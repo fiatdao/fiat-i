@@ -1,0 +1,17 @@
+# MacOS
+.DS_Store
+
+# Node
+node_modules
+
+# Dapptools
+.cache/
+out/
+.env
+
+# Ganache
+.db/
+1337.json
+
+# Seth
+.sethrc

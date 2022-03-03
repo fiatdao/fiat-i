@@ -1,0 +1,28 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - uses: cachix/install-nix-action@v13
+      - uses: cachix/cachix-action@v10
+        with:
+          name: dapp
+
+      - name: Install dependencies
+        run: nix-shell --run 'make'
+
+      - name: Run tests
+        run: nix-shell --run 'make test'
+        env:
+          ALCHEMY_API_KEY: "${{ secrets.ALCHEMY_API_KEY }}"
