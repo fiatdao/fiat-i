@@ -105,7 +105,7 @@ contract FIATTest is DSTest {
     }
 
     function testTransferCost() public logs_gas {
-        token.transfer(address(0), 10);
+        token.transfer(address(1), 10);
     }
 
     function testAllowanceStartsAtZero() public logs_gas {
@@ -270,9 +270,9 @@ contract FIATTest is DSTest {
         assertEq(address(token), address(0x2e0F3B1C5444c0225c74fb17446065f136AC87C6));
     }
 
-    function testTypehash() public {
-        assertEq(token.PERMIT_TYPEHASH(), 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9);
-    }
+    // function testTypehash() public {
+    //     assertEq(token.PERMIT_TYPEHASH(), 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9);
+    // }
 
     function testDomain_Separator() public {
         assertEq(token.DOMAIN_SEPARATOR(), 0xb39b3fd4d9ebbdfd9d7dc59bb1c912ea4e454d7b7fd5f1089dd02a16e034595c);
