@@ -7,7 +7,7 @@ import {ICodex} from "./interfaces/ICodex.sol";
 import {ICollybus} from "./interfaces/ICollybus.sol";
 
 import {Guarded} from "./utils/Guarded.sol";
-import {WAD, add, sub, wmul, wdiv} from "./utils/Math.sol";
+import "./utils/Math.sol";
 
 /// @title Collybus
 /// @notice `Collybus` stores a spot price and discount rate for every Vault / asset.

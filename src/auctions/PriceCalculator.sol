@@ -5,7 +5,7 @@ pragma solidity ^0.8.4;
 import {IPriceCalculator} from "../interfaces/IPriceCalculator.sol";
 
 import {Guarded} from "../utils/Guarded.sol";
-import {WAD, sub, wmul, wdiv, wpow} from "../utils/Math.sol";
+import "../utils/Math.sol";
 
 /// @title LinearDecrease
 /// @notice Implements a linear decreasing price curve for the collateral auction

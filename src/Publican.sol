@@ -7,7 +7,7 @@ import {ICodex} from "./interfaces/ICodex.sol";
 import {IPublican} from "./interfaces/IPublican.sol";
 
 import {Guarded} from "./utils/Guarded.sol";
-import {WAD, diff, add, sub, wmul, wpow} from "./utils/Math.sol";
+import "./utils/Math.sol";
 
 /// @title Publican
 /// @notice `Publican` is responsible for setting the debt interest rate and collecting interest

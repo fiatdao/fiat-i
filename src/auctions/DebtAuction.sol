@@ -10,7 +10,7 @@ import {ICollybus} from "../interfaces/ICollybus.sol";
 import {IDebtAuction} from "../interfaces/IDebtAuction.sol";
 
 import {Guarded} from "../utils/Guarded.sol";
-import {WAD, min, add48, mul} from "../utils/Math.sol";
+import "../utils/Math.sol";
 
 /// @title DebtAuction
 /// @notice

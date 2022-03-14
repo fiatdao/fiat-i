@@ -6,7 +6,7 @@ import {ICodex} from "./interfaces/ICodex.sol";
 import {IVault} from "./interfaces/IVault.sol";
 
 import {Guarded} from "./utils/Guarded.sol";
-import {WAD, add, sub, wmul} from "./utils/Math.sol";
+import "./utils/Math.sol";
 
 /// @title Codex
 /// @notice `Codex` is responsible for the accounting of collateral and debt balances

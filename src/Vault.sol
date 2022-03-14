@@ -15,7 +15,7 @@ import {ICollybus} from "./interfaces/ICollybus.sol";
 import {IVault} from "./interfaces/IVault.sol";
 
 import {Guarded} from "./utils/Guarded.sol";
-import {WAD, toInt256, wmul, wdiv} from "./utils/Math.sol";
+import "./utils/Math.sol";
 
 /// @title Vault20
 /// @notice The `Vault20` adapter allows for entering plain ERC20 tokens into the system

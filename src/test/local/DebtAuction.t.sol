@@ -7,7 +7,7 @@ import {DSToken} from "../utils/dapphub/DSToken.sol";
 
 import {Codex} from "../../Codex.sol";
 import {DebtAuction} from "../../auctions/DebtAuction.sol";
-import {WAD, sub} from "../../utils/Math.sol";
+import "../../utils/Math.sol";
 
 interface Hevm {
     function warp(uint256) external;

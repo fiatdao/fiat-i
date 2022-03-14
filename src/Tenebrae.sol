@@ -13,7 +13,7 @@ import {ITenebrae} from "./interfaces/ITenebrae.sol";
 import {IVault} from "./interfaces/IVault.sol";
 
 import {Guarded} from "./utils/Guarded.sol";
-import {WAD, min, add, sub, wmul, wdiv} from "./utils/Math.sol";
+import "./utils/Math.sol";
 
 /// @title Tenebrae
 /// @notice `Tenebrae` coordinates Global Settlement. This is an involved, stateful process that takes

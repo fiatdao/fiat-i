@@ -9,7 +9,7 @@ import {ILimes} from "./interfaces/ILimes.sol";
 import {IVault} from "./interfaces/IVault.sol";
 
 import {Guarded} from "./utils/Guarded.sol";
-import {WAD, min, add, sub, mul, wmul} from "./utils/Math.sol";
+import "./utils/Math.sol";
 
 /// @title Limes
 /// @notice `Limes` is responsible for triggering liquidations of unsafe Positions and

@@ -14,10 +14,10 @@ import {Collybus} from "../../Collybus.sol";
 import {DebtAuction} from "../../auctions/DebtAuction.sol";
 import {Aer} from "../../Aer.sol";
 import {Limes} from "../../Limes.sol";
-import {WAD, wmul} from "../../utils/Math.sol";
 import {Vault20} from "../../Vault.sol";
 import {SurplusAuction} from "../../auctions/SurplusAuction.sol";
 import {Tenebrae} from "../../Tenebrae.sol";
+import "../../utils/Math.sol";
 
 uint256 constant tokenId = 0;
 

@@ -7,7 +7,7 @@ import {IFIAT} from "./interfaces/IFIAT.sol";
 import {IMoneta} from "./interfaces/IMoneta.sol";
 
 import {Guarded} from "./utils/Guarded.sol";
-import {WAD, wmul} from "./utils/Math.sol";
+import "./utils/Math.sol";
 
 /// @title Moneta (FIAT Mint)
 /// @notice The canonical mint for FIAT (Fixed Income Asset Token),

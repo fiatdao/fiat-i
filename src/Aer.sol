@@ -8,7 +8,7 @@ import {IAer} from "./interfaces/IAer.sol";
 import {ISurplusAuction} from "./interfaces/ISurplusAuction.sol";
 
 import {Guarded} from "./utils/Guarded.sol";
-import {WAD, min, add, sub} from "./utils/Math.sol";
+import "./utils/Math.sol";
 
 /// @title Aer (short for Aerarium)
 /// @notice `Aer` is used for managing the protocol's debt and surplus balances via the DebtAuction and

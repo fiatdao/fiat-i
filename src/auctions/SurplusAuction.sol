@@ -8,7 +8,7 @@ import {ICodex} from "../interfaces/ICodex.sol";
 import {ISurplusAuction} from "../interfaces/ISurplusAuction.sol";
 
 import {Guarded} from "../utils/Guarded.sol";
-import {WAD, add48, sub, mul} from "../utils/Math.sol";
+import "../utils/Math.sol";
 
 /// @title SurplusAuction
 /// @notice

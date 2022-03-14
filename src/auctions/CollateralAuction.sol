@@ -11,7 +11,7 @@ import {ILimes} from "../interfaces/ILimes.sol";
 import {IVault} from "../interfaces/IVault.sol";
 
 import {Guarded} from "../utils/Guarded.sol";
-import {WAD, max, min, add, sub, mul, wmul, wdiv} from "../utils/Math.sol";
+import "../utils/Math.sol";
 
 /// @title CollateralAuction
 /// @notice
