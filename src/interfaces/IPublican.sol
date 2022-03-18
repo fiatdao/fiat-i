@@ -25,5 +25,7 @@ interface IPublican {
 
     function setParam(bytes32 param, address data) external;
 
+    function virtualRate(address vault) external returns (uint256 rate);
+
     function collect(address vault) external returns (uint256 rate);
 }

@@ -138,7 +138,10 @@ contract PublicanTest is DSTest {
         publican.setParam(address(vaultA), "interestPerSecond", 1000000564701133626); // 5% / day
         hevm.warp(block.timestamp + 1 days);
         assertEq(codex.credit(ali), 0 ether);
+        uint256 ratePreview = publican.virtualRate(address(vaultA));
         publican.collect(address(vaultA));
+        (, uint256 newRate, , ) = codex.vaults(address(vaultA));
+        assertEq(ratePreview, newRate);
         assertEqPrecision(codex.credit(ali), 5 ether - 1, 1e10);
     }
 
@@ -173,7 +176,10 @@ contract PublicanTest is DSTest {
 
         hevm.warp(block.timestamp + 2 days);
         assertEq(codex.credit(ali), 0 ether);
+        uint256 ratePreview = publican.virtualRate(address(vaultA));
         publican.collect(address(vaultA));
+        (, uint256 newRate, , ) = codex.vaults(address(vaultA));
+        assertEq(ratePreview, newRate);
         assertEqPrecision(codex.credit(ali), 10.25 ether - 1, 1e10);
     }
 
@@ -184,7 +190,10 @@ contract PublicanTest is DSTest {
         publican.setParam(address(vaultA), "interestPerSecond", 1000000564701133626); // 5% / day
         hevm.warp(block.timestamp + 3 days);
         assertEq(codex.credit(ali), 0 ether);
+        uint256 ratePreview = publican.virtualRate(address(vaultA));
         publican.collect(address(vaultA));
+        (, uint256 newRate, , ) = codex.vaults(address(vaultA));
+        assertEq(ratePreview, newRate);
         assertEqPrecision(codex.credit(ali), 15.7625 ether - 1, 1e10);
     }
 
@@ -197,7 +206,10 @@ contract PublicanTest is DSTest {
         assertEq(codex.credit(address(this)), 100 ether);
         codex.transferCredit(address(this), ali, 100 ether);
         assertEq(codex.credit(ali), 100 ether);
+        uint256 ratePreview = publican.virtualRate(address(vaultA));
         publican.collect(address(vaultA));
+        (, uint256 newRate, , ) = codex.vaults(address(vaultA));
+        assertEq(ratePreview, newRate);
         assertEqPrecision(codex.credit(ali), 92.6859375 ether - 1, 1e10);
     }
 

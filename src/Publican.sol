@@ -107,6 +107,23 @@ contract Publican is Guarded, IPublican {
 
     /// ======== Interest Rates ======== ///
 
+    /// @notice Returns the up to date rate (virtual rate) for a given vault as the rate stored in Codex 
+    /// might be outdated
+    /// @param vault Address of the Vault
+    /// @return rate Virtual rate
+    function virtualRate(address vault) external view override returns (uint256 rate) {
+        (, uint256 prev, , ) = codex.vaults(vault);
+        if (block.timestamp < vaults[vault].lastCollected) return prev;
+        rate = wmul(
+            wpow(
+                add(baseInterest, vaults[vault].interestPerSecond),
+                sub(block.timestamp, vaults[vault].lastCollected),
+                WAD
+            ),
+            prev
+        );
+    }
+
     /// @notice Collects accrued interest from all Position on a Vault by updating the Vault's rate
     /// @param vault Address of the Vault
     /// @return rate Set rate
