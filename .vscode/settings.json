@@ -4,5 +4,5 @@
   "files.associations": {
     ".dapprc": "shellscript"
   },
-  "solidity.compileUsingRemoteVersion": "v0.8.11"
+  "solidity.compileUsingRemoteVersion": "v0.8.13"
 }
