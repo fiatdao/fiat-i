@@ -8,7 +8,7 @@ update:; dapp update
 # npm deps for linting etc.
 npm:; yarn install
 # install solc version
-solc:; nix-env -f https://github.com/pcaversaccio/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_8_13
+solc:; nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_8_13
 
 # Build & test & deploy
 build           :; dapp build
