@@ -8,10 +8,8 @@ contract_size() {
 	# select the filename and the contract in it
 	PATTERN=".contracts[\"src/$NAME.sol\"].$NAME"
 
-  dapp build # first, build the contract
-
 	# get the bytecode from the compiled file
-	BYTECODE=0x$(jq -r "$PATTERN.evm.bytecode.object" out/dapp.sol.json)
+	BYTECODE=$(jq -r ".bytecode.object" out/$NAME.sol/$NAME.json)
 	length=$(echo "$BYTECODE" | wc -m)
 	echo $(($length / 2))
 }
@@ -24,6 +22,9 @@ if [[ -z $contract ]]; then
     contract=${1}
   fi
 fi
+
+echo "Building project..."
+make build
 
 contract_size=$(contract_size ${contract})
 echo "Contract Name: ${contract}"
