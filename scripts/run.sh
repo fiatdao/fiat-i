@@ -19,14 +19,10 @@ if [[ ! " ${networks[*]} " =~ " $1 " ]]; then
 fi
 
 if [ "$1" == "local" ]; then
-  ETH_RPC_URL=http://localhost:8545
+  forge test --ffi --chain-id 99 --match-path $(pwd)/src/test/local --fork-url http://localhost:8545
 elif [ "$1" == "mainnet" ]; then
-  DAPP_TEST_NUMBER=13627845
-  DAPP_TEST_CACHE=.cache/mainnet-${DAPP_TEST_NUMBER}
-  ETH_RPC_URL=https://eth-$1.alchemyapi.io/v2/${ALCHEMY_API_KEY}
-  forge test --fork-url $ETH_RPC_URL --fork-block-number $DAPP_TEST_NUMBER
+  forge test --chain-id 99 --fork-url https://eth-$1.alchemyapi.io/v2/${ALCHEMY_API_KEY} --fork-block-number 13627845
 else
   ETH_RPC_URL=https://eth-$1.alchemyapi.io/v2/${ALCHEMY_API_KEY}
   forge test --fork-url $ETH_RPC_URL
 fi
-

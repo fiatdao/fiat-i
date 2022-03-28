@@ -11,16 +11,12 @@ install-deps	:; yarn install
 build           :; forge build
 clean           :; forge clean
 lint            :; yarn run lint
-# debug           :; ./scripts/run.sh local "dapp debug"
-# debug-tx        :; ./scripts/run.sh $(network) "seth run-tx $(tx) --source out/dapp.sol.json --debug"
-
-# This isn't used
-# lint            :; yarn run lint
 size            :; ./scripts/contract-size.sh ${contract}
-snapshot        :; ./scripts/run.sh mainnet "forge snapshot --fork-url ${ETH_RPC_URL} --fork-block-number ${DAPP_TEST_NUMBER}"
-test            :
-	./scripts/run.sh mainnet
-test-fork		:
-	./scripts/run.sh $(network)
-test-local      :
-	./scripts/run.sh local "forge test --ffi --match-path `pwd`/src/test/local --fork-url http://localhost:8545"
+test            :; ./scripts/run.sh mainnet
+test-fork		:; ./scripts/run.sh $(network)
+test-local      :; ./scripts/run.sh local
+
+# Not migrated to Foundry yet
+debug           :; ./scripts/debug.sh local "dapp debug"
+debug-tx        :; ./scripts/debug.sh $(network) "seth run-tx $(tx) --source out/dapp.sol.json --debug"
+snapshot        :; ./scripts/debug.sh mainnet "forge snapshot --fork-url ${ETH_RPC_URL} --fork-block-number ${DAPP_TEST_NUMBER}"
