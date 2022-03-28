@@ -6,7 +6,6 @@ import {IERC20Permit} from "openzeppelin/contracts/token/ERC20/extensions/draft-
 import {IERC20Metadata} from "openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 interface IFIATExcl {
-
     function mint(address to, uint256 amount) external;
 
     function burn(address from, uint256 amount) external;

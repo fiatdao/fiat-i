@@ -11,7 +11,6 @@ import {Guarded} from "./utils/Guarded.sol";
 /// @title Fixed Income Asset Token (FIAT)
 /// @notice `FIAT` is the protocol's stable asset which can be redeemed for `Credit` via `Moneta`
 contract FIAT is Guarded, ERC20Permit, IFIATExcl {
-
     constructor() Guarded() ERC20("Fixed Income Asset Token", "FIAT") ERC20Permit("Fixed Income Asset Token") {}
 
     /// ======== Minting and Burning ======== ///

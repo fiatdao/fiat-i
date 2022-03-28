@@ -10,6 +10,7 @@ install-deps	:; yarn install
 # Build & test & deploy
 build           :; forge build
 clean           :; forge clean
+lint            :; yarn run lint
 # debug           :; ./scripts/run.sh local "dapp debug"
 # debug-tx        :; ./scripts/run.sh $(network) "seth run-tx $(tx) --source out/dapp.sol.json --debug"
 
