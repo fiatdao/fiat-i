@@ -31,8 +31,8 @@ jobs:
       - name: Show Foundry config
         run: forge config
         
-      # - name: Check contracts are linted
-      #   run: yarn lint:check
+      - name: Check contracts are linted
+        run: yarn lint:check
 
       - name: Run tests
         env:
