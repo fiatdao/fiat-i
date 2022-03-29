@@ -3,9 +3,9 @@
 -include .env
 
 # Update dependencies
-setup			:; make update-libs ; make install-deps
-update-libs		:; git submodule update --init --recursive
-install-deps	:; yarn install
+setup           :; make update-libs ; make install-deps
+update-libs     :; git submodule update --init --recursive
+install-deps    :; yarn install
 
 # Build & test & deploy
 build           :; forge build
@@ -13,7 +13,7 @@ clean           :; forge clean
 lint            :; yarn run lint
 size            :; ./scripts/contract-size.sh ${contract}
 test            :; ./scripts/run.sh mainnet
-test-fork		:; ./scripts/run.sh $(network)
+test-fork       :; ./scripts/run.sh $(network)
 test-local      :; ./scripts/run.sh local
 
 # Not migrated to Foundry yet
