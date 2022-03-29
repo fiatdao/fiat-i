@@ -32,7 +32,7 @@ let typedData = {
         name: 'Fixed Income Asset Token',
         version: '1',
         chainId: '99',
-        verifyingContract: '0x2e0F3B1C5444c0225c74fb17446065f136AC87C6', //in hevm
+        verifyingContract: '0xf925e7d14e89736700b73ca27ecceeb0a088383f', //in hevm
     },
     message: {
         owner: '0x'+cal.toString('hex'),

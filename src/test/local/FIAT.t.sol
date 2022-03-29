@@ -78,12 +78,12 @@ contract FIATTest is DSTest {
     uint256 deadline = 0;
     address cal = 0xcfDFCdf4e30Cf2C9CAa2C239677C8d42Ad7D67DE;
     address del = 0x0D1d31abea2384b0D5add552E3a9b9F66d57e141;
-    bytes32 r = 0xbd9e56f723dae1735e8810e4896abe0c163137e26514f5d065c024a0edb574e0;
-    bytes32 s = 0x27ce44662fb1886dd3533eac9b9ff307d6a38f917e510db3addeef265028e241;
-    uint8 v = 27;
-    bytes32 _r = 0x02e0fc3b8b48ac6c7f90e9639b1da5307956f506f472b6e280618e8c83c411e2;
-    bytes32 _s = 0x06f719b9e0623bc3b05c31100fb70c520eaecc8ec12cb2ef1ea781a23fc45735;
-    uint8 _v = 28;
+    bytes32 r = 0x748703fa9efcb5ee2d6a139b95d97b3b09425af631cb8f655de82290b71cdf6f;
+    bytes32 s = 0x13841519f7fb9b5a7ef44890b2a72881ade66a8b5e0938faf0c50ef722976c46;
+    uint8 v = 28;
+    bytes32 _r = 0xce0a22140b7337647fadd3edd4d259b4ba9bc1ddaac6b01ccd32fb819110fb8e;
+    bytes32 _s = 0x6e7042e66108e942443bbdc9a2e44ade57076e0a6a439e776f408bb62b1d1fde;
+    uint8 _v = 27;
 
     function setUp() public {
         hevm = Hevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
