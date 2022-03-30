@@ -107,7 +107,7 @@ contract Publican is Guarded, IPublican {
 
     /// ======== Interest Rates ======== ///
 
-    /// @notice Returns the up to date rate (virtual rate) for a given vault as the rate stored in Codex 
+    /// @notice Returns the up to date rate (virtual rate) for a given vault as the rate stored in Codex
     /// might be outdated
     /// @param vault Address of the Vault
     /// @return rate Virtual rate

@@ -8,7 +8,7 @@ const calprivKeyHex = '9e99449797b670840f53a749df174a19772bcd4c6b52e976ab139812d
 const calprivKey = new Buffer.from(calprivKeyHex, 'hex')
 const cal = ethUtil.privateToAddress(calprivKey);
 const del = new Buffer.from('0D1d31abea2384b0D5add552E3a9b9F66d57e141', 'hex');
-const fiat = new Buffer.from('2e0F3B1C5444c0225c74fb17446065f136AC87C6', 'hex');
+const fiat = new Buffer.from('f925e7d14E89736700B73CA27ECceeB0A088383f', 'hex');
 console.log('cals address: ' + '0x' + cal.toString('hex'));
 console.log('dels address: ' + '0x' + del.toString('hex'));
 let typedData = {
@@ -32,7 +32,7 @@ let typedData = {
         name: 'Fixed Income Asset Token',
         version: '1',
         chainId: '99',
-        verifyingContract: '0x2e0F3B1C5444c0225c74fb17446065f136AC87C6', //in hevm
+        verifyingContract: '0xf925e7d14e89736700b73ca27ecceeb0a088383f', //in hevm
     },
     message: {
         owner: '0x'+cal.toString('hex'),

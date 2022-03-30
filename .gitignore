@@ -15,3 +15,9 @@ out/
 
 # Seth
 .sethrc
+
+# Gas snapshot
+.gas-snapshot
+
+# Foundry
+cache/
