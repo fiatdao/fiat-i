@@ -25,9 +25,5 @@ make test
 ```
 
 ## Deploying contracts
-```sh
-# local
-make testnet
-# in another shell
-make deploy-local
-```
+
+This is typically done in a different repository by loading this repo as a gitmodule and defining the deploy strategy.
