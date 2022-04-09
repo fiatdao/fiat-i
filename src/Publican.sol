@@ -48,8 +48,9 @@ contract Publican is Guarded, IPublican {
 
     /// ======== Events ======== ///
     event Init(address indexed vault);
-    event SetParam(address indexed vault, bytes32 indexed param, uint256 data);
+    event SetParam(bytes32 indexed param, uint256);
     event SetParam(bytes32 indexed param, address indexed data);
+    event SetParam(address indexed vault, bytes32 indexed param, uint256 data);
     event Collect(address indexed vault);
 
     constructor(address codex_) Guarded() {
@@ -92,7 +93,7 @@ contract Publican is Guarded, IPublican {
     function setParam(bytes32 param, uint256 data) external override checkCaller {
         if (param == "baseInterest") baseInterest = data;
         else revert Publican__setParam_unrecognizedParam();
-        emit SetParam(address(0), param, data);
+        emit SetParam(param, data);
     }
 
     /// @notice Sets various variables for this contract

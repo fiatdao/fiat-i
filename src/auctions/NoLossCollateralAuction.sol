@@ -116,7 +116,9 @@ contract NoLossCollateralAuction is Guarded, INoLossCollateralAuction {
     event Init(address vault);
 
     event SetParam(bytes32 indexed param, uint256 data);
+    event SetParam(address indexed vault, bytes32 indexed param, uint256 data);
     event SetParam(bytes32 indexed param, address data);
+    event SetParam(address indexed vault, bytes32 indexed param, address data);
 
     event StartAuction(
         uint256 indexed auctionId,
@@ -230,7 +232,7 @@ contract NoLossCollateralAuction is Guarded, INoLossCollateralAuction {
         else if (param == "maxAuctionDuration")
             vaults[vault].maxAuctionDuration = data; // Time elapsed before auction reset
         else revert NoLossCollateralAuction__setParam_unrecognizedParam();
-        emit SetParam(param, data);
+        emit SetParam(vault, param, data);
     }
 
     /// @notice Sets various variables for a Vault
@@ -246,7 +248,7 @@ contract NoLossCollateralAuction is Guarded, INoLossCollateralAuction {
         if (param == "collybus") vaults[vault].collybus = ICollybus(data);
         else if (param == "calculator") vaults[vault].calculator = IPriceCalculator(data);
         else revert NoLossCollateralAuction__setParam_unrecognizedParam();
-        emit SetParam(param, data);
+        emit SetParam(vault, param, data);
     }
 
     /// ======== No Loss Collateral Auction ======== ///

@@ -170,7 +170,7 @@ contract Codex is Guarded, ICodex {
         if (live == 0) revert Codex__setParam_notLive();
         if (param == "globalDebtCeiling") globalDebtCeiling = data;
         else revert Codex__setParam_unrecognizedParam();
-        emit SetParam(address(0), param, data);
+        emit SetParam(param, data);
     }
 
     /// @notice Sets various variables for a Vault

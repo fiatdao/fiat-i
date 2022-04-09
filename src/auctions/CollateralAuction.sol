@@ -117,7 +117,9 @@ contract CollateralAuction is Guarded, ICollateralAuction {
     event Init(address vault);
 
     event SetParam(bytes32 indexed param, uint256 data);
+    event SetParam(address indexed vault, bytes32 indexed param, uint256 data);
     event SetParam(bytes32 indexed param, address data);
+    event SetParam(address indexed vault, bytes32 indexed param, address data);
 
     event StartAuction(
         uint256 indexed auctionId,
@@ -232,7 +234,7 @@ contract CollateralAuction is Guarded, ICollateralAuction {
         else if (param == "maxDiscount")
             vaults[vault].maxDiscount = data; // Percentage drop before auction reset
         else revert CollateralAuction__setParam_unrecognizedParam();
-        emit SetParam(param, data);
+        emit SetParam(vault, param, data);
     }
 
     /// @notice Sets various variables for a Vault
@@ -248,7 +250,7 @@ contract CollateralAuction is Guarded, ICollateralAuction {
         if (param == "collybus") vaults[vault].collybus = ICollybus(data);
         else if (param == "calculator") vaults[vault].calculator = IPriceCalculator(data);
         else revert CollateralAuction__setParam_unrecognizedParam();
-        emit SetParam(param, data);
+        emit SetParam(vault, param, data);
     }
 
     /// ======== Collateral Auction ======== ///

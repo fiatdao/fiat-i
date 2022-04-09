@@ -75,7 +75,7 @@ contract Collybus is Guarded, ICollybus {
         if (live == 0) revert Collybus__setParam_notLive();
         if (param == "live") live = data;
         else revert Collybus__setParam_unrecognizedParam();
-        emit SetParam(address(0), param, data);
+        emit SetParam(param, data);
     }
 
     /// @notice Sets various variables for a Vault
