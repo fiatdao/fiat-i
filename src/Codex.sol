@@ -90,6 +90,7 @@ contract Codex is Guarded, ICodex {
 
     /// ======== Events ======== ///
     event Init(address indexed vault);
+    event SetParam(bytes32 indexed param, uint256 data);
     event SetParam(address indexed vault, bytes32 indexed param, uint256 data);
     event GrantDelegate(address indexed delegator, address indexed delegatee);
     event RevokeDelegate(address indexed delegator, address indexed delegatee);
