@@ -114,5 +114,7 @@ interface ICodex {
         int256 rate
     ) external;
 
+    function live() external view returns (uint256);
+
     function lock() external;
 }
