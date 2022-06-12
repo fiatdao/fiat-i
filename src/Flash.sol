@@ -10,6 +10,9 @@ import {IMoneta} from "./interfaces/IMoneta.sol";
 import {Guarded} from "./utils/Guarded.sol";
 import {WAD, add, sub, wmul} from "./utils/Math.sol";
 
+/// @title Flash
+/// @notice `Flash` enables flash minting / borrowing of FIAT and internal Credit
+/// Uses DssFlash.sol from DSS (MakerDAO) as a blueprint
 contract Flash is Guarded, IFlash {
 
     /// ======== Custom Errors ======== ///
@@ -38,7 +41,7 @@ contract Flash is Guarded, IFlash {
     uint256 private locked = 1;
 
     bytes32 public constant CALLBACK_SUCCESS = keccak256("ERC3156FlashBorrower.onFlashLoan");
-    bytes32 public constant CALLBACK_SUCCESS_CREDIT = keccak256("FIATFlashBorrower.onCreditFlashLoan");
+    bytes32 public constant CALLBACK_SUCCESS_CREDIT = keccak256("CreditFlashBorrower.onCreditFlashLoan");
 
     /// ======== Events ======== ///
 
@@ -165,18 +168,18 @@ abstract contract FlashLoanReceiverBase is ICreditFlashBorrower, IERC3156FlashBo
     Flash public flash;
 
     bytes32 public constant CALLBACK_SUCCESS = keccak256("ERC3156FlashBorrower.onFlashLoan");
-    bytes32 public constant CALLBACK_SUCCESS_CREDIT = keccak256("FIATFlashBorrower.onCreditFlashLoan");
+    bytes32 public constant CALLBACK_SUCCESS_CREDIT = keccak256("CreditFlashBorrower.onCreditFlashLoan");
 
     constructor(address flash_) {
         flash = Flash(flash_);
     }
 
     function approvePayback(uint256 amount) internal {
-        // Lender takes back the FIAT as per ERC 3156 spec
+        // Lender takes back the FIAT as per ERC3156 spec
         flash.fiat().approve(address(flash), amount);
     }
     function payBackCredit(uint256 amount) internal {
-        // Lender takes back the FIAT as per ERC 3156 spec
+        // Lender takes back the FIAT as per ERC3156 spec
         flash.codex().transferCredit(address(this), address(flash), amount);
     }
 }

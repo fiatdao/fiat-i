@@ -30,41 +30,6 @@ contract TestCodex is Codex {
 contract TestAer is Aer {
     
     constructor(address codex, address surplusAuction, address debtAuction) Aer(codex, surplusAuction, debtAuction) {}
-
-    // Total deficit
-    function Awe() public view returns (uint256) {
-        return codex.unbackedDebt(address(this));
-    }
-    // Total surplus
-    function Joy() public view returns (uint256) {
-        return codex.credit(address(this));
-    }
-    // Unqueued, pre-auction debt
-    function Woe() public view returns (uint256) {
-        return sub(sub(Awe(), queuedDebt), debtOnAuction);
-    }
-}
-
-contract TestDoNothingReceiver is FlashLoanReceiverBase {
-
-    constructor(address flash) FlashLoanReceiverBase(flash) {
-    }
-
-    function onFlashLoan(
-        address _sender, address _token, uint256 _amount, uint256 _fee, bytes calldata
-    ) external pure override returns (bytes32) {
-        _sender; _token; _amount; _fee;
-        // Don't do anything
-        return CALLBACK_SUCCESS;
-    }
-
-    function onCreditFlashLoan(
-        address _sender, uint256 _amount, uint256 _fee, bytes calldata
-    ) external pure override returns (bytes32) {
-        _sender; _amount; _fee;
-        // Don't do anything
-        return CALLBACK_SUCCESS_CREDIT;
-    }
 }
 
 contract TestImmediatePaybackReceiver is FlashLoanReceiverBase {
@@ -92,112 +57,10 @@ contract TestImmediatePaybackReceiver is FlashLoanReceiverBase {
     }
 }
 
-contract TestLoanAndPaybackReceiver is FlashLoanReceiverBase {
-
-    uint256 public mint;
-
-    constructor(address _flash) FlashLoanReceiverBase(_flash) {}
-
-    function setMint(uint256 _mint) public {
-        mint = _mint;
-    }
-
-    function onFlashLoan(
-        address _sender, address _token, uint256 _amount, uint256 _fee, bytes calldata
-    ) external override returns (bytes32) {
-        _sender; _token;
-        TestCodex(address(flash.codex())).mint(address(this), mint);
-        flash.codex().grantDelegate(address(flash.moneta()));
-        flash.moneta().exit(address(this), mint);
-
-        approvePayback(add(_amount, _fee));
-
-        return CALLBACK_SUCCESS;
-    }
-
-    function onCreditFlashLoan(
-        address _sender, uint256 _amount, uint256 _fee, bytes calldata
-    ) external override returns (bytes32) {
-        _sender;
-        TestCodex(address(flash.codex())).mint(address(this), mint);
-
-        payBackCredit(add(_amount, _fee));
-
-        return CALLBACK_SUCCESS_CREDIT;
-    }
-}
-
-contract TestLoanAndPaybackAllReceiver is FlashLoanReceiverBase {
-
-    uint256 public mint;
-
-    constructor(address _flash) FlashLoanReceiverBase(_flash) {}
-
-    function setMint(uint256 _mint) public {
-        mint = _mint;
-    }
-
-    function onFlashLoan(
-        address _sender, address _token, uint256 _amount, uint256 _fee, bytes calldata
-    ) external override returns (bytes32) {
-        _sender; _token; _fee;
-        TestCodex(address(flash.codex())).mint(address(this), mint);
-        flash.codex().grantDelegate(address(flash.moneta()));
-        flash.moneta().exit(address(this), mint);
-
-        approvePayback(add(_amount, mint));
-
-        return CALLBACK_SUCCESS;
-    }
-
-    function onCreditFlashLoan(
-        address _sender, uint256 _amount, uint256 _fee, bytes calldata
-    ) external override returns (bytes32) {
-        _sender; _fee;
-        TestCodex(address(flash.codex())).mint(address(this), mint);
-
-        payBackCredit(add(_amount, mint));
-
-        return CALLBACK_SUCCESS_CREDIT;
-    }
-}
-
-contract TestLoanAndPaybackDataReceiver is FlashLoanReceiverBase {
-
-    constructor(address flash) FlashLoanReceiverBase(flash) {}
-
-    function onFlashLoan(
-        address _sender, address _token, uint256 _amount, uint256 _fee, bytes calldata _data
-    ) external override returns (bytes32) {
-        _sender; _token;
-        (uint256 mint) = abi.decode(_data, (uint256));
-        TestCodex(address(flash.codex())).mint(address(this), mint);
-        flash.codex().grantDelegate(address(flash.moneta()));
-        flash.moneta().exit(address(this), mint);
-
-        approvePayback(add(_amount, _fee));
-
-        return CALLBACK_SUCCESS;
-    }
-
-    function onCreditFlashLoan(
-        address _sender, uint256 _amount, uint256 _fee, bytes calldata _data
-    ) external override returns (bytes32) {
-        _sender;
-        (uint256 mint) = abi.decode(_data, (uint256));
-        TestCodex(address(flash.codex())).mint(address(this), mint);
-
-        payBackCredit(add(_amount, _fee));
-
-        return CALLBACK_SUCCESS_CREDIT;
-    }
-}
-
 contract TestReentrancyReceiver is FlashLoanReceiverBase {
 
     TestImmediatePaybackReceiver public immediatePaybackReceiver;
 
-    // --- Init ---
     constructor(address flash) FlashLoanReceiverBase(flash) {
         immediatePaybackReceiver = new TestImmediatePaybackReceiver(flash);
     }
@@ -229,16 +92,16 @@ contract TestDEXTradeReceiver is FlashLoanReceiverBase {
 
     FIAT public fiat;
     Moneta public moneta;
-    DSToken public gold;
-    IVault public gemA;
+    DSToken public token;
+    IVault public vaultA;
 
     constructor(
-        address flash, address fiat_, address moneta_, address gold_, address gemA_
+        address flash, address fiat_, address moneta_, address token_, address vaultA_
     ) FlashLoanReceiverBase(flash) {
         fiat = FIAT(fiat_);
         moneta = Moneta(moneta_);
-        gold = DSToken(gold_);
-        gemA = IVault(gemA_);
+        token = DSToken(token_);
+        vaultA = IVault(vaultA_);
     }
 
     function onFlashLoan(
@@ -247,17 +110,17 @@ contract TestDEXTradeReceiver is FlashLoanReceiverBase {
         _sender; _token;
         address me = address(this);
         uint256 totalDebt = _amount + _fee;
-        uint256 goldAmount = totalDebt * 3;
+        uint256 tokenAmount = totalDebt * 3;
 
         // Perform a "trade"
         fiat.burn(me, _amount);
-        gold.mint(me, goldAmount);
+        token.mint(me, tokenAmount);
 
         // Mint some more fiat to repay the original loan
-        gold.approve(address(gemA));
-        gemA.enter(0, me, goldAmount);
+        token.approve(address(vaultA));
+        vaultA.enter(0, me, tokenAmount);
         Codex(address(flash.codex())).modifyCollateralAndDebt(
-            address(gemA), 0, me, me, me, int256(goldAmount), int256(totalDebt)
+            address(vaultA), 0, me, me, me, int256(tokenAmount), int256(totalDebt)
         );
         flash.codex().grantDelegate(address(flash.moneta()));
         flash.moneta().exit(me, totalDebt);
@@ -310,29 +173,21 @@ contract FlashTest is DSTest {
     TestCodex public codex;
     Collybus public collybus;
     TestAer public aer;
-    DSValue public pip;
-    IVault public gemA;
-    DSToken public gold;
+    IVault public vaultA;
+    DSToken public token;
     Moneta public moneta;
     FIAT public fiat;
 
     Flash public flash;
 
-    TestDoNothingReceiver public doNothingReceiver;
     TestImmediatePaybackReceiver public immediatePaybackReceiver;
-    TestLoanAndPaybackReceiver public mintAndPaybackReceiver;
-    TestLoanAndPaybackAllReceiver public mintAndPaybackAllReceiver;
-    TestLoanAndPaybackDataReceiver public mintAndPaybackDataReceiver;
     TestReentrancyReceiver public reentrancyReceiver;
     TestDEXTradeReceiver public dexTradeReceiver;
     TestBadReturn public badReturn;
     TestNoCallbacks public noCallbacks;
 
-    // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
-    bytes20 constant public CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
-
     function setUp() public {
-        hevm = Hevm(address(CHEAT_CODE));
+        hevm = Hevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
         me = address(this);
 
@@ -344,14 +199,14 @@ contract FlashTest is DSTest {
 
         aer = new TestAer(address(codex), address(0), address(0));
 
-        gold = new DSToken("GEM");
-        gold.mint(1000 ether);
+        token = new DSToken("Token");
+        token.mint(1000 ether);
 
-        gemA = new Vault20(address(codex), address(gold), address(collybus));
-        codex.init(address(gemA));
-        codex.allowCaller(codex.ANY_SIG(), address(gemA));
-        gold.approve(address(gemA));
-        gemA.enter(0, me, 1000 ether);
+        vaultA = new Vault20(address(codex), address(token), address(collybus));
+        codex.init(address(vaultA));
+        codex.allowCaller(codex.ANY_SIG(), address(vaultA));
+        token.approve(address(vaultA));
+        vaultA.enter(0, me, 1000 ether);
 
         fiat = new FIAT();
         moneta = new Moneta(address(codex), address(fiat));
@@ -360,36 +215,29 @@ contract FlashTest is DSTest {
 
         flash = new Flash(address(moneta));
 
-        pip = new DSValue();
-        // pip.poke(bytes32(uint256(5 ether))); // Spot = $2.5
+        collybus.setParam(address(vaultA), bytes32("liquidationRatio"), 2 ether);
 
-        collybus.setParam(address(gemA), bytes32("liquidationRatio"), 2 ether);
+        collybus.updateSpot(address(token), 5 ether);
 
-        collybus.updateSpot(address(gold), 5 ether);
-
-        codex.setParam(address(gemA), "debtCeiling", 1000 ether);
+        codex.setParam(address(vaultA), "debtCeiling", 1000 ether);
         codex.setParam("globalDebtCeiling", 1000 ether);
 
-        gold.approve(address(codex));
+        token.approve(address(codex));
 
-        assertEq(codex.balances(address(gemA), 0, me), 1000 ether);
+        assertEq(codex.balances(address(vaultA), 0, me), 1000 ether);
         assertEq(codex.credit(me), 0);
-        codex.modifyCollateralAndDebt(address(gemA), 0, me, me, me, 40 ether, 100 ether);
-        assertEq(codex.balances(address(gemA), 0, me), 960 ether);
+        codex.modifyCollateralAndDebt(address(vaultA), 0, me, me, me, 40 ether, 100 ether);
+        assertEq(codex.balances(address(vaultA), 0, me), 960 ether);
         assertEq(codex.credit(me), 100 ether);
 
         // Basic auth and 1000 fiat debt ceiling
         flash.setParam("max", 1000 ether);
         codex.allowCaller(codex.ANY_SIG(), address(flash));
 
-        doNothingReceiver = new TestDoNothingReceiver(address(flash));
         immediatePaybackReceiver = new TestImmediatePaybackReceiver(address(flash));
-        mintAndPaybackReceiver = new TestLoanAndPaybackReceiver(address(flash));
-        mintAndPaybackAllReceiver = new TestLoanAndPaybackAllReceiver(address(flash));
-        mintAndPaybackDataReceiver = new TestLoanAndPaybackDataReceiver(address(flash));
         reentrancyReceiver = new TestReentrancyReceiver(address(flash));
         dexTradeReceiver = new TestDEXTradeReceiver(
-            address(flash), address(fiat), address(moneta), address(gold), address(gemA)
+            address(flash), address(fiat), address(moneta), address(token), address(vaultA)
         );
         badReturn = new TestBadReturn(address(flash));
         noCallbacks = new TestNoCallbacks();
@@ -406,12 +254,12 @@ contract FlashTest is DSTest {
         assertEq(codex.unbackedDebt(address(flash)), 0);
     }
 
-    function testFail_flash_vat_not_live() public {
+    function testFail_flash_codex_not_live() public {
         codex.lock();
         flash.creditFlashLoan(immediatePaybackReceiver, 10 ether, "");
     }
 
-    function testFail_vat_flash_vat_not_live() public {
+    function testFail_codex_flash_codex_not_live() public {
         codex.lock();
         flash.flashLoan(immediatePaybackReceiver, address(fiat), 10 ether, "");
     }
@@ -422,36 +270,36 @@ contract FlashTest is DSTest {
         flash.flashLoan(immediatePaybackReceiver, address(fiat), 0, "");
     }
 
-    // test mint() for _amount > line
-    function testFail_mint_amount_over_line1() public {
+    // test mint() for _amount > max borrowable amount
+    function testFail_mint_amount_over_max1() public {
         flash.creditFlashLoan(immediatePaybackReceiver, 1001 ether, "");
     }
 
-    function testFail_mint_amount_over_line2() public {
+    function testFail_mint_amount_over_max2() public {
         flash.flashLoan(immediatePaybackReceiver, address(fiat), 1001 ether, "");
     }
 
-    // test line == 0 means flash minting is halted
-    function testFail_mint_line_zero1() public {
+    // test max == 0 means flash minting is halted
+    function testFail_mint_max_zero1() public {
         flash.setParam("max", 0);
 
         flash.creditFlashLoan(immediatePaybackReceiver, 10 ether, "");
     }
 
-    function testFail_mint_line_zero2() public {
+    function testFail_mint_max_zero2() public {
         flash.setParam("max", 0);
 
         flash.flashLoan(immediatePaybackReceiver, address(fiat), 10 ether, "");
     }
 
-    // test unauthorized suck() reverts
-    function testFail_mint_unauthorized_suck1() public {
+    // test unauthorized createUnbackedDebt() reverts
+    function testFail_mint_unauthorized_createUnbackedDebt1() public {
         codex.blockCaller(codex.ANY_SIG(), address(flash));
 
         flash.creditFlashLoan(immediatePaybackReceiver, 10 ether, "");
     }
 
-    function testFail_mint_unauthorized_suck2() public {
+    function testFail_mint_unauthorized_createUnbackedDebt2() public {
         codex.blockCaller(codex.ANY_SIG(), address(flash));
 
         flash.flashLoan(immediatePaybackReceiver, address(fiat), 10 ether, "");
@@ -466,16 +314,15 @@ contract FlashTest is DSTest {
         flash.flashLoan(reentrancyReceiver, address(fiat), 100 ether, "");
     }
 
-    // test trading flash minted fiat for gold and minting more fiat
+    // test trading flash minted fiat for token and minting more fiat
     function test_dex_trade() public {
         // Set the owner temporarily to allow the receiver to mint
-        gold.setOwner(address(dexTradeReceiver));
-
+        token.setOwner(address(dexTradeReceiver));
         flash.flashLoan(dexTradeReceiver, address(fiat), 100 ether, "");
     }
 
-    // test excessive max debt ceiling
-    function testFail_line_limit() public {
+    // test excessive max borrowable amount
+    function testFail_max_limit() public {
         flash.setParam("max", 10 ** 45 + 1);
     }
 
