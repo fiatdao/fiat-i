@@ -14,7 +14,6 @@ import {WAD, add, sub, wmul} from "./utils/Math.sol";
 /// @notice `Flash` enables flash minting / borrowing of FIAT and internal Credit
 /// Uses DssFlash.sol from DSS (MakerDAO) as a blueprint
 contract Flash is Guarded, IFlash {
-
     /// ======== Custom Errors ======== ///
 
     error Flash__lock_reentrancy();
@@ -49,7 +48,7 @@ contract Flash is Guarded, IFlash {
     event FlashLoan(address indexed receiver, address token, uint256 amount, uint256 fee);
     event CreditFlashLoan(address indexed receiver, uint256 amount, uint256 fee);
 
-    modifier lock {
+    modifier lock() {
         if (locked != 1) revert Flash__lock_reentrancy();
         locked = 2;
         _;
@@ -76,8 +75,7 @@ contract Flash is Guarded, IFlash {
             // Add an upper limit of 10^45 FIAT to avoid breaking technical assumptions of FIAT << 2^256 - 1
             if (data > 1e45) revert Flash__setParam_ceilingTooHigh();
             max = data;
-        }
-        else revert Flash__setParam_unrecognizedParam();
+        } else revert Flash__setParam_unrecognizedParam();
         emit SetParam(param, data);
     }
 
@@ -87,7 +85,7 @@ contract Flash is Guarded, IFlash {
     /// @dev If `token` is not FIAT then 0 is returned
     /// @param token Address of the token to borrow (has to be the address of FIAT)
     /// @return maximum borrowable amount [wad]
-    function maxFlashLoan(address token) external override view returns (uint256) {
+    function maxFlashLoan(address token) external view override returns (uint256) {
         return (token == address(fiat) && locked == 1) ? max : 0;
     }
 
@@ -99,7 +97,7 @@ contract Flash is Guarded, IFlash {
     function flashFee(
         address token,
         uint256 /* amount */
-    ) external override view returns (uint256) {
+    ) external view override returns (uint256) {
         if (token != address(fiat)) revert Flash__flashFee_unsupportedToken();
         return 0;
     }
@@ -164,7 +162,6 @@ contract Flash is Guarded, IFlash {
 }
 
 abstract contract FlashLoanReceiverBase is ICreditFlashBorrower, IERC3156FlashBorrower {
-
     Flash public flash;
 
     bytes32 public constant CALLBACK_SUCCESS = keccak256("ERC3156FlashBorrower.onFlashLoan");
@@ -178,6 +175,7 @@ abstract contract FlashLoanReceiverBase is ICreditFlashBorrower, IERC3156FlashBo
         // Lender takes back the FIAT as per ERC3156 spec
         flash.fiat().approve(address(flash), amount);
     }
+
     function payBackCredit(uint256 amount) internal {
         // Lender takes back the FIAT as per ERC3156 spec
         flash.codex().transferCredit(address(this), address(flash), amount);

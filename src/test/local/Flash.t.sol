@@ -18,7 +18,12 @@ import "../../Flash.sol";
 
 interface Hevm {
     function warp(uint256) external;
-    function store(address,bytes32,bytes32) external;
+
+    function store(
+        address,
+        bytes32,
+        bytes32
+    ) external;
 }
 
 contract TestCodex is Codex {
@@ -28,18 +33,25 @@ contract TestCodex is Codex {
 }
 
 contract TestAer is Aer {
-    
-    constructor(address codex, address surplusAuction, address debtAuction) Aer(codex, surplusAuction, debtAuction) {}
+    constructor(
+        address codex,
+        address surplusAuction,
+        address debtAuction
+    ) Aer(codex, surplusAuction, debtAuction) {}
 }
 
 contract TestImmediatePaybackReceiver is FlashLoanReceiverBase {
-
     constructor(address flash) FlashLoanReceiverBase(flash) {}
 
     function onFlashLoan(
-        address _sender, address _token, uint256 _amount, uint256 _fee, bytes calldata
+        address _sender,
+        address _token,
+        uint256 _amount,
+        uint256 _fee,
+        bytes calldata
     ) external override returns (bytes32) {
-        _sender; _token;
+        _sender;
+        _token;
         // Just pay back the original amount
         approvePayback(add(_amount, _fee));
 
@@ -47,7 +59,10 @@ contract TestImmediatePaybackReceiver is FlashLoanReceiverBase {
     }
 
     function onCreditFlashLoan(
-        address _sender, uint256 _amount, uint256 _fee, bytes calldata
+        address _sender,
+        uint256 _amount,
+        uint256 _fee,
+        bytes calldata
     ) external override returns (bytes32) {
         _sender;
         // Just pay back the original amount
@@ -58,7 +73,6 @@ contract TestImmediatePaybackReceiver is FlashLoanReceiverBase {
 }
 
 contract TestReentrancyReceiver is FlashLoanReceiverBase {
-
     TestImmediatePaybackReceiver public immediatePaybackReceiver;
 
     constructor(address flash) FlashLoanReceiverBase(flash) {
@@ -66,7 +80,11 @@ contract TestReentrancyReceiver is FlashLoanReceiverBase {
     }
 
     function onFlashLoan(
-        address _sender, address _token, uint256 _amount, uint256 _fee, bytes calldata _data
+        address _sender,
+        address _token,
+        uint256 _amount,
+        uint256 _fee,
+        bytes calldata _data
     ) external override returns (bytes32) {
         _sender;
         flash.flashLoan(immediatePaybackReceiver, _token, _amount + _fee, _data);
@@ -77,7 +95,10 @@ contract TestReentrancyReceiver is FlashLoanReceiverBase {
     }
 
     function onCreditFlashLoan(
-        address _sender, uint256 _amount, uint256 _fee, bytes calldata _data
+        address _sender,
+        uint256 _amount,
+        uint256 _fee,
+        bytes calldata _data
     ) external override returns (bytes32) {
         _sender;
         flash.creditFlashLoan(immediatePaybackReceiver, _amount + _fee, _data);
@@ -89,14 +110,17 @@ contract TestReentrancyReceiver is FlashLoanReceiverBase {
 }
 
 contract TestDEXTradeReceiver is FlashLoanReceiverBase {
-
     FIAT public fiat;
     Moneta public moneta;
     DSToken public token;
     IVault public vaultA;
 
     constructor(
-        address flash, address fiat_, address moneta_, address token_, address vaultA_
+        address flash,
+        address fiat_,
+        address moneta_,
+        address token_,
+        address vaultA_
     ) FlashLoanReceiverBase(flash) {
         fiat = FIAT(fiat_);
         moneta = Moneta(moneta_);
@@ -105,9 +129,14 @@ contract TestDEXTradeReceiver is FlashLoanReceiverBase {
     }
 
     function onFlashLoan(
-        address _sender, address _token, uint256 _amount, uint256 _fee, bytes calldata
+        address _sender,
+        address _token,
+        uint256 _amount,
+        uint256 _fee,
+        bytes calldata
     ) external override returns (bytes32) {
-        _sender; _token;
+        _sender;
+        _token;
         address me = address(this);
         uint256 totalDebt = _amount + _fee;
         uint256 tokenAmount = totalDebt * 3;
@@ -120,7 +149,13 @@ contract TestDEXTradeReceiver is FlashLoanReceiverBase {
         token.approve(address(vaultA));
         vaultA.enter(0, me, tokenAmount);
         Codex(address(flash.codex())).modifyCollateralAndDebt(
-            address(vaultA), 0, me, me, me, int256(tokenAmount), int256(totalDebt)
+            address(vaultA),
+            0,
+            me,
+            me,
+            me,
+            int256(tokenAmount),
+            int256(totalDebt)
         );
         flash.codex().grantDelegate(address(flash.moneta()));
         flash.moneta().exit(me, totalDebt);
@@ -131,30 +166,43 @@ contract TestDEXTradeReceiver is FlashLoanReceiverBase {
     }
 
     function onCreditFlashLoan(
-        address _sender, uint256 _amount, uint256 _fee, bytes calldata _data
+        address _sender,
+        uint256 _amount,
+        uint256 _fee,
+        bytes calldata _data
     ) external pure override returns (bytes32) {
-        _sender; _amount; _fee; _data;
+        _sender;
+        _amount;
+        _fee;
+        _data;
         return CALLBACK_SUCCESS_CREDIT;
     }
 }
 
 contract TestBadReturn is FlashLoanReceiverBase {
-
-    bytes32 constant public BAD_HASH = keccak256("my bad hash");
+    bytes32 public constant BAD_HASH = keccak256("my bad hash");
 
     constructor(address flash) FlashLoanReceiverBase(flash) {}
 
     function onFlashLoan(
-        address _sender, address _token, uint256 _amount, uint256 _fee, bytes calldata
+        address _sender,
+        address _token,
+        uint256 _amount,
+        uint256 _fee,
+        bytes calldata
     ) external override returns (bytes32) {
-        _sender; _token;
+        _sender;
+        _token;
         approvePayback(add(_amount, _fee));
 
         return BAD_HASH;
     }
 
     function onCreditFlashLoan(
-        address _sender, uint256 _amount, uint256 _fee, bytes calldata
+        address _sender,
+        uint256 _amount,
+        uint256 _fee,
+        bytes calldata
     ) external override returns (bytes32) {
         _sender;
         payBackCredit(add(_amount, _fee));
@@ -237,7 +285,11 @@ contract FlashTest is DSTest {
         immediatePaybackReceiver = new TestImmediatePaybackReceiver(address(flash));
         reentrancyReceiver = new TestReentrancyReceiver(address(flash));
         dexTradeReceiver = new TestDEXTradeReceiver(
-            address(flash), address(fiat), address(moneta), address(token), address(vaultA)
+            address(flash),
+            address(fiat),
+            address(moneta),
+            address(token),
+            address(vaultA)
         );
         badReturn = new TestBadReturn(address(flash));
         noCallbacks = new TestNoCallbacks();
@@ -323,12 +375,12 @@ contract FlashTest is DSTest {
 
     // test excessive max borrowable amount
     function testFail_max_limit() public {
-        flash.setParam("max", 10 ** 45 + 1);
+        flash.setParam("max", 10**45 + 1);
     }
 
     function test_max_flash_loan() public {
         assertEq(flash.maxFlashLoan(address(fiat)), 1000 ether);
-        assertEq(flash.maxFlashLoan(address(moneta)), 0);  // Any other address should be 0 as per the spec
+        assertEq(flash.maxFlashLoan(address(moneta)), 0); // Any other address should be 0 as per the spec
     }
 
     function test_flash_fee() public {
@@ -336,7 +388,7 @@ contract FlashTest is DSTest {
     }
 
     function testFail_flash_fee() public view {
-        flash.flashFee(address(moneta), 100 ether);  // Any other address should fail
+        flash.flashFee(address(moneta), 100 ether); // Any other address should fail
     }
 
     function testFail_bad_token() public {
