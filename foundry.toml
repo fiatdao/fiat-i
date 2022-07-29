@@ -1,7 +1,7 @@
 # Full reference
 # https://onbjerg.github.io/foundry-book/reference/config.html
 
-[default]
+[profile.default]
 # Solidity
 solc_version = "0.8.13"
 optimizer = true
@@ -15,5 +15,5 @@ verbosity = 1
 sender = '0xf1A7dA0000000000000000000000000000000000'
 tx_origin = '0xf1A7dA0000000000000000000000000000000000'
 
-[ci]
+[profile.ci]
 verbosity = 4
