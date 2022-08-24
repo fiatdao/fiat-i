@@ -90,7 +90,7 @@ contract Flash is Guarded, IFlash {
     }
 
     /// @notice Returns the current borrow fee for borrowing `amount` of `token`
-    /// @dev If `token` is not FIAT then 0 is returned
+    /// @dev If `token` is not FIAT then this method will revert
     /// @param token Address of the token to borrow (has to be the address of FIAT)
     /// @param *amount Amount to borrow [wad]
     /// @return fee to borrow `amount` of `token`
