@@ -162,7 +162,7 @@ contract Flash is Guarded, IFlash {
 }
 
 abstract contract FlashLoanReceiverBase is ICreditFlashBorrower, IERC3156FlashBorrower {
-    Flash public flash;
+    Flash public immutable flash;
 
     bytes32 public constant CALLBACK_SUCCESS = keccak256("ERC3156FlashBorrower.onFlashLoan");
     bytes32 public constant CALLBACK_SUCCESS_CREDIT = keccak256("CreditFlashBorrower.onCreditFlashLoan");
