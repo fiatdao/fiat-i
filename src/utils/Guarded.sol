@@ -82,6 +82,6 @@ abstract contract Guarded is IGuarded {
     /// @param root Address of who should be unset as root
     function _unsetRoot(address root) internal {
         _canCall[ANY_SIG][root] = false;
-        emit AllowCaller(ANY_SIG, root);
+        emit BlockCaller(ANY_SIG, root);
     }
 }
