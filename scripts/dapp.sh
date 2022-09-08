@@ -36,4 +36,6 @@ if [ -n "$DAPP_TEST_CACHE" ]; then
 fi
 set -o nounset
 
+# dapp debug
+# seth run-tx $(tx) --source out/dapp.sol.json --debug
 eval $2
