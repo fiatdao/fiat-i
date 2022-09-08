@@ -21,9 +21,6 @@ jobs:
 
       - name: Install dependencies
         run: make
-
-      - name: Show Foundry config
-        run: forge config
         
       - name: Run tests
         env:
