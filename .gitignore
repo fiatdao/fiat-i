@@ -3,21 +3,11 @@
 
 # Node
 node_modules
-
-# Dapptools
-.cache/
-out/
-.env
-
-# Ganache
-.db/
-1337.json
-
-# Seth
-.sethrc
-
-# Gas snapshot
-.gas-snapshot
+yarn.lock
 
 # Foundry
 cache/
+out/
+
+# Secrets
+.env

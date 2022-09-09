@@ -1,19 +1,19 @@
-# Full reference
-# https://onbjerg.github.io/foundry-book/reference/config.html
-
 [profile.default]
-# Solidity
+# Compilation
 solc_version = "0.8.13"
 optimizer = true
 optimizer_runs = 8000
 
-# Gas reporting
+# Testing
 gas_reports = ["*"]
-
 verbosity = 1
-
 sender = '0xf1A7dA0000000000000000000000000000000000'
 tx_origin = '0xf1A7dA0000000000000000000000000000000000'
+chain_id = 99
 
 [profile.ci]
 verbosity = 4
+
+[fmt]
+int_types = "preserve"
+number_underscore = "preserve"
