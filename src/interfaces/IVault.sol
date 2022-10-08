@@ -25,7 +25,7 @@ interface IVault {
 
     function setParam(bytes32 param, address data) external;
 
-    function maturity(uint256 tokenId) external returns (uint256);
+    function maturity(uint256 tokenId) external view returns (uint256);
 
     function fairPrice(
         uint256 tokenId,
