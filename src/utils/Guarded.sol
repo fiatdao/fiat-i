@@ -46,31 +46,6 @@ abstract contract Guarded is IGuarded {
         } else revert Guarded__notGranted();
     }
 
-    /// @notice Grant the right to call method `sig` to `who`
-    /// @dev Only the root user (granted `ANY_SIG`) is able to call this method
-    /// @param sig Method signature (4Byte)
-    /// @param who Address of who should be able to call `sig`
-    function allowCaller(bytes32 sig, address who) public override callerIsRoot {
-        _canCall[sig][who] = true;
-        emit AllowCaller(sig, who);
-    }
-
-    /// @notice Revoke the right to call method `sig` from `who`
-    /// @dev Only the root user (granted `ANY_SIG`) is able to call this method
-    /// @param sig Method signature (4Byte)
-    /// @param who Address of who should not be able to call `sig` anymore
-    function blockCaller(bytes32 sig, address who) public override callerIsRoot {
-        _canCall[sig][who] = false;
-        emit BlockCaller(sig, who);
-    }
-
-    /// @notice Returns if `who` can call `sig`
-    /// @param sig Method signature (4Byte)
-    /// @param who Address of who should be able to call `sig`
-    function canCall(bytes32 sig, address who) public view override returns (bool) {
-        return (_canCall[sig][who] || _canCall[ANY_SIG][who] || _canCall[sig][ANY_CALLER]);
-    }
-
     /// @notice Sets the root user (granted `ANY_SIG`)
     /// @param root Address of who should be set as root
     function _setRoot(address root) internal {
@@ -83,5 +58,44 @@ abstract contract Guarded is IGuarded {
     function _unsetRoot(address root) internal {
         _canCall[ANY_SIG][root] = false;
         emit BlockCaller(ANY_SIG, root);
+    }
+
+    /// @notice Grant the right to call method `sig` to `who`
+    /// @param sig Method signature (4Byte)
+    /// @param who Address of who should be able to call `sig`
+    function _allowCaller(bytes32 sig, address who) internal {
+        _canCall[sig][who] = true;
+        emit AllowCaller(sig, who);        
+    }
+
+    /// @notice Revoke the right to call method `sig` from `who`
+    /// @param sig Method signature (4Byte)
+    /// @param who Address of who should not be able to call `sig` anymore
+    function _blockCaller(bytes32 sig, address who) internal {
+        _canCall[sig][who] = false;
+        emit BlockCaller(sig, who);
+    }
+
+    /// @notice Grant the right to call method `sig` to `who`
+    /// @dev Only the root user (granted `ANY_SIG`) is able to call this method
+    /// @param sig Method signature (4Byte)
+    /// @param who Address of who should be able to call `sig`
+    function allowCaller(bytes32 sig, address who) public override callerIsRoot {
+        _allowCaller(sig, who);
+    }
+
+    /// @notice Revoke the right to call method `sig` from `who`
+    /// @dev Only the root user (granted `ANY_SIG`) is able to call this method
+    /// @param sig Method signature (4Byte)
+    /// @param who Address of who should not be able to call `sig` anymore
+    function blockCaller(bytes32 sig, address who) public override callerIsRoot {
+        _blockCaller(sig, who);
+    }
+
+    /// @notice Returns if `who` can call `sig`
+    /// @param sig Method signature (4Byte)
+    /// @param who Address of who should be able to call `sig`
+    function canCall(bytes32 sig, address who) public view override returns (bool) {
+        return (_canCall[sig][who] || _canCall[ANY_SIG][who] || _canCall[sig][ANY_CALLER]);
     }
 }
