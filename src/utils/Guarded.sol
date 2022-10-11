@@ -46,20 +46,6 @@ abstract contract Guarded is IGuarded {
         } else revert Guarded__notGranted();
     }
 
-    /// @notice Sets the root user (granted `ANY_SIG`)
-    /// @param root Address of who should be set as root
-    function _setRoot(address root) internal {
-        _canCall[ANY_SIG][root] = true;
-        emit AllowCaller(ANY_SIG, root);
-    }
-
-    /// @notice Unsets the root user (granted `ANY_SIG`)
-    /// @param root Address of who should be unset as root
-    function _unsetRoot(address root) internal {
-        _canCall[ANY_SIG][root] = false;
-        emit BlockCaller(ANY_SIG, root);
-    }
-
     /// @notice Grant the right to call method `sig` to `who`
     /// @param sig Method signature (4Byte)
     /// @param who Address of who should be able to call `sig`
@@ -74,6 +60,18 @@ abstract contract Guarded is IGuarded {
     function _blockCaller(bytes32 sig, address who) internal {
         _canCall[sig][who] = false;
         emit BlockCaller(sig, who);
+    }
+
+    /// @notice Sets the root user (granted `ANY_SIG`)
+    /// @param root Address of who should be set as root
+    function _setRoot(address root) internal {
+        _allowCaller(ANY_SIG, root);
+    }
+
+    /// @notice Unsets the root user (granted `ANY_SIG`)
+    /// @param root Address of who should be unset as root
+    function _unsetRoot(address root) internal {
+        _blockCaller(ANY_SIG, root);
     }
 
     /// @notice Grant the right to call method `sig` to `who`
