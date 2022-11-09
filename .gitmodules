@@ -10,3 +10,6 @@
 [submodule "lib/mockprovider"]
 	path = lib/mockprovider
 	url = https://github.com/cleanunicorn/mockprovider
+[submodule "lib/proxy"]
+	path = lib/proxy
+	url = https://github.com/fiatdao/proxy
