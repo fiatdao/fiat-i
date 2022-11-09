@@ -23,7 +23,7 @@ import {IVault} from "../../../interfaces/IVault.sol";
 
 import {VaultFC} from "../../../vaults/VaultFC.sol";
 
-import {Caller} from "../utils/Caller.sol";
+import {Caller} from "../../../test/utils/Caller.sol";
 
 import {Vault1155Actions} from "../../vault/Vault1155Actions.sol";
 

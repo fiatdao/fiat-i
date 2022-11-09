@@ -21,8 +21,8 @@ import {NotionalProxy} from "../utils/notional/NotionalProxy.sol";
 import {ICToken} from "../utils/notional/ICToken.sol";
 import {EncodeDecode, TokenType, CashGroupSettings, Constants, BalanceActionWithTrades, DepositActionType, AccountContext, PortfolioAsset, Token} from "../utils/notional/EncodeDecode.sol";
 
-import {TestERC20} from "../utils/TestERC20.sol";
-import {MockProvider} from "../utils/MockProvider.sol";
+import {TestERC20} from "../../../test/utils/TestERC20.sol";
+import {MockProvider} from "../../../test/utils/MockProvider.sol";
 
 import {VaultFC} from "../../VaultFC.sol";
 

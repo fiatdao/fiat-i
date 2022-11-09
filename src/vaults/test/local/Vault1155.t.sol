@@ -11,7 +11,7 @@ import {ERC165} from "openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import {Codex} from "../../../Codex.sol";
 
-import {MockProvider} from "../utils/MockProvider.sol";
+import {MockProvider} from "../../../test/utils/MockProvider.sol";
 import {Vault1155} from "../../Vault.sol";
 
 contract Receiver is ERC165, IERC1155Receiver {

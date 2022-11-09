@@ -12,8 +12,8 @@ import {Codex} from "../../../Codex.sol";
 import {Collybus, ICollybus} from "../../../Collybus.sol";
 import {WAD, wdiv} from "../../../utils/Math.sol";
 
-import {MockProvider} from "../utils/MockProvider.sol";
-import {Caller} from "../utils/Caller.sol";
+import {MockProvider} from "../../../test/utils/MockProvider.sol";
+import {Caller} from "../../../test/utils/Caller.sol";
 
 import {VaultEPT} from "../../VaultEPT.sol";
 import {VaultFactory} from "../../VaultFactory.sol";

@@ -3,8 +3,8 @@ pragma solidity ^0.8.4;
 
 import {Test} from "forge-std/Test.sol";
 
-import {MockProvider} from "../utils/MockProvider.sol";
-import {TestERC20} from "../utils/TestERC20.sol";
+import {MockProvider} from "../../../test/utils/MockProvider.sol";
+import {TestERC20} from "../../../test/utils/TestERC20.sol";
 
 import {Codex} from "../../../Codex.sol";
 import {IVault} from "../../../interfaces/IVault.sol";

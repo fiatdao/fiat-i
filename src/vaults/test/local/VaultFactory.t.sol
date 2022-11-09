@@ -3,8 +3,8 @@ pragma solidity ^0.8.4;
 
 import {Test} from "forge-std/Test.sol";
 
-import {MockProvider} from "../utils/MockProvider.sol";
-import {Caller} from "../utils/Caller.sol";
+import {MockProvider} from "../../../test/utils/MockProvider.sol";
+import {Caller} from "../../../test/utils/Caller.sol";
 
 import {IVaultInitializable, VaultFactory} from "../../VaultFactory.sol";
 

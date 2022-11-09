@@ -22,8 +22,8 @@ import {Vault20} from "../../../vaults/Vault.sol";
 import {PRBProxyFactory} from "proxy/contracts/PRBProxyFactory.sol";
 import {PRBProxy} from "proxy/contracts/PRBProxy.sol";
 
-import {Caller} from "../utils/Caller.sol";
-import {TestERC20} from "../utils/TestERC20.sol";
+import {Caller} from "../../../test/utils/Caller.sol";
+import {TestERC20} from "../../../test/utils/TestERC20.sol";
 
 import {Vault20Actions} from "../../vault/Vault20Actions.sol";
 

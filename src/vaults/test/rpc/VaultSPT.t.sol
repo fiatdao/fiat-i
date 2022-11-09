@@ -19,7 +19,7 @@ import {IVault} from "../../../interfaces/IVault.sol";
 
 import {VaultFactory} from "../../VaultFactory.sol";
 import {VaultSPT} from "../../VaultSPT.sol";
-import {MockProvider} from "../utils/MockProvider.sol";
+import {MockProvider} from "../../../test/utils/MockProvider.sol";
 
 contract VaultSPT_Test_rpc is Test {
     Codex codex;

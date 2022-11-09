@@ -10,9 +10,9 @@ import {ERC1155PresetMinterPauser} from "openzeppelin/contracts/token/ERC1155/pr
 import {Codex} from "../../../Codex.sol";
 import {wdiv, toInt256} from "../../../utils/Math.sol";
 
-import {DSToken} from "../utils/dapphub/DSToken.sol";
-import {MockProvider} from "../utils/MockProvider.sol";
-import {Caller} from "../utils/Caller.sol";
+import {DSToken} from "../../../test/utils/dapphub/DSToken.sol";
+import {MockProvider} from "../../../test/utils/MockProvider.sol";
+import {Caller} from "../../../test/utils/Caller.sol";
 import {Receiver} from "./Vault1155.t.sol";
 
 import {VaultFCv2} from "../../VaultFCv2.sol";

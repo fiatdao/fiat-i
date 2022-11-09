@@ -22,7 +22,7 @@ import {toInt256, WAD, wmul, wdiv} from "../../../utils/Math.sol";
 
 import {VaultFC, IVaultFC} from "../../../vaults/VaultFC.sol";
 
-import {Caller} from "../utils/Caller.sol";
+import {Caller} from "../../../test/utils/Caller.sol";
 
 import {VaultFCActions, INotional, Constants, EncodeDecode} from "../../vault/VaultFCActions.sol";
 

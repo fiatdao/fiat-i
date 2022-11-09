@@ -21,7 +21,7 @@ import {toInt256, WAD, wdiv} from "../../../utils/Math.sol";
 
 import {VaultSY, ISmartYield} from "../../../vaults/VaultSY.sol";
 
-import {Caller} from "../utils/Caller.sol";
+import {Caller} from "../../../test/utils/Caller.sol";
 
 import {VaultSYActions} from "../../vault/VaultSYActions.sol";
 
