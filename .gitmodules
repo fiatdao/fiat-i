@@ -7,3 +7,6 @@
 [submodule "lib/prb-math"]
 	path = lib/prb-math
 	url = https://github.com/paulrberg/prb-math
+[submodule "lib/mockprovider"]
+	path = lib/mockprovider
+	url = https://github.com/cleanunicorn/mockprovider
