@@ -2,3 +2,4 @@ ds-test/=lib/ds-test/src/
 openzeppelin/=lib/openzeppelin-contracts/
 prb-math/=lib/prb-math/
 mockprovider/=lib/mockprovider/src/
+proxy/=lib/proxy/
