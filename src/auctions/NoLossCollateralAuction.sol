@@ -223,11 +223,7 @@ contract NoLossCollateralAuction is Guarded, INoLossCollateralAuction {
     /// @param vault Address of the Vault
     /// @param param Name of the variable to set
     /// @param data New value to set for the variable [wad]
-    function setParam(
-        address vault,
-        bytes32 param,
-        uint256 data
-    ) external override checkCaller checkReentrancy {
+    function setParam(address vault, bytes32 param, uint256 data) external override checkCaller checkReentrancy {
         if (param == "multiplier") vaults[vault].multiplier = data;
         else if (param == "maxAuctionDuration")
             vaults[vault].maxAuctionDuration = data; // Time elapsed before auction reset
@@ -240,11 +236,7 @@ contract NoLossCollateralAuction is Guarded, INoLossCollateralAuction {
     /// @param vault Address of the Vault
     /// @param param Name of the variable to set
     /// @param data New value to set for the variable [address]
-    function setParam(
-        address vault,
-        bytes32 param,
-        address data
-    ) external override checkCaller checkReentrancy {
+    function setParam(address vault, bytes32 param, address data) external override checkCaller checkReentrancy {
         if (param == "collybus") vaults[vault].collybus = ICollybus(data);
         else if (param == "calculator") vaults[vault].calculator = IPriceCalculator(data);
         else revert NoLossCollateralAuction__setParam_unrecognizedParam();
@@ -532,17 +524,9 @@ contract NoLossCollateralAuction is Guarded, INoLossCollateralAuction {
     /// @return price Current price of the collateral determined by the calculator [wad]
     /// @return collateralToSell Amount of collateral left to buy for credit [wad]
     /// @return debt Amount of debt / credit to sell for collateral [wad]
-    function getStatus(uint256 auctionId)
-        external
-        view
-        override
-        returns (
-            bool needsRedo,
-            uint256 price,
-            uint256 collateralToSell,
-            uint256 debt
-        )
-    {
+    function getStatus(
+        uint256 auctionId
+    ) external view override returns (bool needsRedo, uint256 price, uint256 collateralToSell, uint256 debt) {
         Auction memory auction = auctions[auctionId];
 
         bool done;

@@ -15,13 +15,7 @@ import {Codex} from "../../Codex.sol";
 import {Vault1155} from "../../Vault.sol";
 
 contract Receiver is ERC165, IERC1155Receiver {
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes memory
-    ) external pure returns (bytes4) {
+    function onERC1155Received(address, address, uint256, uint256, bytes memory) external pure returns (bytes4) {
         return this.onERC1155Received.selector;
     }
 
@@ -52,7 +46,7 @@ contract Vault1155Test is DSTest {
     Receiver receiver;
 
     uint256 constant MAX_DECIMALS = 38; // ~type(int256).max ~= 1e18*1e18
-    uint256 constant MAX_AMOUNT = 10**(MAX_DECIMALS);
+    uint256 constant MAX_AMOUNT = 10 ** (MAX_DECIMALS);
 
     function setUp() public {
         codex = new MockProvider();
@@ -63,13 +57,7 @@ contract Vault1155Test is DSTest {
         receiver = new Receiver();
     }
 
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes memory
-    ) external pure returns (bytes4) {
+    function onERC1155Received(address, address, uint256, uint256, bytes memory) external pure returns (bytes4) {
         return this.onERC1155Received.selector;
     }
 
@@ -92,7 +80,7 @@ contract Vault1155Test is DSTest {
     }
 
     function test_tokenScale() public {
-        assertEq(vault.tokenScale(), 10**18);
+        assertEq(vault.tokenScale(), 10 ** 18);
     }
 
     function test_implements_ERC165Support_For_ERC1155Receiver() public {
@@ -113,11 +101,7 @@ contract Vault1155Test is DSTest {
         );
     }
 
-    function test_enter_transfersTokens_to_vault(
-        uint256 tokenId,
-        address owner,
-        uint128 amount
-    ) public {
+    function test_enter_transfersTokens_to_vault(uint256 tokenId, address owner, uint128 amount) public {
         if (amount >= MAX_AMOUNT) return;
 
         token.setApprovalForAll(address(vault), true);
@@ -129,11 +113,7 @@ contract Vault1155Test is DSTest {
         assertEq(token.balanceOf(address(vault), tokenId), amount);
     }
 
-    function test_enter_calls_codex_modifyBalance(
-        uint256 tokenId,
-        address owner,
-        uint128 amount
-    ) public {
+    function test_enter_calls_codex_modifyBalance(uint256 tokenId, address owner, uint128 amount) public {
         if (amount >= MAX_AMOUNT) return;
 
         token.setApprovalForAll(address(vault), true);
@@ -152,10 +132,7 @@ contract Vault1155Test is DSTest {
         emit log_bytes(abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), tokenId, owner, amount));
     }
 
-    function test_exit_transfers_tokens(
-        uint256 tokenId,
-        uint128 amount
-    ) public {
+    function test_exit_transfers_tokens(uint256 tokenId, uint128 amount) public {
         if (amount >= MAX_AMOUNT) return;
 
         token.setApprovalForAll(address(vault), true);
@@ -168,10 +145,7 @@ contract Vault1155Test is DSTest {
         assertEq(token.balanceOf(address(vault), tokenId), 0);
     }
 
-    function test_exit_calls_codex_modifyBalance(
-        uint256 tokenId,
-        uint128 amount
-    ) public {
+    function test_exit_calls_codex_modifyBalance(uint256 tokenId, uint128 amount) public {
         if (amount >= MAX_AMOUNT) return;
 
         token.setApprovalForAll(address(vault), true);

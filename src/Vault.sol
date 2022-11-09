@@ -64,12 +64,8 @@ contract Vault20 is Guarded, IVault {
 
     event Lock();
 
-    constructor(
-        address codex_,
-        address token_,
-        address collybus_
-    ) Guarded() {
-        uint256 scale = 10**IERC20Metadata(token_).decimals();
+    constructor(address codex_, address token_, address collybus_) Guarded() {
+        uint256 scale = 10 ** IERC20Metadata(token_).decimals();
 
         live = 1;
         codex = ICodex(codex_);
@@ -101,11 +97,7 @@ contract Vault20 is Guarded, IVault {
     /// @param *tokenId ERC1155 or ERC721 style TokenId (leave at 0 for ERC20)
     /// @param user Address to whom the collateral should be credited to in Codex
     /// @param amount Amount of collateral to enter [tokenScale]
-    function enter(
-        uint256, /* tokenId */
-        address user,
-        uint256 amount
-    ) external virtual override {
+    function enter(uint256 /* tokenId */, address user, uint256 amount) external virtual override {
         if (live == 0) revert Vault20__enter_notLive();
         int256 wad = toInt256(wdiv(amount, tokenScale));
         codex.modifyBalance(address(this), 0, user, wad);
@@ -117,11 +109,7 @@ contract Vault20 is Guarded, IVault {
     /// @param *tokenId ERC1155 or ERC721 style TokenId (leave at 0 for ERC20)
     /// @param user Address to whom the collateral should be credited to
     /// @param amount Amount of collateral to exit [tokenScale]
-    function exit(
-        uint256, /* tokenId */
-        address user,
-        uint256 amount
-    ) external virtual override {
+    function exit(uint256 /* tokenId */, address user, uint256 amount) external virtual override {
         int256 wad = toInt256(wdiv(amount, tokenScale));
         codex.modifyBalance(address(this), 0, msg.sender, -int256(wad));
         IERC20(token).safeTransfer(user, amount);
@@ -133,9 +121,7 @@ contract Vault20 is Guarded, IVault {
     /// @notice Returns the maturity of the collateral asset
     /// @param *tokenId ERC1155 or ERC721 style TokenId (leave at 0 for ERC20)
     /// @return maturity [seconds]
-    function maturity(
-        uint256 /* tokenId */
-    ) external view virtual override returns (uint256) {
+    function maturity(uint256 /* tokenId */) external view virtual override returns (uint256) {
         return block.timestamp;
     }
 
@@ -147,11 +133,7 @@ contract Vault20 is Guarded, IVault {
     /// @param net Boolean indicating whether the liquidation safety margin should be applied to the fair value
     /// @param *face Boolean indicating whether the current fair value or the fair value at maturity should be returned
     /// @return fair price [wad]
-    function fairPrice(
-        uint256 tokenId,
-        bool net,
-        bool /* face */
-    ) external view virtual override returns (uint256) {
+    function fairPrice(uint256 tokenId, bool net, bool /* face */) external view virtual override returns (uint256) {
         return collybus.read(address(this), address(token), tokenId, block.timestamp, net);
     }
 
@@ -213,19 +195,14 @@ contract Vault1155 is Guarded, IVault, ERC165, ERC1155Supply {
 
     event Lock();
 
-    constructor(
-        address codex_,
-        address token_,
-        address collybus_,
-        string memory uri
-    ) Guarded() ERC1155(uri) {
+    constructor(address codex_, address token_, address collybus_, string memory uri) Guarded() ERC1155(uri) {
         live = 1;
         codex = ICodex(codex_);
         collybus = ICollybus(collybus_);
         token = token_;
-        tokenScale = 10**18;
+        tokenScale = 10 ** 18;
         underlierToken = token_;
-        underlierScale = 10**18;
+        underlierScale = 10 ** 18;
         vaultType = bytes32("ERC1155");
     }
 
@@ -249,11 +226,7 @@ contract Vault1155 is Guarded, IVault, ERC165, ERC1155Supply {
     /// @param tokenId ERC1155 or ERC721 style TokenId (leave at 0 for ERC20)
     /// @param user Address to whom the collateral should be credited to in Codex
     /// @param amount Amount of collateral to enter [tokenScale]
-    function enter(
-        uint256 tokenId,
-        address user,
-        uint256 amount
-    ) external virtual override {
+    function enter(uint256 tokenId, address user, uint256 amount) external virtual override {
         if (live == 0) revert Vault1155__enter_notLive();
         int256 wad = toInt256(wdiv(amount, tokenScale));
         codex.modifyBalance(address(this), tokenId, user, int256(wad));
@@ -265,11 +238,7 @@ contract Vault1155 is Guarded, IVault, ERC165, ERC1155Supply {
     /// @param tokenId ERC1155 or ERC721 style TokenId (leave at 0 for ERC20)
     /// @param user Address to whom the collateral should be credited to
     /// @param amount Amount of collateral to exit [tokenScale]
-    function exit(
-        uint256 tokenId,
-        address user,
-        uint256 amount
-    ) external virtual override {
+    function exit(uint256 tokenId, address user, uint256 amount) external virtual override {
         int256 wad = toInt256(wdiv(amount, tokenScale));
         codex.modifyBalance(address(this), tokenId, msg.sender, -int256(wad));
         IERC1155(token).safeTransferFrom(address(this), user, tokenId, amount, new bytes(0));
@@ -281,9 +250,7 @@ contract Vault1155 is Guarded, IVault, ERC165, ERC1155Supply {
     /// @notice Returns the maturity of the collateral asset
     /// @param *tokenId ERC1155 or ERC721 style TokenId (leave at 0 for ERC20)
     /// @return maturity [seconds]
-    function maturity(
-        uint256 /* tokenId */
-    ) external view virtual override returns (uint256) {
+    function maturity(uint256 /* tokenId */) external view virtual override returns (uint256) {
         return block.timestamp;
     }
 
@@ -295,23 +262,13 @@ contract Vault1155 is Guarded, IVault, ERC165, ERC1155Supply {
     /// @param net Boolean indicating whether the liquidation safety margin should be applied to the fair value
     /// @param *face Boolean indicating whether the current fair value or the fair value at maturity should be returned
     /// @return fair price [wad]
-    function fairPrice(
-        uint256 tokenId,
-        bool net,
-        bool /* face */
-    ) external view virtual override returns (uint256) {
+    function fairPrice(uint256 tokenId, bool net, bool /* face */) external view virtual override returns (uint256) {
         return collybus.read(address(this), address(token), tokenId, block.timestamp, net);
     }
 
     /// ======== ERC1155 ======== ///
 
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes memory
-    ) external pure returns (bytes4) {
+    function onERC1155Received(address, address, uint256, uint256, bytes memory) external pure returns (bytes4) {
         return this.onERC1155Received.selector;
     }
 

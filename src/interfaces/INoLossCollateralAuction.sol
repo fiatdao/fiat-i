@@ -8,16 +8,7 @@ import {IAer} from "./IAer.sol";
 import {ILimes} from "./ILimes.sol";
 
 interface INoLossCollateralAuction {
-    function vaults(address)
-        external
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256,
-            ICollybus,
-            IPriceCalculator
-        );
+    function vaults(address) external view returns (uint256, uint256, uint256, ICollybus, IPriceCalculator);
 
     function codex() external view returns (ICodex);
 
@@ -33,19 +24,9 @@ interface INoLossCollateralAuction {
 
     function activeAuctions(uint256) external view returns (uint256);
 
-    function auctions(uint256)
-        external
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256,
-            address,
-            uint256,
-            address,
-            uint96,
-            uint256
-        );
+    function auctions(
+        uint256
+    ) external view returns (uint256, uint256, uint256, address, uint256, address, uint96, uint256);
 
     function stopped() external view returns (uint256);
 
@@ -55,17 +36,9 @@ interface INoLossCollateralAuction {
 
     function setParam(bytes32 param, address data) external;
 
-    function setParam(
-        address vault,
-        bytes32 param,
-        uint256 data
-    ) external;
+    function setParam(address vault, bytes32 param, uint256 data) external;
 
-    function setParam(
-        address vault,
-        bytes32 param,
-        address data
-    ) external;
+    function setParam(address vault, bytes32 param, address data) external;
 
     function startAuction(
         uint256 debt,
@@ -90,15 +63,9 @@ interface INoLossCollateralAuction {
 
     function list() external view returns (uint256[] memory);
 
-    function getStatus(uint256 auctionId)
-        external
-        view
-        returns (
-            bool needsRedo,
-            uint256 price,
-            uint256 collateralToSell,
-            uint256 debt
-        );
+    function getStatus(
+        uint256 auctionId
+    ) external view returns (bool needsRedo, uint256 price, uint256 collateralToSell, uint256 debt);
 
     function updateAuctionDebtFloor(address vault) external;
 

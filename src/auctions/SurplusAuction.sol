@@ -132,11 +132,7 @@ contract SurplusAuction is Guarded, ISurplusAuction {
     /// @param auctionId Id of the debt auction
     /// @param creditToSell Amount of credit to receive (has to match)
     /// @param bid Amount of tokens to pay for credit (has to be higher than prev. bid)
-    function submitBid(
-        uint256 auctionId,
-        uint256 creditToSell,
-        uint256 bid
-    ) external override {
+    function submitBid(uint256 auctionId, uint256 creditToSell, uint256 bid) external override {
         if (live == 0) revert SurplusAuction__submitBid_notLive();
         if (auctions[auctionId].recipient == address(0)) revert SurplusAuction__submit_recipientNotSet();
         if (auctions[auctionId].bidExpiry <= block.timestamp && auctions[auctionId].bidExpiry != 0)

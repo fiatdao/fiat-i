@@ -15,11 +15,7 @@ interface IPublican {
 
     function init(address vault) external;
 
-    function setParam(
-        address vault,
-        bytes32 param,
-        uint256 data
-    ) external;
+    function setParam(address vault, bytes32 param, uint256 data) external;
 
     function setParam(bytes32 param, uint256 data) external;
 

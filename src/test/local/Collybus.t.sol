@@ -15,12 +15,7 @@ contract CollybusTest is DSTest {
     address me = address(this);
 
     // helper
-    function readWith(
-        uint256 ttm,
-        bool net,
-        uint256 spot,
-        uint256 rate
-    ) internal returns (uint256) {
+    function readWith(uint256 ttm, bool net, uint256 spot, uint256 rate) internal returns (uint256) {
         collybus.updateDiscountRate(rateId, rate);
         collybus.updateSpot(underlier, spot);
         return collybus.read(vault, underlier, tokenId, block.timestamp + ttm, net);
@@ -142,11 +137,7 @@ contract CollybusTest is DSTest {
         assertTol(readWith(31557600, true, 1000000000000000000, 3020197350), 826446281037927798);
     }
 
-    function test_read(
-        uint32 rate,
-        uint120 spot,
-        uint32 maturity
-    ) public {
+    function test_read(uint32 rate, uint120 spot, uint32 maturity) public {
         collybus.updateDiscountRate(rateId, rate);
         collybus.updateSpot(underlier, spot);
         collybus.read(vault, underlier, tokenId, maturity, false);

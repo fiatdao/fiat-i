@@ -51,7 +51,7 @@ abstract contract Guarded is IGuarded {
     /// @param who Address of who should be able to call `sig`
     function _allowCaller(bytes32 sig, address who) internal {
         _canCall[sig][who] = true;
-        emit AllowCaller(sig, who);        
+        emit AllowCaller(sig, who);
     }
 
     /// @notice Revoke the right to call method `sig` from `who`

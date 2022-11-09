@@ -83,11 +83,7 @@ contract Collybus is Guarded, ICollybus {
     /// @param vault Address of the Vault
     /// @param param Name of the variable to set
     /// @param data New value to set for the variable [wad]
-    function setParam(
-        address vault,
-        bytes32 param,
-        uint128 data
-    ) external override checkCaller {
+    function setParam(address vault, bytes32 param, uint128 data) external override checkCaller {
         if (live == 0) revert Collybus__setParam_notLive();
         if (param == "liquidationRatio") vaults[vault].liquidationRatio = data;
         else if (param == "defaultRateId") vaults[vault].defaultRateId = data;
@@ -101,12 +97,7 @@ contract Collybus is Guarded, ICollybus {
     /// @param param Name of the variable to set
     /// @param tokenId ERC1155 or ERC721 style TokenId (leave at 0 for ERC20)
     /// @param data New value to set for the variable [wad]
-    function setParam(
-        address vault,
-        uint256 tokenId,
-        bytes32 param,
-        uint256 data
-    ) external override checkCaller {
+    function setParam(address vault, uint256 tokenId, bytes32 param, uint256 data) external override checkCaller {
         if (live == 0) revert Collybus__setParam_notLive();
         if (param == "rateId") rateIds[vault][tokenId] = data;
         else revert Collybus__setParam_unrecognizedParam();

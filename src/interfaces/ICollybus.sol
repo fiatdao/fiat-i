@@ -24,18 +24,9 @@ interface ICollybus {
 
     function setParam(bytes32 param, uint256 data) external;
 
-    function setParam(
-        address vault,
-        bytes32 param,
-        uint128 data
-    ) external;
+    function setParam(address vault, bytes32 param, uint128 data) external;
 
-    function setParam(
-        address vault,
-        uint256 tokenId,
-        bytes32 param,
-        uint256 data
-    ) external;
+    function setParam(address vault, uint256 tokenId, bytes32 param, uint256 data) external;
 
     function updateDiscountRate(uint256 rateId, uint256 rate) external;
 

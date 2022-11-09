@@ -75,11 +75,7 @@ contract Publican is Guarded, IPublican {
     /// @param vault Address of the Vault
     /// @param param Name of the variable to set
     /// @param data New value to set for the variable [wad]
-    function setParam(
-        address vault,
-        bytes32 param,
-        uint256 data
-    ) external override checkCaller {
+    function setParam(address vault, bytes32 param, uint256 data) external override checkCaller {
         if (block.timestamp != vaults[vault].lastCollected) revert Publican__setParam_notCollected();
         if (param == "interestPerSecond") vaults[vault].interestPerSecond = data;
         else revert Publican__setParam_unrecognizedParam();

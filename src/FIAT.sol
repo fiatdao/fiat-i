@@ -34,11 +34,7 @@ contract FIAT is Guarded, ERC20Permit, IFIATExcl {
     }
 
     /// @notice Overrides `_spendAllowance` behaviour exempting the case where owner == spender
-    function _spendAllowance(
-        address owner,
-        address spender,
-        uint256 amount
-    ) internal override {
+    function _spendAllowance(address owner, address spender, uint256 amount) internal override {
         if (owner == spender) return;
         super._spendAllowance(owner, spender, amount);
     }

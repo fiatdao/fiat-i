@@ -18,11 +18,7 @@ import {Vault20} from "../../Vault.sol";
 contract Wpow is Publican {
     constructor(address codex_) Publican(codex_) {}
 
-    function pWpow(
-        uint256 x,
-        uint256 n,
-        uint256 b
-    ) public pure returns (uint256) {
+    function pWpow(uint256 x, uint256 n, uint256 b) public pure returns (uint256) {
         return wpow(x, n, b);
     }
 }
@@ -34,11 +30,7 @@ contract PublicanTest is DSTest {
     Vault20 vaultA;
     Publican publican;
 
-    function assertEqPrecision(
-        uint256 a,
-        uint256 b,
-        uint256 scale
-    ) internal {
+    function assertEqPrecision(uint256 a, uint256 b, uint256 scale) internal {
         assertEq((a * scale) / WAD, (b * scale) / WAD);
     }
 

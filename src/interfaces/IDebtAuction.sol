@@ -6,16 +6,7 @@ import {IERC20} from "openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ICodex} from "./ICodex.sol";
 
 interface IDebtAuction {
-    function auctions(uint256)
-        external
-        view
-        returns (
-            uint256,
-            uint256,
-            address,
-            uint48,
-            uint48
-        );
+    function auctions(uint256) external view returns (uint256, uint256, address, uint48, uint48);
 
     function codex() external view returns (ICodex);
 
@@ -37,19 +28,11 @@ interface IDebtAuction {
 
     function setParam(bytes32 param, uint256 data) external;
 
-    function startAuction(
-        address recipient,
-        uint256 tokensToSell,
-        uint256 bid
-    ) external returns (uint256 id);
+    function startAuction(address recipient, uint256 tokensToSell, uint256 bid) external returns (uint256 id);
 
     function redoAuction(uint256 id) external;
 
-    function submitBid(
-        uint256 id,
-        uint256 tokensToSell,
-        uint256 bid
-    ) external;
+    function submitBid(uint256 id, uint256 tokensToSell, uint256 bid) external;
 
     function closeAuction(uint256 id) external;
 

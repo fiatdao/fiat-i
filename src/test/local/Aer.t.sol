@@ -57,11 +57,7 @@ contract AerTest is DSTest {
         (ok, ) = address(aer).call(abi.encodeWithSignature(sig, queuedAt));
     }
 
-    function try_submitBid(
-        uint256 id,
-        uint256 tokensToSell,
-        uint256 bid
-    ) internal returns (bool ok) {
+    function try_submitBid(uint256 id, uint256 tokensToSell, uint256 bid) internal returns (bool ok) {
         string memory sig = "submitBid(uint256,uint256,uint256)";
         (ok, ) = address(debtAuction).call(abi.encodeWithSignature(sig, id, tokensToSell, bid));
     }

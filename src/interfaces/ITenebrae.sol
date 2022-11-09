@@ -29,11 +29,7 @@ interface ITenebrae {
 
     function normalDebtByTokenId(address, uint256) external view returns (uint256);
 
-    function claimed(
-        address,
-        uint256,
-        address
-    ) external view returns (uint256);
+    function claimed(address, uint256, address) external view returns (uint256);
 
     function setParam(bytes32 param, address data) external;
 
@@ -47,19 +43,11 @@ interface ITenebrae {
 
     function skipAuction(address vault, uint256 auctionId) external;
 
-    function offsetPosition(
-        address vault,
-        uint256 tokenId,
-        address user
-    ) external;
+    function offsetPosition(address vault, uint256 tokenId, address user) external;
 
     function closePosition(address vault, uint256 tokenId) external;
 
     function fixGlobalDebt() external;
 
-    function redeem(
-        address vault,
-        uint256 tokenId,
-        uint256 credit
-    ) external;
+    function redeem(address vault, uint256 tokenId, uint256 credit) external;
 }

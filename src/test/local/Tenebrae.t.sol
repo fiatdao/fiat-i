@@ -46,21 +46,11 @@ contract User {
         codex.modifyCollateralAndDebt(vault, tokenId_, u, v, w, deltaCollateral, deltaNormalDebt);
     }
 
-    function transferBalance(
-        address vault,
-        uint256 tokenId_,
-        address src,
-        address dst,
-        uint256 amount
-    ) public {
+    function transferBalance(address vault, uint256 tokenId_, address src, address dst, uint256 amount) public {
         codex.transferBalance(vault, tokenId_, src, dst, amount);
     }
 
-    function transferCredit(
-        address src,
-        address dst,
-        uint256 amount
-    ) public {
+    function transferCredit(address src, address dst, uint256 amount) public {
         codex.transferCredit(src, dst, amount);
     }
 
@@ -68,11 +58,7 @@ contract User {
         codex.grantDelegate(user);
     }
 
-    function exit(
-        Vault20 vaultA,
-        address user,
-        uint256 amount
-    ) public {
+    function exit(Vault20 vaultA, address user, uint256 amount) public {
         vaultA.exit(0, user, amount);
     }
 
@@ -80,11 +66,7 @@ contract User {
         tenebrae.closePosition(vault, tokenId_);
     }
 
-    function redeem(
-        address vault,
-        uint256 tokenId_,
-        uint256 credit
-    ) public {
+    function redeem(address vault, uint256 tokenId_, uint256 credit) public {
         tenebrae.redeem(vault, tokenId_, credit);
     }
 }
@@ -115,29 +97,17 @@ contract TenebraeTest is DSTest {
         return codex.credit(position) / WAD;
     }
 
-    function token(
-        address vault,
-        uint256 tokenId_,
-        address position
-    ) internal view returns (uint256) {
+    function token(address vault, uint256 tokenId_, address position) internal view returns (uint256) {
         return codex.balances(vault, tokenId_, position);
     }
 
-    function collateral(
-        address vault,
-        uint256 tokenId_,
-        address position
-    ) internal view returns (uint256) {
+    function collateral(address vault, uint256 tokenId_, address position) internal view returns (uint256) {
         (uint256 collateral_, uint256 normalDebt_) = codex.positions(vault, tokenId_, position);
         normalDebt_;
         return collateral_;
     }
 
-    function normalDebt(
-        address vault,
-        uint256 tokenId_,
-        address position
-    ) internal view returns (uint256) {
+    function normalDebt(address vault, uint256 tokenId_, address position) internal view returns (uint256) {
         (uint256 collateral_, uint256 normalDebt_) = codex.positions(vault, tokenId_, position);
         collateral_;
         return normalDebt_;

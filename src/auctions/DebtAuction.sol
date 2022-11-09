@@ -146,11 +146,7 @@ contract DebtAuction is Guarded, IDebtAuction {
     /// @param auctionId Id of the debt auction
     /// @param tokensToSell Amount of tokens to receive (has to be lower than prev. bid)
     /// @param bid Amount of credit to pay for tokens (has to match)
-    function submitBid(
-        uint256 auctionId,
-        uint256 tokensToSell,
-        uint256 bid
-    ) external override {
+    function submitBid(uint256 auctionId, uint256 tokensToSell, uint256 bid) external override {
         if (live == 0) revert DebtAuction__submitBid_notLive();
         if (auctions[auctionId].recipient == address(0)) revert DebtAuction__submitBid_recipientNotSet();
         if (auctions[auctionId].bidExpiry <= block.timestamp && auctions[auctionId].bidExpiry != 0)

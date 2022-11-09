@@ -27,21 +27,9 @@ interface IVault {
 
     function maturity(uint256 tokenId) external view returns (uint256);
 
-    function fairPrice(
-        uint256 tokenId,
-        bool net,
-        bool face
-    ) external view returns (uint256);
+    function fairPrice(uint256 tokenId, bool net, bool face) external view returns (uint256);
 
-    function enter(
-        uint256 tokenId,
-        address user,
-        uint256 amount
-    ) external;
+    function enter(uint256 tokenId, address user, uint256 amount) external;
 
-    function exit(
-        uint256 tokenId,
-        address user,
-        uint256 amount
-    ) external;
+    function exit(uint256 tokenId, address user, uint256 amount) external;
 }

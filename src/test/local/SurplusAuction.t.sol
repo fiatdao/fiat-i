@@ -21,11 +21,7 @@ contract Guy {
         DSToken(address(surplusAuction.token())).approve(address(surplusAuction));
     }
 
-    function submitBid(
-        uint256 id,
-        uint256 creditToSell,
-        uint256 bid
-    ) public {
+    function submitBid(uint256 id, uint256 creditToSell, uint256 bid) public {
         surplusAuction.submitBid(id, creditToSell, bid);
     }
 
@@ -33,11 +29,7 @@ contract Guy {
         surplusAuction.closeAuction(id);
     }
 
-    function try_submitBid(
-        uint256 id,
-        uint256 creditToSell,
-        uint256 bid
-    ) public returns (bool ok) {
+    function try_submitBid(uint256 id, uint256 creditToSell, uint256 bid) public returns (bool ok) {
         string memory sig = "submitBid(uint256,uint256,uint256)";
         (ok, ) = address(surplusAuction).call(abi.encodeWithSignature(sig, id, creditToSell, bid));
     }

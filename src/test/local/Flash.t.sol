@@ -19,11 +19,7 @@ import "../../Flash.sol";
 interface Hevm {
     function warp(uint256) external;
 
-    function store(
-        address,
-        bytes32,
-        bytes32
-    ) external;
+    function store(address, bytes32, bytes32) external;
 }
 
 contract TestCodex is Codex {
@@ -33,11 +29,7 @@ contract TestCodex is Codex {
 }
 
 contract TestAer is Aer {
-    constructor(
-        address codex,
-        address surplusAuction,
-        address debtAuction
-    ) Aer(codex, surplusAuction, debtAuction) {}
+    constructor(address codex, address surplusAuction, address debtAuction) Aer(codex, surplusAuction, debtAuction) {}
 }
 
 contract TestImmediatePaybackReceiver is FlashLoanReceiverBase {
@@ -375,7 +367,7 @@ contract FlashTest is DSTest {
 
     // test excessive max borrowable amount
     function testFail_max_limit() public {
-        flash.setParam("max", 10**45 + 1);
+        flash.setParam("max", 10 ** 45 + 1);
     }
 
     function test_max_flash_loan() public {

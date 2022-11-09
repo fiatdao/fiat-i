@@ -6,16 +6,7 @@ import {IERC20} from "openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ICodex} from "./ICodex.sol";
 
 interface ISurplusAuction {
-    function auctions(uint256)
-        external
-        view
-        returns (
-            uint256,
-            uint256,
-            address,
-            uint48,
-            uint48
-        );
+    function auctions(uint256) external view returns (uint256, uint256, address, uint48, uint48);
 
     function codex() external view returns (ICodex);
 
@@ -37,11 +28,7 @@ interface ISurplusAuction {
 
     function redoAuction(uint256 id) external;
 
-    function submitBid(
-        uint256 id,
-        uint256 creditToSell,
-        uint256 bid
-    ) external;
+    function submitBid(uint256 id, uint256 creditToSell, uint256 bid) external;
 
     function closeAuction(uint256 id) external;
 

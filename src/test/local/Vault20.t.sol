@@ -17,7 +17,7 @@ contract Vault20Test is DSTest {
     TestERC20 token;
 
     uint256 constant MAX_DECIMALS = 38; // ~type(int256).max ~= 1e18*1e18
-    uint256 constant MAX_AMOUNT = 10**(MAX_DECIMALS);
+    uint256 constant MAX_AMOUNT = 10 ** (MAX_DECIMALS);
 
     function setUp() public {
         codex = new MockProvider();
@@ -122,7 +122,7 @@ contract Vault20Test is DSTest {
 
         address owner = address(this);
         uint256 vanillaAmount = 12345678901234567890;
-        uint256 amount = vanillaAmount * 10**decimals;
+        uint256 amount = vanillaAmount * 10 ** decimals;
 
         codex = new MockProvider();
         collybus = new MockProvider();
@@ -137,7 +137,7 @@ contract Vault20Test is DSTest {
         MockProvider.CallData memory cd = codex.getCallData(0);
         (, , , uint256 sentAmount) = abi.decode(cd.arguments, (address, uint256, address, uint256));
 
-        uint256 scaledAmount = vanillaAmount * 10**18;
+        uint256 scaledAmount = vanillaAmount * 10 ** 18;
         assertEq(scaledAmount, sentAmount);
     }
 
@@ -146,7 +146,7 @@ contract Vault20Test is DSTest {
 
         address owner = address(this);
         uint256 vanillaAmount = 12345678901234567890;
-        uint256 amount = vanillaAmount * 10**decimals;
+        uint256 amount = vanillaAmount * 10 ** decimals;
 
         codex = new MockProvider();
         collybus = new MockProvider();
@@ -162,7 +162,7 @@ contract Vault20Test is DSTest {
         (, , , int256 sentAmount) = abi.decode(cd.arguments, (address, uint256, address, int256));
 
         // exit decreases the amount in Codex by that much
-        int256 scaledAmount = int256(vanillaAmount) * 10**18 * -1;
+        int256 scaledAmount = int256(vanillaAmount) * 10 ** 18 * -1;
         assertEq(sentAmount, scaledAmount);
     }
 }

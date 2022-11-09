@@ -21,11 +21,7 @@ contract CollateralAuctionTest is DSTest {
         hevm.warp(startTime);
     }
 
-    function assertEqWithinTolerance(
-        uint256 x,
-        uint256 y,
-        uint256 tolerance
-    ) internal {
+    function assertEqWithinTolerance(uint256 x, uint256 y, uint256 tolerance) internal {
         uint256 diff;
         if (x >= y) {
             diff = x - y;

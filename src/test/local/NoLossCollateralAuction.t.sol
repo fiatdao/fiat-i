@@ -23,11 +23,7 @@ uint256 constant tokenId = 0;
 interface Hevm {
     function warp(uint256) external;
 
-    function store(
-        address,
-        bytes32,
-        bytes32
-    ) external;
+    function store(address, bytes32, bytes32) external;
 }
 
 contract Exchange {
@@ -35,11 +31,7 @@ contract Exchange {
     DSToken credit;
     uint256 goldPrice;
 
-    constructor(
-        DSToken gold_,
-        DSToken credit_,
-        uint256 goldPrice_
-    ) {
+    constructor(DSToken gold_, DSToken credit_, uint256 goldPrice_) {
         gold = gold_;
         credit = credit_;
         goldPrice = goldPrice_;
@@ -95,12 +87,7 @@ contract Trader {
         });
     }
 
-    function collateralAuctionCall(
-        address sender,
-        uint256 owe,
-        uint256 collateralSlice,
-        bytes calldata data
-    ) external {
+    function collateralAuctionCall(address sender, uint256 owe, uint256 collateralSlice, bytes calldata data) external {
         data;
         goldVault.exit(0, address(this), collateralSlice);
         gold.approve(address(exchange));
@@ -138,13 +125,7 @@ contract Guy {
         });
     }
 
-    function liquidate(
-        Limes limes,
-        address vault,
-        uint256 tokenId_,
-        address user,
-        address keeper
-    ) external {
+    function liquidate(Limes limes, address vault, uint256 tokenId_, address user, address keeper) external {
         limes.liquidate(vault, tokenId_, user, keeper);
     }
 }
@@ -152,12 +133,7 @@ contract Guy {
 contract BadGuy is Guy {
     constructor(NoLossCollateralAuction collateralAuction_) Guy(collateralAuction_) {}
 
-    function collateralAuctionCall(
-        address sender,
-        uint256 owe,
-        uint256 collateralSlice,
-        bytes calldata data
-    ) external {
+    function collateralAuctionCall(address sender, uint256 owe, uint256 collateralSlice, bytes calldata data) external {
         sender;
         owe;
         collateralSlice;
@@ -175,12 +151,7 @@ contract BadGuy is Guy {
 contract RedoGuy is Guy {
     constructor(NoLossCollateralAuction collateralAuction_) Guy(collateralAuction_) {}
 
-    function collateralAuctionCall(
-        address sender,
-        uint256 owe,
-        uint256 collateralSlice,
-        bytes calldata data
-    ) external {
+    function collateralAuctionCall(address sender, uint256 owe, uint256 collateralSlice, bytes calldata data) external {
         owe;
         collateralSlice;
         data;
@@ -195,12 +166,7 @@ contract StartGuy is Guy {
         vault = vault_;
     }
 
-    function collateralAuctionCall(
-        address sender,
-        uint256 owe,
-        uint256 collateralSlice,
-        bytes calldata data
-    ) external {
+    function collateralAuctionCall(address sender, uint256 owe, uint256 collateralSlice, bytes calldata data) external {
         sender;
         owe;
         collateralSlice;
@@ -212,12 +178,7 @@ contract StartGuy is Guy {
 contract SetParamUintGuy is Guy {
     constructor(NoLossCollateralAuction collateralAuction_) Guy(collateralAuction_) {}
 
-    function collateralAuctionCall(
-        address sender,
-        uint256 owe,
-        uint256 collateralSlice,
-        bytes calldata data
-    ) external {
+    function collateralAuctionCall(address sender, uint256 owe, uint256 collateralSlice, bytes calldata data) external {
         sender;
         owe;
         collateralSlice;
@@ -229,12 +190,7 @@ contract SetParamUintGuy is Guy {
 contract SetParamAddrGuy is Guy {
     constructor(NoLossCollateralAuction collateralAuction_) Guy(collateralAuction_) {}
 
-    function collateralAuctionCall(
-        address sender,
-        uint256 owe,
-        uint256 collateralSlice,
-        bytes calldata data
-    ) external {
+    function collateralAuctionCall(address sender, uint256 owe, uint256 collateralSlice, bytes calldata data) external {
         sender;
         owe;
         collateralSlice;
@@ -246,12 +202,7 @@ contract SetParamAddrGuy is Guy {
 contract YankGuy is Guy {
     constructor(NoLossCollateralAuction collateralAuction_) Guy(collateralAuction_) {}
 
-    function collateralAuctionCall(
-        address sender,
-        uint256 owe,
-        uint256 collateralSlice,
-        bytes calldata data
-    ) external {
+    function collateralAuctionCall(address sender, uint256 owe, uint256 collateralSlice, bytes calldata data) external {
         sender;
         owe;
         collateralSlice;
@@ -261,12 +212,7 @@ contract YankGuy is Guy {
 }
 
 contract PublicCollateralAuction is NoLossCollateralAuction {
-    constructor(
-        address codex,
-        address collybus,
-        address limes,
-        address vault
-    ) NoLossCollateralAuction(codex, limes) {}
+    constructor(address codex, address collybus, address limes, address vault) NoLossCollateralAuction(codex, limes) {}
 
     function addAuction() public returns (uint256 auctionId) {
         auctionId = ++auctionCounter;
@@ -308,20 +254,12 @@ contract NoLossCollateralAuctionTest is DSTest {
 
     uint256 constant startTime = 604411200; // Used to avoid issues with `block.timestamp`
 
-    function _collateral(
-        address vault_,
-        uint256 tokenId_,
-        address user_
-    ) internal view returns (uint256) {
+    function _collateral(address vault_, uint256 tokenId_, address user_) internal view returns (uint256) {
         (uint256 collateral_, ) = codex.positions(vault_, tokenId_, user_);
         return collateral_;
     }
 
-    function _normalDebt(
-        address vault_,
-        uint256 tokenId_,
-        address user_
-    ) internal view returns (uint256) {
+    function _normalDebt(address vault_, uint256 tokenId_, address user_) internal view returns (uint256) {
         (, uint256 normalDebt_) = codex.positions(vault_, tokenId_, user_);
         return normalDebt_;
     }
@@ -593,11 +531,7 @@ contract NoLossCollateralAuctionTest is DSTest {
         assertTrue(!try_startAuction(1 ether, 2 ether, vault, tokenId, address(0), address(this)));
     }
 
-    function try_liquidate(
-        address vault_,
-        uint256 tokenId_,
-        address user_
-    ) internal returns (bool ok) {
+    function try_liquidate(address vault_, uint256 tokenId_, address user_) internal returns (bool ok) {
         string memory sig = "liquidate(address,uint256,address,address)";
         (ok, ) = address(limes).call(abi.encodeWithSignature(sig, vault_, tokenId_, user_, address(this)));
     }
@@ -1558,17 +1492,17 @@ contract NoLossCollateralAuctionTest is DSTest {
     }
 
     function test_incentive_max_values() public {
-        collateralAuction.setParam("feeTip", 2**64 - 1);
-        collateralAuction.setParam("flatTip", 2**192 - 1);
+        collateralAuction.setParam("feeTip", 2 ** 64 - 1);
+        collateralAuction.setParam("flatTip", 2 ** 192 - 1);
 
-        assertEq(uint256(collateralAuction.feeTip()), uint256(18.446744073709551615 * 10**18));
+        assertEq(uint256(collateralAuction.feeTip()), uint256(18.446744073709551615 * 10 ** 18));
         assertEq(
             uint256(collateralAuction.flatTip()),
-            uint256(6277101735386.680763835789423207666416102355444464034512895 * 10**45)
+            uint256(6277101735386.680763835789423207666416102355444464034512895 * 10 ** 45)
         );
 
-        collateralAuction.setParam("feeTip", 2**64);
-        collateralAuction.setParam("flatTip", 2**192);
+        collateralAuction.setParam("feeTip", 2 ** 64);
+        collateralAuction.setParam("flatTip", 2 ** 192);
 
         assertEq(uint256(collateralAuction.feeTip()), 0);
         assertEq(uint256(collateralAuction.flatTip()), 0);

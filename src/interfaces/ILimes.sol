@@ -9,15 +9,7 @@ interface ILimes {
 
     function aer() external view returns (IAer);
 
-    function vaults(address)
-        external
-        view
-        returns (
-            address,
-            uint256,
-            uint256,
-            uint256
-        );
+    function vaults(address) external view returns (address, uint256, uint256, uint256);
 
     function live() external view returns (uint256);
 
@@ -29,17 +21,9 @@ interface ILimes {
 
     function setParam(bytes32 param, uint256 data) external;
 
-    function setParam(
-        address vault,
-        bytes32 param,
-        uint256 data
-    ) external;
+    function setParam(address vault, bytes32 param, uint256 data) external;
 
-    function setParam(
-        address vault,
-        bytes32 param,
-        address collateralAuction
-    ) external;
+    function setParam(address vault, bytes32 param, address collateralAuction) external;
 
     function liquidationPenalty(address vault) external view returns (uint256);
 
@@ -50,11 +34,7 @@ interface ILimes {
         address keeper
     ) external returns (uint256 auctionId);
 
-    function liquidated(
-        address vault,
-        uint256 tokenId,
-        uint256 debt
-    ) external;
+    function liquidated(address vault, uint256 tokenId, uint256 debt) external;
 
     function lock() external;
 }

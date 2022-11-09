@@ -22,11 +22,7 @@ contract Guy {
         DSToken(address(debtAuction.token())).approve(address(debtAuction));
     }
 
-    function submitBid(
-        uint256 id,
-        uint256 tokensToSell,
-        uint256 bid
-    ) public {
+    function submitBid(uint256 id, uint256 tokensToSell, uint256 bid) public {
         debtAuction.submitBid(id, tokensToSell, bid);
     }
 
@@ -34,11 +30,7 @@ contract Guy {
         debtAuction.closeAuction(id);
     }
 
-    function try_submitBid(
-        uint256 id,
-        uint256 tokensToSell,
-        uint256 bid
-    ) public returns (bool ok) {
+    function try_submitBid(uint256 id, uint256 tokensToSell, uint256 bid) public returns (bool ok) {
         string memory sig = "submitBid(uint256,uint256,uint256)";
         (ok, ) = address(debtAuction).call(abi.encodeWithSignature(sig, id, tokensToSell, bid));
     }
@@ -57,11 +49,7 @@ contract Guy {
 contract Gal {
     uint256 public debtOnAuction;
 
-    function startAuction(
-        DebtAuction debtAuction,
-        uint256 tokensToSell,
-        uint256 bid
-    ) external returns (uint256) {
+    function startAuction(DebtAuction debtAuction, uint256 tokensToSell, uint256 bid) external returns (uint256) {
         debtOnAuction += bid;
         return debtAuction.startAuction(address(this), tokensToSell, bid);
     }

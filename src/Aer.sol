@@ -76,11 +76,7 @@ contract Aer is Guarded, IAer {
     event SettleDebtWithSurplus(uint256 debt);
     event Lock();
 
-    constructor(
-        address codex_,
-        address surplusAuction_,
-        address debtAuction_
-    ) Guarded() {
+    constructor(address codex_, address surplusAuction_, address debtAuction_) Guarded() {
         codex = ICodex(codex_);
         surplusAuction = ISurplusAuction(surplusAuction_);
         debtAuction = IDebtAuction(debtAuction_);

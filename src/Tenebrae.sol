@@ -267,11 +267,7 @@ contract Tenebrae is Guarded, ITenebrae {
     /// @param vault Address of the Vault
     /// @param tokenId ERC1155 or ERC721 style TokenId (leave at 0 for ERC20)
     /// @param user Address of the Position's owner
-    function offsetPosition(
-        address vault,
-        uint256 tokenId,
-        address user
-    ) external override {
+    function offsetPosition(address vault, uint256 tokenId, address user) external override {
         if (debt != 0) revert Tenebrae__offsetPosition_debtNotZero();
         (, uint256 rate, , ) = codex.vaults(vault);
         (uint256 collateral, uint256 normalDebt) = codex.positions(vault, tokenId, user);
@@ -286,7 +282,7 @@ contract Tenebrae is Guarded, ITenebrae {
             offsetCollateral = owedCollateral;
         }
         normalDebtByTokenId[vault][tokenId] = add(normalDebtByTokenId[vault][tokenId], normalDebt);
-        if (!(offsetCollateral <= 2**255 && normalDebt <= 2**255)) revert Tenebrae__offsetPosition_overflow();
+        if (!(offsetCollateral <= 2 ** 255 && normalDebt <= 2 ** 255)) revert Tenebrae__offsetPosition_overflow();
         codex.confiscateCollateralAndDebt(
             vault,
             tokenId,
@@ -309,7 +305,7 @@ contract Tenebrae is Guarded, ITenebrae {
         (uint256 collateral, uint256 normalDebt) = codex.positions(vault, tokenId, msg.sender);
         if (normalDebt != 0) revert Tenebrae__closePosition_normalDebtNotZero();
         normalDebtByTokenId[vault][tokenId] = add(normalDebtByTokenId[vault][tokenId], normalDebt);
-        if (collateral > 2**255) revert Tenebrae__closePosition_overflow();
+        if (collateral > 2 ** 255) revert Tenebrae__closePosition_overflow();
         codex.confiscateCollateralAndDebt(vault, tokenId, msg.sender, msg.sender, address(aer), -int256(collateral), 0);
         emit ClosePosition(vault, tokenId, msg.sender, collateral, normalDebt);
     }

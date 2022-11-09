@@ -114,11 +114,7 @@ contract Limes is Guarded, ILimes {
     /// @param vault Address of the Vault
     /// @param param Name of the variable to set
     /// @param data New value to set for the variable [wad]
-    function setParam(
-        address vault,
-        bytes32 param,
-        uint256 data
-    ) external override checkCaller {
+    function setParam(address vault, bytes32 param, uint256 data) external override checkCaller {
         if (param == "liquidationPenalty") {
             if (data < WAD) revert Limes__setParam_liquidationPenaltyLtWad();
             vaults[vault].liquidationPenalty = data;
@@ -132,11 +128,7 @@ contract Limes is Guarded, ILimes {
     /// @param vault Address of the Vault
     /// @param param Name of the variable to set
     /// @param data New value to set for the variable [address]
-    function setParam(
-        address vault,
-        bytes32 param,
-        address data
-    ) external override checkCaller {
+    function setParam(address vault, bytes32 param, address data) external override checkCaller {
         if (param == "collateralAuction") {
             vaults[vault].collateralAuction = data;
         } else revert Limes__setParam_unrecognizedParam();
@@ -222,7 +214,7 @@ contract Limes is Guarded, ILimes {
         }
 
         if (deltaCollateral == 0) revert Limes__liquidate_nullAuction();
-        if (!(deltaNormalDebt <= 2**255 && deltaCollateral <= 2**255)) revert Limes__liquidate_overflow();
+        if (!(deltaNormalDebt <= 2 ** 255 && deltaCollateral <= 2 ** 255)) revert Limes__liquidate_overflow();
 
         codex.confiscateCollateralAndDebt(
             vault,
@@ -271,11 +263,7 @@ contract Limes is Guarded, ILimes {
     /// @param vault Address of the liquidated Position's Vault
     /// @param tokenId ERC1155 or ERC721 style TokenId (leave at 0 for ERC20) of the liquidated Position
     /// @param debt Amount of debt sold
-    function liquidated(
-        address vault,
-        uint256 tokenId,
-        uint256 debt
-    ) external override checkCaller {
+    function liquidated(address vault, uint256 tokenId, uint256 debt) external override checkCaller {
         globalDebtOnAuction = sub(globalDebtOnAuction, debt);
         vaults[vault].debtOnAuction = sub(vaults[vault].debtOnAuction, debt);
         emit Liquidated(vault, tokenId, debt);

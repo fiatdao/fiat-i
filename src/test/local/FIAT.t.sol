@@ -13,11 +13,7 @@ contract TokenUser {
         token = token_;
     }
 
-    function doTransferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) public returns (bool) {
+    function doTransferFrom(address from, address to, uint256 amount) public returns (bool) {
         return token.transferFrom(from, to, amount);
     }
 

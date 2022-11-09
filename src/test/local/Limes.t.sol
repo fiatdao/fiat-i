@@ -33,14 +33,7 @@ contract CollateralAuctionMock {
         vaults[vault].collybus = collybus;
     }
 
-    function startAuction(
-        uint256,
-        uint256,
-        address,
-        uint256,
-        address,
-        address
-    ) external pure returns (uint256 id) {
+    function startAuction(uint256, uint256, address, uint256, address, address) external pure returns (uint256 id) {
         id = 42;
     }
 }
@@ -255,7 +248,7 @@ contract LimesTest is DSTest {
         // Create a small vault
         uint256 DebtFloor_1 = 30;
         codex.setParam(vault, "debtFloor", DebtFloor_1 * WAD);
-        setPosition(WAD / 10**4, (DebtFloor_1 * WAD * WAD) / rate);
+        setPosition(WAD / 10 ** 4, (DebtFloor_1 * WAD * WAD) / rate);
 
         // Dust limit goes up!
         uint256 DebtFloor_2 = 1500;

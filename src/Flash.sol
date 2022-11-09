@@ -94,10 +94,7 @@ contract Flash is Guarded, IFlash {
     /// @param token Address of the token to borrow (has to be the address of FIAT)
     /// @param *amount Amount to borrow [wad]
     /// @return fee to borrow `amount` of `token`
-    function flashFee(
-        address token,
-        uint256 /* amount */
-    ) external view override returns (uint256) {
+    function flashFee(address token, uint256 /* amount */) external view override returns (uint256) {
         if (token != address(fiat)) revert Flash__flashFee_unsupportedToken();
         return 0;
     }

@@ -2,11 +2,11 @@
 // Copyright (C) 2020 Maker Ecosystem Growth Holdings, INC.
 pragma solidity ^0.8.4;
 
-uint256 constant MLN = 10**6;
-uint256 constant BLN = 10**9;
-uint256 constant WAD = 10**18;
-uint256 constant RAY = 10**18;
-uint256 constant RAD = 10**18;
+uint256 constant MLN = 10 ** 6;
+uint256 constant BLN = 10 ** 9;
+uint256 constant WAD = 10 ** 18;
+uint256 constant RAY = 10 ** 18;
+uint256 constant RAD = 10 ** 18;
 
 /* solhint-disable func-visibility, no-inline-assembly */
 
@@ -128,11 +128,7 @@ function wdiv(uint256 x, uint256 y) pure returns (uint256 z) {
 }
 
 // optimized version from dss PR #78
-function wpow(
-    uint256 x,
-    uint256 n,
-    uint256 b
-) pure returns (uint256 z) {
+function wpow(uint256 x, uint256 n, uint256 b) pure returns (uint256 z) {
     unchecked {
         assembly {
             switch n

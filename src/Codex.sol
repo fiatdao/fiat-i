@@ -179,11 +179,7 @@ contract Codex is Guarded, ICodex {
     /// @param vault Address of the Vault
     /// @param param Name of the variable to set
     /// @param data New value to set for the variable [wad]
-    function setParam(
-        address vault,
-        bytes32 param,
-        uint256 data
-    ) external override checkCaller {
+    function setParam(address vault, bytes32 param, uint256 data) external override checkCaller {
         if (live == 0) revert Codex__setParam_notLive();
         if (param == "debtCeiling") vaults[vault].debtCeiling = data;
         else if (param == "debtFloor") vaults[vault].debtFloor = data;
@@ -223,12 +219,7 @@ contract Codex is Guarded, ICodex {
     /// @param tokenId ERC1155 or ERC721 style TokenId (leave at 0 for ERC20)
     /// @param user Address of the user
     /// @param amount Amount to add (positive) or subtract (negative) [wad]
-    function modifyBalance(
-        address vault,
-        uint256 tokenId,
-        address user,
-        int256 amount
-    ) external override checkCaller {
+    function modifyBalance(address vault, uint256 tokenId, address user, int256 amount) external override checkCaller {
         balances[vault][tokenId][user] = add(balances[vault][tokenId][user], amount);
         emit ModifyBalance(vault, tokenId, user, amount, balances[vault][tokenId][user]);
     }
@@ -266,11 +257,7 @@ contract Codex is Guarded, ICodex {
     /// @param src From address
     /// @param dst To address
     /// @param amount Amount to be transferred [wad]
-    function transferCredit(
-        address src,
-        address dst,
-        uint256 amount
-    ) external override {
+    function transferCredit(address src, address dst, uint256 amount) external override {
         if (!hasDelegate(src, msg.sender)) revert Codex__transferCredit_notAllowed();
         credit[src] = sub(credit[src], amount);
         credit[dst] = add(credit[dst], amount);
@@ -461,11 +448,7 @@ contract Codex is Guarded, ICodex {
     /// @param debtor Address of the account who takes the unbacked debt
     /// @param creditor Address of the account who gets the credit
     /// @param debt Amount of unbacked debt / credit to generate [wad]
-    function createUnbackedDebt(
-        address debtor,
-        address creditor,
-        uint256 debt
-    ) external override checkCaller {
+    function createUnbackedDebt(address debtor, address creditor, uint256 debt) external override checkCaller {
         unbackedDebt[debtor] = add(unbackedDebt[debtor], debt);
         credit[creditor] = add(credit[creditor], debt);
         globalUnbackedDebt = add(globalUnbackedDebt, debt);
@@ -480,11 +463,7 @@ contract Codex is Guarded, ICodex {
     /// @param vault Address of the vault
     /// @param creditor Address of the account who gets the accrued interest
     /// @param deltaRate Delta to increase (+) or decrease (-) the rate [percentage in wad]
-    function modifyRate(
-        address vault,
-        address creditor,
-        int256 deltaRate
-    ) external override checkCaller {
+    function modifyRate(address vault, address creditor, int256 deltaRate) external override checkCaller {
         if (live == 0) revert Codex__modifyRate_notLive();
         Vault storage v = vaults[vault];
         v.rate = add(v.rate, deltaRate);
