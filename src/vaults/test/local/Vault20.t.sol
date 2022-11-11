@@ -5,7 +5,7 @@ import {Test} from "forge-std/Test.sol";
 
 import {Codex} from "../../../Codex.sol";
 
-import {TestERC20} from "../utils/TestERC20.sol";
+import {TestERC20} from "../../../test/utils/TestERC20.sol";
 
 import {Vault20} from "../../Vault.sol";
 

@@ -21,7 +21,7 @@ import {PRBProxy} from "proxy/contracts/PRBProxy.sol";
 import {VaultEPT} from "../../../vaults/VaultEPT.sol";
 import {VaultFactory} from "../../../vaults/VaultFactory.sol";
 
-import {Caller} from "../utils/Caller.sol";
+import {Caller} from "../../../test/utils/Caller.sol";
 import {VaultFactory} from "../../../vaults/VaultFactory.sol";
 import {VaultSPT} from "../../../vaults/VaultSPT.sol";
 import {VaultSPTActions} from "../../vault/VaultSPTActions.sol";

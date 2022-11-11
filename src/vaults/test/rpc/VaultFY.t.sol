@@ -12,7 +12,7 @@ import {Codex} from "../../../Codex.sol";
 import {Collybus, ICollybus} from "../../../Collybus.sol";
 import {WAD, wdiv} from "../../../utils/Math.sol";
 
-import {Caller} from "../utils/Caller.sol";
+import {Caller} from "../../../test/utils/Caller.sol";
 
 import {VaultFY} from "../../VaultFY.sol";
 import {VaultFactory} from "../../VaultFactory.sol";

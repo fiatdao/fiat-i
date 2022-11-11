@@ -16,7 +16,7 @@ import {Publican} from "../../../Publican.sol";
 import {IVault} from "../../../interfaces/IVault.sol";
 
 import {SenseToken} from "../utils/SenseToken.sol";
-import {TestERC20} from "../utils/TestERC20.sol";
+import {TestERC20} from "../../../test/utils/TestERC20.sol";
 import {VaultFactory} from "../../VaultFactory.sol";
 import {VaultSPT} from "../../VaultSPT.sol";
 

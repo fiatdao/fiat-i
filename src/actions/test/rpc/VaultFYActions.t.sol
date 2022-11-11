@@ -20,7 +20,7 @@ import {PRBProxy} from "proxy/contracts/PRBProxy.sol";
 import {VaultFY} from "../../../vaults/VaultFY.sol";
 import {VaultFactory} from "../../../vaults/VaultFactory.sol";
 
-import {Caller} from "../utils/Caller.sol";
+import {Caller} from "../../../test/utils/Caller.sol";
 
 import {VaultFYActions, IFYPool} from "../../vault/VaultFYActions.sol";
 

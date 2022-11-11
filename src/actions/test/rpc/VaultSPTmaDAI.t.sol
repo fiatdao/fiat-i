@@ -25,9 +25,9 @@ import {VaultSPT} from "../../../vaults/VaultSPT.sol";
 
 import {VaultSPTActions} from "../../vault/VaultSPTActions.sol";
 import {IBalancerVault, IConvergentCurvePool} from "../../helper/ConvergentCurvePoolHelper.sol";
-import {TestERC20} from "../utils/TestERC20.sol";
+import {TestERC20} from "../../../test/utils/TestERC20.sol";
 
-import {Caller} from "../utils/Caller.sol";
+import {Caller} from "../../../test/utils/Caller.sol";
 import {console} from "forge-std/console.sol";
 
 interface IAdapter {

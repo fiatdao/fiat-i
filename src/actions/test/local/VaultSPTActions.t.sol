@@ -24,8 +24,8 @@ import {VaultSPT} from "../../../vaults/VaultSPT.sol";
 
 import {VaultSPTActions} from "../../vault/VaultSPTActions.sol";
 import {SenseToken} from "../../../vaults/test/utils/SenseToken.sol";
-import {TestERC20} from "../utils/TestERC20.sol";
-import {Caller} from "../utils/Caller.sol";
+import {TestERC20} from "../../../test/utils/TestERC20.sol";
+import {Caller} from "../../../test/utils/Caller.sol";
 
 contract VaultSPTActions_UnitTest is Test {
     Codex codex;
