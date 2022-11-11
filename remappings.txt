@@ -1,3 +1,5 @@
 ds-test/=lib/ds-test/src/
 openzeppelin/=lib/openzeppelin-contracts/
+@openzeppelin/=lib/openzeppelin-contracts/
 prb-math/=lib/prb-math/
+proxy/=lib/proxy/
