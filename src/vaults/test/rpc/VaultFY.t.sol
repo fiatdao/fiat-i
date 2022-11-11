@@ -12,7 +12,6 @@ import {Codex} from "../../../Codex.sol";
 import {Collybus, ICollybus} from "../../../Collybus.sol";
 import {WAD, wdiv} from "../../../utils/Math.sol";
 
-import {MockProvider} from "../utils/MockProvider.sol";
 import {Caller} from "../utils/Caller.sol";
 
 import {VaultFY} from "../../VaultFY.sol";
@@ -40,7 +39,7 @@ contract VaultFY_ModifyPositionCollateralizationTest is Test, ERC1155Holder {
     IERC20 internal underlierDAI = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F); // DAI
 
     Codex internal codex;
-    MockProvider internal collybus;
+    address internal collybus = address(0xc0111b115);
     VaultFY internal impl;
     VaultFY internal vaultFY_USDC04;
     VaultFactory vaultFactory;
@@ -84,7 +83,6 @@ contract VaultFY_ModifyPositionCollateralizationTest is Test, ERC1155Holder {
 
         vaultFactory = new VaultFactory();
         codex = new Codex();
-        collybus = new MockProvider();
         kakaroto = new Caller();
 
         impl = new VaultFY(address(codex), address(underlierUSDC));
@@ -98,7 +96,7 @@ contract VaultFY_ModifyPositionCollateralizationTest is Test, ERC1155Holder {
         underlierUSDC.transfer(fyUSDC04LP, 1000 * ONE_USDC);
         IFYPool(fyUSDC04LP).sellBase(address(this), minFYToken);
 
-        address instance = vaultFactory.createVault(address(impl), abi.encode(address(fyUSDC04), address(collybus)));
+        address instance = vaultFactory.createVault(address(impl), abi.encode(address(fyUSDC04), collybus));
         vaultFY_USDC04 = VaultFY(instance);
         codex.setParam(instance, "debtCeiling", uint256(1000 ether));
         codex.allowCaller(codex.modifyBalance.selector, instance);
@@ -108,21 +106,21 @@ contract VaultFY_ModifyPositionCollateralizationTest is Test, ERC1155Holder {
     }
 
     function testFail_initialize_with_wrong_ptoken() public {
-        vaultFactory.createVault(address(impl), abi.encode(fyDAI04, address(collybus)));
+        vaultFactory.createVault(address(impl), abi.encode(fyDAI04, collybus));
     }
 
     function test_initialize_with_right_ptoken() public {
-        vaultFactory.createVault(address(impl), abi.encode(fyUSDC04, address(collybus)));
+        vaultFactory.createVault(address(impl), abi.encode(fyUSDC04, collybus));
     }
 
     function test_initialize_parameters() public {
-        address instance = vaultFactory.createVault(address(impl), abi.encode(fyUSDC04, address(collybus)));
+        address instance = vaultFactory.createVault(address(impl), abi.encode(fyUSDC04, collybus));
         assertEq(address(VaultFY(instance).token()), fyUSDC04);
         assertEq(VaultFY(instance).tokenScale(), 10**IERC20Metadata(fyUSDC04).decimals());
         assertEq(VaultFY(instance).maturity(0), IFYToken(fyUSDC04).maturity());
         assertEq(VaultFY(instance).underlierToken(), address(underlierUSDC));
         assertEq(VaultFY(instance).underlierScale(), 10**IERC20Metadata(address(underlierUSDC)).decimals());
-        assertEq(address(VaultFY(instance).collybus()), address(collybus));
+        assertEq(address(VaultFY(instance).collybus()), collybus);
     }
 
     function test_enter(uint32 rnd) public {
@@ -167,11 +165,8 @@ contract VaultFY_ModifyPositionCollateralizationTest is Test, ERC1155Holder {
             block.timestamp,
             true
         );
-        collybus.givenQueryReturnResponse(
-            query,
-            MockProvider.ReturnData({success: true, data: abi.encode(uint256(fairPriceExpected))})
-        );
-
+        
+        vm.mockCall(collybus, query, abi.encode(uint256(fairPriceExpected)));
         uint256 fairPriceReturned = vaultFY_USDC04.fairPrice(0, true, true);
         assertEq(fairPriceReturned, fairPriceExpected);
     }
@@ -186,11 +181,8 @@ contract VaultFY_ModifyPositionCollateralizationTest is Test, ERC1155Holder {
             vaultFY_USDC04.maturity(0),
             true
         );
-        collybus.givenQueryReturnResponse(
-            query,
-            MockProvider.ReturnData({success: true, data: abi.encode(uint256(fairPriceExpected))})
-        );
 
+        vm.mockCall(collybus, query, abi.encode(uint256(fairPriceExpected)));
         uint256 fairPriceReturned = vaultFY_USDC04.fairPrice(0, true, false);
         assertEq(fairPriceReturned, fairPriceExpected);
     }

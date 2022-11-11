@@ -11,7 +11,6 @@ import {ERC165} from "openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import {Codex} from "../../../Codex.sol";
 
-import {MockProvider} from "../utils/MockProvider.sol";
 import {Vault1155} from "../../Vault.sol";
 
 contract Receiver is ERC165, IERC1155Receiver {
@@ -45,8 +44,8 @@ contract Receiver is ERC165, IERC1155Receiver {
 contract Vault1155Test is Test {
     Vault1155 vault;
 
-    MockProvider codex;
-    MockProvider collybus;
+    address codex = address(0xc0d311);
+    address collybus = address(0xc0111b115);
     ERC1155PresetMinterPauser token;
 
     Receiver receiver;
@@ -54,12 +53,16 @@ contract Vault1155Test is Test {
     uint256 constant MAX_DECIMALS = 38; // ~type(int256).max ~= 1e18*1e18
 
     function setUp() public {
-        codex = new MockProvider();
-        collybus = new MockProvider();
         token = new ERC1155PresetMinterPauser("");
-        vault = new Vault1155(address(codex), address(token), address(collybus), "");
+        vault = new Vault1155(codex, address(token), collybus, "");
 
         receiver = new Receiver();
+
+        vm.mockCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector),
+            abi.encode(true)
+        );
     }
 
     function onERC1155Received(
@@ -138,17 +141,18 @@ contract Vault1155Test is Test {
         token.setApprovalForAll(address(vault), true);
         token.mint(address(this), tokenId, amount, new bytes(0));
 
-        vault.enter(tokenId, owner, amount);
-
-        MockProvider.CallData memory cd = codex.getCallData(0);
-        assertEq(cd.caller, address(vault));
-        assertEq(cd.functionSelector, Codex.modifyBalance.selector);
-        assertEq(
-            keccak256(cd.data),
-            keccak256(abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), tokenId, owner, amount))
+        vm.mockCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), tokenId, owner, amount),
+            abi.encode(true)
         );
-        emit log_bytes(cd.data);
-        emit log_bytes(abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), tokenId, owner, amount));
+
+        vm.expectCall(
+            codex,
+            abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), tokenId, owner, amount)
+        );
+
+        vault.enter(tokenId, owner, amount);
     }
 
     function test_exit_transfers_tokens(uint256 tokenId, uint128 amount) public {
@@ -167,24 +171,21 @@ contract Vault1155Test is Test {
         token.mint(address(this), tokenId, amount, new bytes(0));
 
         vault.enter(tokenId, address(this), amount);
+        
+        vm.mockCall(
+            codex,
+            abi.encodeWithSelector(
+                Codex.modifyBalance.selector,
+                address(vault),
+                tokenId,
+                address(this),
+                -int256(uint256(amount))
+            ),
+            abi.encode(true)
+        );
+        
         vault.exit(tokenId, address(receiver), amount);
 
-        MockProvider.CallData memory cd = codex.getCallData(1);
-        assertEq(cd.caller, address(vault));
-        assertEq(cd.functionSelector, Codex.modifyBalance.selector);
-        assertEq(
-            keccak256(cd.data),
-            keccak256(
-                abi.encodeWithSelector(
-                    Codex.modifyBalance.selector,
-                    address(vault),
-                    tokenId,
-                    address(this),
-                    -int256(uint256(amount))
-                )
-            )
-        );
-        emit log_bytes(cd.data);
         emit log_bytes(
             abi.encodeWithSelector(
                 Codex.modifyBalance.selector,

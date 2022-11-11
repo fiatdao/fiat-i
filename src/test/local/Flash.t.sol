@@ -12,8 +12,7 @@ import {Codex} from "../../Codex.sol";
 import {Collybus} from "../../Collybus.sol";
 import {FIAT} from "../../FIAT.sol";
 import {Moneta} from "../../Moneta.sol";
-import {IVault, Vault20} from "../../Vault.sol";
-
+import {IVault, Vault20} from "../../vaults/Vault.sol";
 import "../../Flash.sol";
 
 interface Hevm {

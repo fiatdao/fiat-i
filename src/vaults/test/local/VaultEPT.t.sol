@@ -3,7 +3,6 @@ pragma solidity ^0.8.4;
 
 import {Test} from "forge-std/Test.sol";
 
-import {MockProvider} from "../utils/MockProvider.sol";
 import {TestERC20} from "../utils/TestERC20.sol";
 
 import {Codex} from "../../../Codex.sol";
@@ -111,34 +110,39 @@ contract VaultEPTTest is Test {
     VaultEPT impl;
     IVault vault;
 
-    MockProvider wrappedPosition;
+    //  keccak256(abi.encode("wrappedPosition"))
+    address wrappedPosition = address(0xD7DdD01F6293d8dfCD7E58Ea71aEa4bd04AD04f8);
     TestTrancheFactory trancheFactory;
     TestTrancheToken token;
     TestERC20 underlier;
 
-    MockProvider codex;
-    MockProvider collybus;
+    address codex = address(0xc0d311);
+    address internal collybus = address(0xc0111b115);
 
     uint256 maturity;
     uint256 constant MAX_DECIMALS = 38; // ~type(int256).max ~= 1e18*1e18
 
     function setUp() public {
         vaultFactory = new VaultFactory();
-        codex = new MockProvider();
-        collybus = new MockProvider();
-        wrappedPosition = new MockProvider();
         trancheFactory = new TestTrancheFactory();
         maturity = block.timestamp + 12 weeks;
         underlier = new TestERC20("Test Token", "TKN", 18);
-        token = trancheFactory.deployTestTranche(maturity, address(wrappedPosition));
+        token = trancheFactory.deployTestTranche(maturity, wrappedPosition);
         token.setUnlockTimestamp(maturity);
 
-        wrappedPosition.givenQueryReturnResponse(
-            abi.encodeWithSelector(IWrappedPosition.token.selector),
-            MockProvider.ReturnData({success: true, data: abi.encode(address(underlier))})
+        vm.mockCall(
+            wrappedPosition, 
+            abi.encodeWithSelector(IWrappedPosition.token.selector), 
+            abi.encode(address(underlier))
         );
 
-        impl = new VaultEPT(address(codex), address(wrappedPosition), address(trancheFactory));
+        vm.mockCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector),
+            abi.encode(true)
+        );
+
+        impl = new VaultEPT(address(codex), wrappedPosition, address(trancheFactory));
         address vaultAddr = vaultFactory.createVault(address(impl), abi.encode(address(token), address(collybus)));
         vault = IVault(vaultAddr);
     }
@@ -199,16 +203,14 @@ contract VaultEPTTest is Test {
         token.approve(address(vault), amount);
         token.mint(address(this), amount);
 
+        vm.mockCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, owner, amount),
+            abi.encode(true)
+        );
+
         vault.enter(0, owner, amount);
 
-        MockProvider.CallData memory cd = codex.getCallData(0);
-        assertEq(cd.caller, address(vault));
-        assertEq(cd.functionSelector, Codex.modifyBalance.selector);
-        assertEq(
-            keccak256(cd.data),
-            keccak256(abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, owner, amount))
-        );
-        emit log_bytes(cd.data);
         emit log_bytes(abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, owner, amount));
     }
 
@@ -234,18 +236,15 @@ contract VaultEPTTest is Test {
         token.mint(address(this), amount);
 
         vault.enter(0, address(this), amount);
+
+        vm.mockCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), -int256(amount)),
+            abi.encode(true)
+        );
+
         vault.exit(0, owner, amount);
 
-        MockProvider.CallData memory cd = codex.getCallData(1);
-        assertEq(cd.caller, address(vault));
-        assertEq(cd.functionSelector, Codex.modifyBalance.selector);
-        assertEq(
-            keccak256(cd.data),
-            keccak256(
-                abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), -int256(amount))
-            )
-        );
-        emit log_bytes(cd.data);
         emit log_bytes(
             abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), -int256(amount))
         );
@@ -265,13 +264,14 @@ contract VaultEPTTest is Test {
         token.approve(address(vault), amount);
         token.mint(address(this), amount);
 
-        vault.enter(0, owner, amount);
-
-        MockProvider.CallData memory cd = codex.getCallData(0);
-        (, , , uint256 sentAmount) = abi.decode(cd.arguments, (address, uint256, address, uint256));
-
         uint256 scaledAmount = vanillaAmount * 10**18;
-        assertEq(scaledAmount, sentAmount);
+        vm.mockCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), scaledAmount),
+            abi.encode(true)
+        );
+        
+        vault.enter(0, owner, amount);
     }
 
     function test_exit_scales_wad_to_native(uint8 decimals) public {
@@ -288,13 +288,12 @@ contract VaultEPTTest is Test {
         token.approve(address(vault), amount);
         token.mint(address(vault), amount);
 
-        vault.exit(0, owner, amount);
-
-        MockProvider.CallData memory cd = codex.getCallData(0);
-        (, , , int256 sentAmount) = abi.decode(cd.arguments, (address, uint256, address, int256));
-
-        // exit decreases the amount in Codex by that much
         int256 scaledAmount = int256(vanillaAmount) * 10**18 * -1;
-        assertEq(sentAmount, scaledAmount);
+        vm.mockCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), scaledAmount),
+            abi.encode(true)
+        );
+        vault.exit(0, owner, amount);
     }
 }

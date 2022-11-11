@@ -22,7 +22,6 @@ import {ICToken} from "../utils/notional/ICToken.sol";
 import {EncodeDecode, TokenType, CashGroupSettings, Constants, BalanceActionWithTrades, DepositActionType, AccountContext, PortfolioAsset, Token} from "../utils/notional/EncodeDecode.sol";
 
 import {TestERC20} from "../utils/TestERC20.sol";
-import {MockProvider} from "../utils/MockProvider.sol";
 
 import {VaultFC} from "../../VaultFC.sol";
 
@@ -366,7 +365,7 @@ contract NotionalMinter is ERC1155Holder {
 
 contract VaultSY_ModifyPositionCollateralizationTest is Test, ERC1155Holder {
     Codex internal codex;
-    MockProvider internal collybus;
+    address internal collybus = address(0xc0111b115);
     VaultFC internal vault;
     NotionalMinter internal minterfDAI_1;
     NotionalMinter internal minterfDAI_2;
@@ -435,9 +434,9 @@ contract VaultSY_ModifyPositionCollateralizationTest is Test, ERC1155Holder {
         vm.createSelectFork(vm.rpcUrl("mainnet"), 13627845);
 
         codex = new Codex();
-        collybus = new MockProvider();
+        
         // vault = new VaultFC(address(codex), address(collybus), notional, cDAI, uint256(86400 * 6 * 5 * 3), 2);
-        vault = new VaultFC(address(codex), address(collybus), notional, address(DAI), uint256(86400 * 6 * 5 * 3), 2);
+        vault = new VaultFC(address(codex), collybus, notional, address(DAI), uint256(86400 * 6 * 5 * 3), 2);
 
         codex.setParam("globalDebtCeiling", uint256(1000 ether));
         codex.setParam(address(vault), "debtCeiling", uint256(1000 ether));
@@ -556,10 +555,8 @@ contract VaultSY_ModifyPositionCollateralizationTest is Test, ERC1155Holder {
             block.timestamp,
             true
         );
-        collybus.givenQueryReturnResponse(
-            query,
-            MockProvider.ReturnData({success: true, data: abi.encode(uint256(fairPriceExpected))})
-        );
+        
+        vm.mockCall(collybus, query, abi.encode(uint256(fairPriceExpected)));
 
         uint256 fairPriceReturned = vault.fairPrice(fCashId_1, true, true);
         assertEq(fairPriceReturned, fairPriceExpected);
@@ -575,10 +572,8 @@ contract VaultSY_ModifyPositionCollateralizationTest is Test, ERC1155Holder {
             vault.maturity(fCashId_1),
             true
         );
-        collybus.givenQueryReturnResponse(
-            query,
-            MockProvider.ReturnData({success: true, data: abi.encode(uint256(fairPriceExpected))})
-        );
+        
+        vm.mockCall(collybus, query, abi.encode(uint256(fairPriceExpected)));
 
         uint256 fairPriceReturned = vault.fairPrice(fCashId_1, true, false);
         assertEq(fairPriceReturned, fairPriceExpected);

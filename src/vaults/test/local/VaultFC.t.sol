@@ -11,7 +11,6 @@ import {Codex} from "../../../Codex.sol";
 import {wdiv, toInt256} from "../../../utils/Math.sol";
 
 import {DSToken} from "../utils/dapphub/DSToken.sol";
-import {MockProvider} from "../utils/MockProvider.sol";
 import {Caller} from "../utils/Caller.sol";
 import {Receiver} from "./Vault1155.t.sol";
 
@@ -20,8 +19,8 @@ import {VaultFC} from "../../VaultFC.sol";
 contract VaultFCTest is Test {
     VaultFC vault;
 
-    MockProvider codex;
-    MockProvider collybus;
+    address codex;
+    address collybus;
     ERC1155PresetMinterPauser notional;
     Caller kakaroto;
     Receiver receiver;
@@ -51,13 +50,17 @@ contract VaultFCTest is Test {
 
     function setUp() public {
         kakaroto = new Caller();
-        codex = new MockProvider();
-        collybus = new MockProvider();
         notional = new ERC1155PresetMinterPauser("");
         underlierToken = address(new DSToken(""));
         vault = new VaultFC(address(codex), address(collybus), address(notional), underlierToken, QUARTER, 1);
 
         receiver = new Receiver();
+
+        vm.mockCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector),
+            abi.encode(true)
+        );
     }
 
     function onERC1155Received(
@@ -183,18 +186,21 @@ contract VaultFCTest is Test {
         notional.setApprovalForAll(address(vault), true);
         notional.mint(address(this), tokenId, amount, new bytes(0));
 
+        int256 wad = toInt256(wdiv(amount, 10**8));
+
+        vm.mockCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), tokenId, owner, wad),
+            abi.encode(true)
+        );
+
+        vm.expectCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), tokenId, owner, wad)
+        );
+
         vault.enter(tokenId, owner, amount);
 
-        MockProvider.CallData memory cd = codex.getCallData(0);
-        assertEq(cd.caller, address(vault));
-        assertEq(cd.functionSelector, Codex.modifyBalance.selector);
-
-        int256 wad = toInt256(wdiv(amount, 10**8));
-        assertEq(
-            keccak256(cd.data),
-            keccak256(abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), tokenId, owner, wad))
-        );
-        emit log_bytes(cd.data);
         emit log_bytes(abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), tokenId, owner, wad));
     }
 
@@ -233,29 +239,17 @@ contract VaultFCTest is Test {
         notional.mint(address(this), tokenId, amount, new bytes(0));
 
         vault.enter(tokenId, me, amount);
-        vault.exit(tokenId, address(receiver), amount);
-
-        MockProvider.CallData memory cd = codex.getCallData(1);
-        assertEq(cd.caller, address(vault));
-        assertEq(cd.functionSelector, Codex.modifyBalance.selector);
 
         int256 wad = toInt256(wdiv(amount, 10**8));
-
-        assertEq(
-            keccak256(cd.data),
-            keccak256(
-                abi.encodeWithSelector(
-                    Codex.modifyBalance.selector,
-                    address(vault),
-                    tokenId,
-                    address(this),
-                    -int256(wad)
-                )
-            )
+        vm.mockCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), tokenId, address(this), -int256(wad)),
+            abi.encode(true)
         );
-        emit log_bytes(cd.data);
+        vault.exit(tokenId, address(receiver), amount);
+
         emit log_bytes(
-            abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), tokenId, address(this), -int256(wad))
+            abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), tokenId , address(this), -int256(wad))
         );
     }
 

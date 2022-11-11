@@ -19,13 +19,12 @@ import {IVault} from "../../../interfaces/IVault.sol";
 
 import {VaultFactory} from "../../VaultFactory.sol";
 import {VaultSPT} from "../../VaultSPT.sol";
-import {MockProvider} from "../utils/MockProvider.sol";
 
 contract VaultSPT_Test_rpc is Test {
     Codex codex;
     Moneta moneta;
     FIAT fiat;
-    MockProvider collybus;
+    address collybus = address(0xc0111b115);
     Publican publican;
 
     IERC20 sP_cUSDC; // spToken
@@ -66,7 +65,6 @@ contract VaultSPT_Test_rpc is Test {
 
         vaultFactory = new VaultFactory();
         codex = new Codex();
-        collybus = new MockProvider();
 
         impl_sP_cUSDC = new VaultSPT(address(codex), address(cUSDC), address(usdc));
         impl_sP_wstETH = new VaultSPT(address(codex), address(wstETH), address(weth));
@@ -74,7 +72,7 @@ contract VaultSPT_Test_rpc is Test {
         vault_sP_cUSDC = IVault(
             vaultFactory.createVault(
                 address(impl_sP_cUSDC),
-                abi.encode(maturity, address(sP_cUSDC), address(collybus))
+                abi.encode(maturity, address(sP_cUSDC), collybus)
             )
         );
         assertEq(vault_sP_cUSDC.live(), 1);
@@ -82,7 +80,7 @@ contract VaultSPT_Test_rpc is Test {
         vault_sP_wstETH = IVault(
             vaultFactory.createVault(
                 address(impl_sP_wstETH),
-                abi.encode(maturity, address(sP_wstETH), address(collybus))
+                abi.encode(maturity, address(sP_wstETH), collybus)
             )
         );
         assertEq(vault_sP_wstETH.live(), 1);
@@ -160,9 +158,11 @@ contract VaultSPT_Test_rpc is Test {
             block.timestamp,
             true
         );
-        collybus.givenQueryReturnResponse(
+
+        vm.mockCall(
+            collybus,
             query,
-            MockProvider.ReturnData({success: true, data: abi.encode(uint256(fairPriceExpected))})
+            abi.encode(uint256(fairPriceExpected))
         );
 
         uint256 fairPriceReturned = vault_sP_cUSDC.fairPrice(0, true, true);
@@ -179,11 +179,8 @@ contract VaultSPT_Test_rpc is Test {
             maturity,
             true
         );
-        collybus.givenQueryReturnResponse(
-            query,
-            MockProvider.ReturnData({success: true, data: abi.encode(uint256(fairPriceExpected))})
-        );
 
+        vm.mockCall(collybus, query, abi.encode(uint256(fairPriceExpected)));
         uint256 fairPriceReturned = vault_sP_cUSDC.fairPrice(0, true, false);
         assertEq(fairPriceReturned, fairPriceExpected);
     }

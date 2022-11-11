@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Test} from "forge-std/Test.sol";
 
-import {MockProvider} from "../utils/MockProvider.sol";
 import {TestERC20} from "../utils/TestERC20.sol";
 
 import {Codex} from "../../../Codex.sol";
@@ -96,8 +95,8 @@ contract VaultFYTest is Test {
     TestFYToken token;
     TestERC20 underlier;
 
-    MockProvider codex;
-    MockProvider collybus;
+    address codex = address(0xc0d311);
+    address collybus = address(0xc0111b115);
 
     uint256 maturity;
 
@@ -105,8 +104,6 @@ contract VaultFYTest is Test {
 
     function setUp() public {
         vaultFactory = new VaultFactory();
-        codex = new MockProvider();
-        collybus = new MockProvider();
         maturity = block.timestamp + 12 weeks;
         underlier = new TestERC20("Test Token", "TKN", 18);
 
@@ -114,8 +111,14 @@ contract VaultFYTest is Test {
         token.setMaturity(maturity);
         token.setUnderlying(address(underlier));
 
-        impl = new VaultFY(address(codex), address(underlier));
-        address vaultAddr = vaultFactory.createVault(address(impl), abi.encode(address(token), address(collybus)));
+        vm.mockCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector),
+            abi.encode(true)
+        );
+
+        impl = new VaultFY(codex, address(underlier));
+        address vaultAddr = vaultFactory.createVault(address(impl), abi.encode(address(token), collybus));
         vault = IVault(vaultAddr);
     }
 
@@ -175,16 +178,19 @@ contract VaultFYTest is Test {
         token.approve(address(vault), amount);
         token.mint(address(this), amount);
 
+        vm.mockCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, owner, amount),
+            abi.encode(true)
+        );
+
+        vm.expectCall(
+            codex, 
+            abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, owner, amount)
+        );
+
         vault.enter(0, owner, amount);
 
-        MockProvider.CallData memory cd = codex.getCallData(0);
-        assertEq(cd.caller, address(vault));
-        assertEq(cd.functionSelector, Codex.modifyBalance.selector);
-        assertEq(
-            keccak256(cd.data),
-            keccak256(abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, owner, amount))
-        );
-        emit log_bytes(cd.data);
         emit log_bytes(abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, owner, amount));
     }
 
@@ -210,18 +216,11 @@ contract VaultFYTest is Test {
         token.mint(address(this), amount);
 
         vault.enter(0, address(this), amount);
+
+        vm.expectCall(codex, abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), -int256(amount)));
+
         vault.exit(0, owner, amount);
 
-        MockProvider.CallData memory cd = codex.getCallData(1);
-        assertEq(cd.caller, address(vault));
-        assertEq(cd.functionSelector, Codex.modifyBalance.selector);
-        assertEq(
-            keccak256(cd.data),
-            keccak256(
-                abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), -int256(amount))
-            )
-        );
-        emit log_bytes(cd.data);
         emit log_bytes(
             abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), -int256(amount))
         );
@@ -247,13 +246,10 @@ contract VaultFYTest is Test {
         token.approve(address(vault), amount);
         token.mint(address(this), amount);
 
-        vault.enter(0, owner, amount);
-
-        MockProvider.CallData memory cd = codex.getCallData(0);
-        (, , , uint256 sentAmount) = abi.decode(cd.arguments, (address, uint256, address, uint256));
-
         uint256 scaledAmount = vanillaAmount * 10**18;
-        assertEq(scaledAmount, sentAmount);
+        vm.expectCall(codex, abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), int256(scaledAmount)));
+
+        vault.enter(0, owner, amount);
     }
 
     function test_exit_scales_wad_to_native(uint8 decimals) public {
@@ -276,13 +272,8 @@ contract VaultFYTest is Test {
         token.approve(address(vault), amount);
         token.mint(address(vault), amount);
 
-        vault.exit(0, owner, amount);
-
-        MockProvider.CallData memory cd = codex.getCallData(0);
-        (, , , int256 sentAmount) = abi.decode(cd.arguments, (address, uint256, address, int256));
-
-        // exit decreases the amount in Codex by that much
         int256 scaledAmount = int256(vanillaAmount) * 10**18 * -1;
-        assertEq(sentAmount, scaledAmount);
+        vm.expectCall(codex, abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), scaledAmount));
+        vault.exit(0, owner, amount);
     }
 }

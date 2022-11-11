@@ -11,7 +11,6 @@ import {Collybus} from "../../../Collybus.sol";
 import {WAD, add, sub, mul, wmul, wdiv} from "../../../utils/Math.sol";
 
 import {TestERC20} from "../utils/TestERC20.sol";
-import {MockProvider} from "../utils/MockProvider.sol";
 
 import {Receiver} from "../local/Vault1155.t.sol";
 

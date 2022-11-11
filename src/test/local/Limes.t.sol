@@ -9,7 +9,7 @@ import {Codex} from "../../Codex.sol";
 import {Collybus} from "../../Collybus.sol";
 import {Limes} from "../../Limes.sol";
 import {WAD} from "../../utils/Math.sol";
-import {Vault20} from "../../Vault.sol";
+import {Vault20} from "../../vaults/Vault.sol";
 
 uint256 constant tokenId = 0;
 

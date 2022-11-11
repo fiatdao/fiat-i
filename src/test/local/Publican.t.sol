@@ -13,7 +13,7 @@ import {Codex} from "../../Codex.sol";
 import {Collybus} from "../../Collybus.sol";
 import {WAD, wpow} from "../../utils/Math.sol";
 import {Publican} from "../../Publican.sol";
-import {Vault20} from "../../Vault.sol";
+import {Vault20} from "../../vaults/Vault.sol";
 
 contract Wpow is Publican {
     constructor(address codex_) Publican(codex_) {}

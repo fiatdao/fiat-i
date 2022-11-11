@@ -18,7 +18,7 @@ import {Limes} from "../../../Limes.sol";
 import {LinearDecrease} from "../../../auctions/PriceCalculator.sol";
 import {Moneta} from "../../../Moneta.sol";
 import {Publican} from "../../../Publican.sol";
-import {Vault20} from "../../../Vault.sol";
+import {Vault20} from "../../../vaults/Vault.sol";
 import {toInt256, WAD, sub, wdiv} from "../../../utils/Math.sol";
 
 import {TestERC20} from "../utils/TestERC20.sol";

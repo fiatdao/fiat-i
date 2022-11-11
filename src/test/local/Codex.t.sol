@@ -12,7 +12,7 @@ import {Codex} from "../../Codex.sol";
 import {Collybus} from "../../Collybus.sol";
 import {Aer} from "../../Aer.sol";
 import {Publican} from "../../Publican.sol";
-import {Vault20} from "../../Vault.sol";
+import {Vault20} from "../../vaults/Vault.sol";
 import {Moneta} from "../../Moneta.sol";
 
 import {DebtAuction} from "./DebtAuction.t.sol";

@@ -14,7 +14,7 @@ import {Collybus} from "../../Collybus.sol";
 import {Aer} from "../../Aer.sol";
 import {Limes} from "../../Limes.sol";
 import {WAD, sub, mul, wdiv} from "../../utils/Math.sol";
-import {Vault20} from "../../Vault.sol";
+import {Vault20} from "../../vaults/Vault.sol";
 import {Moneta} from "../../Moneta.sol";
 import {StairstepExponentialDecrease, LinearDecrease} from "../../auctions/PriceCalculator.sol";
 
