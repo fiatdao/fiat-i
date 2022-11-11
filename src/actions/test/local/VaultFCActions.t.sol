@@ -39,7 +39,7 @@ contract CallerERC1155Holder is Caller, ERC1155Holder {}
 
 contract Vault1155Actions_UnitTest is Test, ERC1155Holder {
     Codex internal codex;
-    address internal collybus = address(0xc011b005);
+    address internal collybus = address(0xc0111b115);
     address internal publican = address(0x511b11ca11);
     Moneta internal moneta;
     FIAT internal fiat;

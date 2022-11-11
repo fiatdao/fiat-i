@@ -5,7 +5,6 @@ import {Test} from "forge-std/Test.sol";
 
 import {Codex} from "../../../Codex.sol";
 
-import {MockProvider} from "../utils/MockProvider.sol";
 import {TestERC20} from "../utils/TestERC20.sol";
 
 import {Vault20} from "../../Vault.sol";
@@ -13,17 +12,17 @@ import {Vault20} from "../../Vault.sol";
 contract Vault20Test is Test {
     Vault20 vault;
 
-    MockProvider codex;
-    MockProvider collybus;
+    address internal codex = address(0xc0d311);
+    address internal collybus = address(0xc0111b115);
     TestERC20 token;
 
     uint256 constant MAX_DECIMALS = 38; // ~type(int256).max ~= 1e18*1e18
 
     function setUp() public {
-        codex = new MockProvider();
-        collybus = new MockProvider();
         token = new TestERC20("Test Token", "TKN", 18);
         vault = new Vault20(address(codex), address(token), address(collybus));
+
+        vm.mockCall(codex, abi.encodeWithSelector(Codex.modifyBalance.selector), abi.encode(true));
     }
 
     function test_vaultType() public {
@@ -50,16 +49,9 @@ contract Vault20Test is Test {
         token.approve(address(vault), amount);
         token.mint(address(this), amount);
 
+        vm.expectCall(codex, abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, owner, amount));
         vault.enter(0, owner, amount);
 
-        MockProvider.CallData memory cd = codex.getCallData(0);
-        assertEq(cd.caller, address(vault));
-        assertEq(cd.functionSelector, Codex.modifyBalance.selector);
-        assertEq(
-            keccak256(cd.data),
-            keccak256(abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, owner, amount))
-        );
-        emit log_bytes(cd.data);
         emit log_bytes(abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, owner, amount));
     }
 
@@ -85,18 +77,10 @@ contract Vault20Test is Test {
         token.mint(address(this), amount);
 
         vault.enter(0, address(this), amount);
+
+        vm.expectCall(codex, abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), -int256(amount)));
         vault.exit(0, owner, amount);
 
-        MockProvider.CallData memory cd = codex.getCallData(1);
-        assertEq(cd.caller, address(vault));
-        assertEq(cd.functionSelector, Codex.modifyBalance.selector);
-        assertEq(
-            keccak256(cd.data),
-            keccak256(
-                abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), -int256(amount))
-            )
-        );
-        emit log_bytes(cd.data);
         emit log_bytes(
             abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), -int256(amount))
         );
@@ -109,21 +93,15 @@ contract Vault20Test is Test {
         uint256 vanillaAmount = 12345678901234567890;
         uint256 amount = vanillaAmount * 10**decimals;
 
-        codex = new MockProvider();
-        collybus = new MockProvider();
         token = new TestERC20("Test Token", "TKN", uint8(decimals));
         vault = new Vault20(address(codex), address(token), address(collybus));
 
         token.approve(address(vault), amount);
         token.mint(address(this), amount);
 
-        vault.enter(0, owner, amount);
-
-        MockProvider.CallData memory cd = codex.getCallData(0);
-        (, , , uint256 sentAmount) = abi.decode(cd.arguments, (address, uint256, address, uint256));
-
         uint256 scaledAmount = vanillaAmount * 10**18;
-        assertEq(scaledAmount, sentAmount);
+        vm.expectCall(codex, abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), scaledAmount));
+        vault.enter(0, owner, amount);
     }
 
     function test_exit_scales_wad_to_native(uint8 decimals) public {
@@ -133,21 +111,14 @@ contract Vault20Test is Test {
         uint256 vanillaAmount = 12345678901234567890;
         uint256 amount = vanillaAmount * 10**decimals;
 
-        codex = new MockProvider();
-        collybus = new MockProvider();
         token = new TestERC20("Test Token", "TKN", uint8(decimals));
         vault = new Vault20(address(codex), address(token), address(collybus));
 
         token.approve(address(vault), amount);
         token.mint(address(vault), amount);
 
-        vault.exit(0, owner, amount);
-
-        MockProvider.CallData memory cd = codex.getCallData(0);
-        (, , , int256 sentAmount) = abi.decode(cd.arguments, (address, uint256, address, int256));
-
-        // exit decreases the amount in Codex by that much
         int256 scaledAmount = int256(vanillaAmount) * 10**18 * -1;
-        assertEq(sentAmount, scaledAmount);
+        vm.expectCall(codex, abi.encodeWithSelector(Codex.modifyBalance.selector, address(vault), 0, address(this), scaledAmount));
+        vault.exit(0, owner, amount);
     }
 }

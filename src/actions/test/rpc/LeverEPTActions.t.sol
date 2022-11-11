@@ -55,7 +55,7 @@ interface ICCP {
 contract LeverEPTActions_RPC_tests is Test {
     Codex internal codex;
     Publican internal publican;
-    address internal collybus = address(0xc011b005);
+    address internal collybus = address(0xc0111b115);
     Moneta internal moneta;
     FIAT internal fiat;
     Flash internal flash;

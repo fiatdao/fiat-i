@@ -26,7 +26,7 @@ import {VaultSYActions} from "../../vault/VaultSYActions.sol";
 contract VaultSYActions_RPC_tests is Test, ERC1155Holder, ERC721Holder {
     Codex internal codex;
     Publican internal publican;
-    address internal collybus = address(0xc011b005);
+    address internal collybus = address(0xc0111b115);
     Moneta internal moneta;
     FIAT internal fiat;
     PRBProxy internal userProxy;
