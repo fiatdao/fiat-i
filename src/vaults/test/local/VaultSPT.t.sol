@@ -271,4 +271,64 @@ contract VaultSPT_Test is Test {
         assertEq(normalDebtEnd, 0);
         assertEq(fiat.balanceOf(me), 0);
     }
+
+    function test_codex() public {
+        assertEq(address(vault.codex()), address(codex));
+    }
+
+    function test_collybus() public {
+        assertEq(address(vault.collybus()), address(collybus));
+    }
+
+    function test_token() public {
+        assertEq(vault.token(), address(sP_cUSDC));
+    }
+
+    function test_token18() public {
+        assertEq(vault18.token(), address(sP_cDAI));
+    }
+
+    function test_tokenScale() public {
+        assertEq(vault.tokenScale(), 10**sP_cUSDC.decimals());
+    }
+
+    function test_tokenScale18() public {
+        assertEq(vault18.tokenScale(), 10**sP_cDAI.decimals());
+    }
+
+    function test_live() public {
+        assertEq(uint256(vault.live()), uint256(1));
+    }
+
+    function test_maturity() public {
+        assertEq(vault.maturity(0), maturity);
+    }
+    
+    function test_maturity18() public {
+        assertEq(vault18.maturity(0), maturity);
+    }
+
+    function test_underlierToken() public {
+        assertEq(vault.underlierToken(), address(usdc));
+    }
+    
+    function test_underlierToken18() public {
+        assertEq(vault18.underlierToken(), address(dai));
+    }
+
+    function test_underlierScale() public {
+        assertEq(vault.underlierScale(), 10**usdc.decimals());
+    }
+    
+    function test_underlierScale18() public {
+        assertEq(vault18.underlierScale(), 10**dai.decimals());
+    }
+
+    function test_vaultType() public {
+        assertEq(vault.vaultType(), bytes32("ERC20:SPT"));
+    }
+
+     function test_vaultType18() public {
+        assertEq(vault18.vaultType(), bytes32("ERC20:SPT"));
+    }
 }

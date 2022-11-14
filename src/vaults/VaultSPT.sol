@@ -45,7 +45,7 @@ contract VaultSPT is Guarded, IVaultSPT, Initializable {
     uint256 public immutable override underlierScale;    
 
     /// @notice The vault type
-    bytes32 public override vaultType;
+    bytes32 public immutable override vaultType;
 
     /// @notice Cached maturity of the pToken (set during initialization)
     uint256 internal _maturity;
