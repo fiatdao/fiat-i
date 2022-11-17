@@ -457,8 +457,8 @@ contract VaultSPTActions_RPC_tests is Test {
         // sPT in the vault
         uint256 sPTBal = sP_cUSDC.balanceOf(address(vaultSenseUSDC));
 
-        // Collateral corresponds to sPTBal scaled  // TODO: use proper math
-        assertEq(collateral, sPTBal * 1e10);
+        // Collateral corresponds to sPTBal scaled 
+        assertEq(collateral, wdiv(sPTBal,vaultSenseUSDC.tokenScale()));
         // Debt is fiat balance
         assertEq(normalDebt, fiat.balanceOf(me));
 
@@ -532,8 +532,8 @@ contract VaultSPTActions_RPC_tests is Test {
         // sPT in the vault
         uint256 sPTBal = sP_cUSDC.balanceOf(address(vaultSenseUSDC));
 
-        // Collateral corresponds to sPTBal scaled  // TODO: use proper math
-        assertEq(collateral, sPTBal * 1e10);
+        // Collateral corresponds to sPTBal scaled 
+        assertEq(collateral, wdiv(sPTBal,vaultSenseUSDC.tokenScale()));
         // Debt is fiat balance
         assertEq(normalDebt, fiat.balanceOf(address(user)));
 

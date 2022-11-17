@@ -17,7 +17,7 @@ import {WAD, toInt256, sub, mul, div, wmul, wdiv} from "../../utils/Math.sol";
 
 /// @title NoLossCollateralAuction actions
 /// @notice A set of actions for buying collateral from NoLossCollateralAuction
-contract NoLossCollateralAuctionActions {
+contract NoLossCollateralAuctionActionsBase {
     using SafeERC20 for IERC20;
 
     /// ======== Custom Errors ======== ///
@@ -73,7 +73,7 @@ contract NoLossCollateralAuctionActions {
         uint256 maxCollateralToBuy,
         uint256 maxPrice,
         address recipient
-    ) external {
+    ) public returns (uint256 bought) {
         // calculate max. amount credit to pay
         uint256 maxCredit = wmul(maxCollateralToBuy, maxPrice);
 
@@ -89,8 +89,8 @@ contract NoLossCollateralAuctionActions {
             codex.grantDelegate(address(noLossCollateralAuction));
 
         uint256 credit = codex.credit(address(this));
-        uint256 balance = codex.balances(vault, tokenId, address(this));
-        noLossCollateralAuction.takeCollateral(auctionId, maxCollateralToBuy, maxPrice, address(this), new bytes(0));
+        uint256 balance = codex.balances(vault, tokenId, recipient);
+        noLossCollateralAuction.takeCollateral(auctionId, maxCollateralToBuy, maxPrice, recipient, new bytes(0));
 
         // proxy needs to delegate ability to transfer internal credit on its behalf to Moneta first
         if (codex.delegates(address(this), address(moneta)) != 1) codex.grantDelegate(address(moneta));
@@ -98,8 +98,7 @@ contract NoLossCollateralAuctionActions {
         // refund unused credit to `from`
         moneta.exit(from, sub(maxCredit, sub(credit, codex.credit(address(this)))));
 
-        // transfer bought collateral to recipient
-        uint256 bought = wmul(sub(codex.balances(vault, tokenId, address(this)), balance), IVault(vault).tokenScale());
-        IVault(vault).exit(tokenId, recipient, bought);
+        // bought collateral
+        bought = wmul(sub(codex.balances(vault, tokenId, recipient), balance), IVault(vault).tokenScale());
     }
 }

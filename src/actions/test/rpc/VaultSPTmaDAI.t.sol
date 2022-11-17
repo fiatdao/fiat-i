@@ -25,7 +25,6 @@ import {VaultSPT} from "../../../vaults/VaultSPT.sol";
 
 import {VaultSPTActions} from "../../vault/VaultSPTActions.sol";
 import {IBalancerVault, IConvergentCurvePool} from "../../helper/ConvergentCurvePoolHelper.sol";
-import {TestERC20} from "../../../test/utils/TestERC20.sol";
 
 import {Caller} from "../../../test/utils/Caller.sol";
 import {console} from "forge-std/console.sol";
@@ -83,7 +82,6 @@ interface IPeriphery {
 contract VaultSPTActions_RPC_tests is Test {
     Codex internal codex;
     Moneta internal moneta;
-    TestERC20 internal sensePT;
     PRBProxy internal userProxy;
     PRBProxyFactory internal prbProxyFactory;
     VaultSPTActions internal vaultActions;
@@ -109,7 +107,7 @@ contract VaultSPTActions_RPC_tests is Test {
 
     uint256 internal maturity = 1688169600; // morpho maturity 1st July 2023
 
-    uint256 internal defaultUnderlierAmount = 100 ether; // TODO: update to 100 DAI
+    uint256 internal defaultUnderlierAmount = 100 ether; 
 
     function _mintDAI(address to, uint256 amount) internal {
         vm.store(address(dai), keccak256(abi.encode(address(address(this)), uint256(0))), bytes32(uint256(1)));
@@ -417,7 +415,7 @@ contract VaultSPTActions_RPC_tests is Test {
         // sPT in the vault
         uint256 sPTBal = sP_maDAI.balanceOf(address(maDAIVault));
 
-        // Collateral corresponds to sPTBal scaled  // TODO: use proper math
+        // Collateral corresponds to sPTBal scaled 
         assertEq(collateral, sPTBal);
         // Debt is fiat balance
         assertEq(normalDebt, fiat.balanceOf(me));

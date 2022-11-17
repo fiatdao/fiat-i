@@ -23,7 +23,7 @@ import {toInt256, WAD, sub, wdiv} from "../../../utils/Math.sol";
 
 import {TestERC20} from "../../../test/utils/TestERC20.sol";
 
-import {NoLossCollateralAuctionActions} from "../../auction/NoLossCollateralAuctionActions.sol";
+import {NoLossCollateralAuctionActionsBase} from "../../auction/NoLossCollateralAuctionActionsBase.sol";
 
 contract Vault20Actions_UnitTest is Test {
     Aer internal aer;
@@ -39,7 +39,7 @@ contract Vault20Actions_UnitTest is Test {
 
     PRBProxy internal userProxy;
 
-    NoLossCollateralAuctionActions internal auctionActions;
+    NoLossCollateralAuctionActionsBase internal auctionActions;
 
     address me = address(this);
 
@@ -97,7 +97,7 @@ contract Vault20Actions_UnitTest is Test {
 
         collateralAuction.redoAuction(1, me);
 
-        auctionActions = new NoLossCollateralAuctionActions(
+        auctionActions = new NoLossCollateralAuctionActionsBase(
             address(codex),
             address(moneta),
             address(fiat),
@@ -125,7 +125,8 @@ contract Vault20Actions_UnitTest is Test {
         fiat.transfer(address(userProxy), 100e18);
 
         uint256 fiatBalance = fiat.balanceOf(address(userProxy));
-        uint256 collateralBalance = collateralToken.balanceOf(address(userProxy));
+        uint256 collateralBalance = codex.balances(address(vault), 0,address(userProxy));
+        assertEq(collateralBalance,0);
 
         vm.warp(block.timestamp + 100);
 
@@ -147,13 +148,14 @@ contract Vault20Actions_UnitTest is Test {
         assertGt(fiat.balanceOf(address(userProxy)), 0);
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(address(userProxy)));
-        // should have more collateral than before
-        assertLt(collateralBalance, collateralToken.balanceOf(address(userProxy)));
+        // we have the collateral in FIAT system
+        assertGt(codex.balances(address(vault), 0,address(userProxy)),collateralBalance);
     }
 
     function test_takeCollateral_from_user() public {
         uint256 fiatBalance = fiat.balanceOf(me);
-        uint256 collateralBalance = collateralToken.balanceOf(me);
+        uint256 collateralBalance = codex.balances(address(vault), 0, me);
+        assertEq(collateralBalance,0);
 
         vm.warp(block.timestamp + 100);
 
@@ -166,7 +168,7 @@ contract Vault20Actions_UnitTest is Test {
         assertGt(fiat.balanceOf(me), 0);
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(me));
-        // should have more collateral than before
-        assertLt(collateralBalance, collateralToken.balanceOf(me));
+        // we have the collateral in FIAT system
+        assertGt(codex.balances(address(vault), 0, me),collateralBalance);
     }
 }
