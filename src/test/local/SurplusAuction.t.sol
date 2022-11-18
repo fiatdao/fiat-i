@@ -176,10 +176,22 @@ contract SurplusAuctionTest is DSTest {
     function testFail_OZ_transferFrom() public {
         ozToken.transferFrom(address(this),address(2),1000 ether); 
     }
-    
+
     function test_transferFrom() public {
         token.transferFrom(address(this),address(2),600 ether);    
         assertEq(token.balanceOf(address(2)),600 ether);  
         assertEq(token.balanceOf(address(this)),0);  
     }
+
+    function testFail_OZ_transfer_to_ZERO_address() public {
+        ozToken.transfer(address(0),600 ether);    
+    }
+
+    function test_transfer_to_ZERO_address() public {
+        token.transfer(address(0),600 ether); 
+        assertEq(token.balanceOf(address(0)),600 ether);
+        assertEq(token.balanceOf(address(this)),0);     
+    }
+    
+    
 }
