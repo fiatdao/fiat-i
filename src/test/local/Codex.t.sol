@@ -605,7 +605,7 @@ contract SurplusTest is DSTest {
         surplusAuction.closeAuction(id);
         assertEq(codex.credit(address(this)), 100 ether);
         assertEq(gov.balanceOf(address(this)), 90 ether);
-        // assertEq(gov.balanceOf(governance),10 ether);
+        assertEq(gov.balanceOf(governance),10 ether);
     }
 }
 

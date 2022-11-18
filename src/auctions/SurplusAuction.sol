@@ -64,7 +64,7 @@ contract SurplusAuction is Guarded, ISurplusAuction {
     /// @notice Tokens to receive for credit
     IERC20 public immutable override token;
     /// @notice Governance address (will receive tokens)
-    address immutable governance;
+    address public immutable governance;
     /// @notice 5% minimum bid increase
     uint256 public override minBidBump = 1.05e18;
     /// @notice 3 hours bid duration [seconds]

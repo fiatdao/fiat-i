@@ -64,7 +64,7 @@ contract SurplusAuctionTest is DSTest {
     Hevm hevm;
 
     SurplusAuction surplusAuction;
-    SurplusAuction surplusAuctionOZ;
+
     Codex codex;
     DSToken token;
     OZToken ozToken;
@@ -86,7 +86,6 @@ contract SurplusAuctionTest is DSTest {
         bob = address(new Guy(surplusAuction));
 
         codex.grantDelegate(address(surplusAuction));
-        codex.grantDelegate(address(surplusAuctionOZ));
         token.approve(address(surplusAuction));
     
         codex.createUnbackedDebt(address(this), address(this), 1000 ether);
