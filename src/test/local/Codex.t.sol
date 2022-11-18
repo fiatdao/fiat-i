@@ -497,6 +497,7 @@ contract SurplusTest is DSTest {
     DSToken gov;
 
     address me;
+    address governance = address(1);
 
     function try_modifyCollateralAndDebt(
         address vault,
@@ -556,7 +557,7 @@ contract SurplusTest is DSTest {
         Collybus collybus = new Collybus();
         collybus.updateSpot(address(gold), 1 ether);
 
-        surplusAuction = new SurplusAuction(address(codex), address(gov));
+        surplusAuction = new SurplusAuction(address(codex), address(gov),governance);
         debtAuction = new DebtAuction(address(codex), address(gov));
 
         aer = new TestAer(address(codex), address(surplusAuction), address(debtAuction));
@@ -590,6 +591,7 @@ contract SurplusTest is DSTest {
         codex.mint(address(aer), 100 ether);
         assertEq(codex.credit(address(aer)), 100 ether);
         assertEq(gov.balanceOf(address(this)), 100 ether);
+        assertEq(gov.balanceOf(governance),0);
 
         aer.setParam("surplusAuctionSellSize", 100 ether);
         assertEq(aer.Awe(), 0 ether);
@@ -603,6 +605,7 @@ contract SurplusTest is DSTest {
         surplusAuction.closeAuction(id);
         assertEq(codex.credit(address(this)), 100 ether);
         assertEq(gov.balanceOf(address(this)), 90 ether);
+        // assertEq(gov.balanceOf(governance),10 ether);
     }
 }
 
