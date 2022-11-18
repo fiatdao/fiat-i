@@ -7,7 +7,7 @@ import {ICodex} from "../../interfaces/ICodex.sol";
 import {IVault} from "../../interfaces/IVault.sol";
 import {IMoneta} from "../../interfaces/IMoneta.sol";
 import {IFIAT} from "../../interfaces/IFIAT.sol";
-import {WAD, toInt256, wmul} from "../../utils/Math.sol";
+import {WAD, toInt256, wmul} from "../../core/utils/Math.sol";
 
 import {VaultActions} from "./VaultActions.sol";
 

@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import {Clones} from "openzeppelin/contracts/proxy/Clones.sol";
 
-import {Guarded} from "../utils/Guarded.sol";
+import {Guarded} from "../core/utils/Guarded.sol";
 
 interface IVaultInitializable {
     function initialize(bytes calldata params) external;

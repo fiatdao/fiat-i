@@ -4,7 +4,7 @@ pragma solidity ^0.8.4;
 import {IPriceCalculator} from "../interfaces/IPriceCalculator.sol";
 import {NoLossCollateralAuction} from "../auctions/NoLossCollateralAuction.sol";
 import {LinearDecrease} from "../auctions/PriceCalculator.sol";
-import {WAD} from "../utils/Math.sol";
+import {WAD} from "../core/utils/Math.sol";
 
 import {Delayed} from "./Delayed.sol";
 import {BaseGuard} from "./BaseGuard.sol";

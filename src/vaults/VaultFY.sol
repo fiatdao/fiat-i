@@ -9,8 +9,8 @@ import {Clones} from "openzeppelin/contracts/proxy/Clones.sol";
 
 import {ICollybus} from "../interfaces/ICollybus.sol";
 import {ICodex} from "../interfaces/ICodex.sol";
-import {Guarded} from "../utils/Guarded.sol";
-import {WAD, toInt256, wmul, wdiv} from "../utils/Math.sol";
+import {Guarded} from "../core/utils/Guarded.sol";
+import {WAD, toInt256, wmul, wdiv} from "../core/utils/Math.sol";
 import {IVault} from "../interfaces/IVault.sol";
 
 import {VaultFactory} from "./VaultFactory.sol";

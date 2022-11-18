@@ -14,8 +14,8 @@ import {SafeERC20} from "openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"
 import {ICodex} from "../interfaces/ICodex.sol";
 import {ICollybus} from "../interfaces/ICollybus.sol";
 import {IVault} from "../interfaces/IVault.sol";
-import {Guarded} from "../utils/Guarded.sol";
-import {WAD, toInt256, add, sub, wmul, wdiv, mul, div} from "../utils/Math.sol";
+import {Guarded} from "../core/utils/Guarded.sol";
+import {WAD, toInt256, add, sub, wmul, wdiv, mul, div} from "../core/utils/Math.sol";
 
 interface ISmartYield {
     struct SeniorBond {

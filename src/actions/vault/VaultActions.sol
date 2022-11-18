@@ -10,7 +10,7 @@ import {IPublican} from "../../interfaces/IPublican.sol";
 import {IMoneta} from "../../interfaces/IMoneta.sol";
 import {IFIAT} from "../../interfaces/IFIAT.sol";
 import {IVault} from "../../interfaces/IVault.sol";
-import {WAD, toInt256, sub, wmul, wdiv} from "../../utils/Math.sol";
+import {WAD, toInt256, sub, wmul, wdiv} from "../../core/utils/Math.sol";
 
 /// @title VaultActions
 /// @notice A set of base vault actions to inherited from

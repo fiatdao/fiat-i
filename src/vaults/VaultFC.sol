@@ -9,10 +9,10 @@ import {ERC1155Holder} from "openzeppelin/contracts/token/ERC1155/utils/ERC1155H
 
 import {ICodex} from "../interfaces/ICodex.sol";
 import {ICollybus} from "../interfaces/ICollybus.sol";
-import {Guarded} from "../utils/Guarded.sol";
-import {toInt256, add, sub, mul, div, wdiv} from "../utils/Math.sol";
+import {Guarded} from "../core/utils/Guarded.sol";
+import {toInt256, add, sub, mul, div, wdiv} from "../core/utils/Math.sol";
 
-import {IVaultFC} from "./interfaces/IVaultFC.sol";
+import {IVaultFC} from "../interfaces/IVaultFC.sol";
 import {Vault1155} from "./Vault.sol";
 
 interface INotionalV2 {

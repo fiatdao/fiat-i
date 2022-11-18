@@ -9,7 +9,7 @@ import {IFIAT} from "../../interfaces/IFIAT.sol";
 import {IMoneta} from "../../interfaces/IMoneta.sol";
 import {INoLossCollateralAuction} from "../../interfaces/INoLossCollateralAuction.sol";
 import {IVault} from "../../interfaces/IVault.sol";
-import {WAD, toInt256, sub, mul, div, wmul, wdiv} from "../../utils/Math.sol";
+import {WAD, toInt256, sub, mul, div, wmul, wdiv} from "../../core/utils/Math.sol";
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // WARNING: These functions meant to be used as a a library for a PRBProxy. Some are unsafe if you call them directly.

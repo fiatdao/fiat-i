@@ -11,6 +11,7 @@ build           :; forge build
 clean           :; forge clean
 lint            :; yarn install && yarn run lint
 test            :; forge test
-test-mainnet    :; forge test --match-path "**/test/rpc/**/*.t.sol"
-test-local      :; forge test --match-path "**/test/local/**/*.t.sol"
-
+test-core    	:; forge test --match-path "**/test/core/**/*.t.sol"
+test-actions    :; forge test --match-path "**/test/actions/**/*.t.sol"
+test-vaults    	:; forge test --match-path "**/test/vaults/**/*.t.sol"
+test-guards    	:; forge test --match-path "**/test/guards/**/*.t.sol"

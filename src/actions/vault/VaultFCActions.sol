@@ -8,9 +8,9 @@ import {SafeERC20} from "openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"
 import {ICodex} from "../../interfaces/ICodex.sol";
 import {IMoneta} from "../../interfaces/IMoneta.sol";
 import {IFIAT} from "../../interfaces/IFIAT.sol";
-import {WAD, toInt256, add, mul, div, wdiv, wmul} from "../../utils/Math.sol";
+import {WAD, toInt256, add, mul, div, wdiv, wmul} from "../../core/utils/Math.sol";
 
-import {IVaultFC} from "../../vaults/interfaces/IVaultFC.sol";
+import {IVaultFC} from "../../interfaces/IVaultFC.sol";
 
 import {Vault1155Actions} from "./Vault1155Actions.sol";
 

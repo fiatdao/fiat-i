@@ -10,8 +10,8 @@ import {IAer} from "../interfaces/IAer.sol";
 import {ILimes} from "../interfaces/ILimes.sol";
 import {IVault} from "../interfaces/IVault.sol";
 
-import {Guarded} from "../utils/Guarded.sol";
-import {WAD, max, min, add, sub, mul, wmul, wdiv} from "../utils/Math.sol";
+import {Guarded} from "../core/utils/Guarded.sol";
+import {WAD, max, min, add, sub, mul, wmul, wdiv} from "../core/utils/Math.sol";
 
 /// @title CollateralAuction
 /// @notice

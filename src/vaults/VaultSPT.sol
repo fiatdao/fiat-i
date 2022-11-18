@@ -8,10 +8,10 @@ import {Initializable} from "openzeppelin/contracts/proxy/utils/Initializable.so
 
 import {ICodex} from "../interfaces/ICodex.sol";
 import {ICollybus} from "../interfaces/ICollybus.sol";
-import {Guarded} from "../utils/Guarded.sol";
-import {WAD, toInt256, wmul, wdiv} from "../utils/Math.sol";
+import {Guarded} from "../core/utils/Guarded.sol";
+import {WAD, toInt256, wmul, wdiv} from "../core/utils/Math.sol";
 
-import {IVaultSPT} from "./interfaces/IVaultSPT.sol";
+import {IVaultSPT} from "../interfaces/IVaultSPT.sol";
 
 /// @title VaultSPT
 /// @notice Collateral adapter for Sense Finance Principal Tokens

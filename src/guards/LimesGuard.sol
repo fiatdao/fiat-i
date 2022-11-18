@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.4;
 
-import {Limes} from "../Limes.sol";
-import {WAD} from "../utils/Math.sol";
+import {Limes} from "../core/Limes.sol";
+import {WAD} from "../core/utils/Math.sol";
 
 import {Delayed} from "./Delayed.sol";
 import {BaseGuard} from "./BaseGuard.sol";

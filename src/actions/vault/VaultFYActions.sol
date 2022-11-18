@@ -5,7 +5,7 @@ import {IERC20} from "openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IVault} from "../../interfaces/IVault.sol";
-import {WAD, toInt256, wmul, wdiv, sub} from "../../utils/Math.sol";
+import {WAD, toInt256, wmul, wdiv, sub} from "../../core/utils/Math.sol";
 
 import {Vault20Actions} from "./Vault20Actions.sol";
 

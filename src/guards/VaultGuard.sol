@@ -4,13 +4,13 @@ pragma solidity ^0.8.4;
 import {IVault} from "../interfaces/IVault.sol";
 import {IGuarded} from "../interfaces/IGuarded.sol";
 
-import {Codex} from "../Codex.sol";
-import {Publican} from "../Publican.sol";
-import {Limes} from "../Limes.sol";
-import {Collybus} from "../Collybus.sol";
+import {Codex} from "../core/Codex.sol";
+import {Publican} from "../core/Publican.sol";
+import {Limes} from "../core/Limes.sol";
+import {Collybus} from "../core/Collybus.sol";
 import {NoLossCollateralAuction} from "../auctions/NoLossCollateralAuction.sol";
 import {LinearDecrease, StairstepExponentialDecrease, ExponentialDecrease} from "../auctions/PriceCalculator.sol";
-import {WAD} from "../utils/Math.sol";
+import {WAD} from "../core/utils/Math.sol";
 
 import {Delayed} from "./Delayed.sol";
 import {BaseGuard} from "./BaseGuard.sol";

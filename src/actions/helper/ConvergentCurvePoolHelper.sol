@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity ^0.8.4;
 
-import {sub, wmul, wdiv} from "../../utils/Math.sol";
+import {sub, wmul, wdiv} from "../../core/utils/Math.sol";
 
 interface IConvergentCurvePool {
     function solveTradeInvariant(

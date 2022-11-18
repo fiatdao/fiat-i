@@ -3,8 +3,8 @@
 pragma solidity ^0.8.4;
 
 import {INoLossCollateralAuction} from "../interfaces/INoLossCollateralAuction.sol";
-import {Codex} from "../Codex.sol";
-import {WAD, min, add, sub, wmul} from "../utils/Math.sol";
+import {Codex} from "../core/Codex.sol";
+import {WAD, min, add, sub, wmul} from "../core/utils/Math.sol";
 
 import {BaseGuard} from "./BaseGuard.sol";
 

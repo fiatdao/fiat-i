@@ -10,7 +10,7 @@ import {IMoneta} from "../../interfaces/IMoneta.sol";
 import {IFIAT} from "../../interfaces/IFIAT.sol";
 import {IFlash, ICreditFlashBorrower, IERC3156FlashBorrower} from "../../interfaces/IFlash.sol";
 import {IPublican} from "../../interfaces/IPublican.sol";
-import {WAD, toInt256, add, wmul, wdiv, sub} from "../../utils/Math.sol";
+import {WAD, toInt256, add, wmul, wdiv, sub} from "../../core/utils/Math.sol";
 
 import {IBalancerVault} from "../helper/ConvergentCurvePoolHelper.sol";
 

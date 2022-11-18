@@ -7,8 +7,8 @@ import {IERC20} from "openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ICodex} from "../interfaces/ICodex.sol";
 import {ISurplusAuction} from "../interfaces/ISurplusAuction.sol";
 
-import {Guarded} from "../utils/Guarded.sol";
-import {WAD, add48, sub, mul} from "../utils/Math.sol";
+import {Guarded} from "../core/utils/Guarded.sol";
+import {WAD, add48, sub, mul} from "../core/utils/Math.sol";
 
 /// @title SurplusAuction
 /// @notice
