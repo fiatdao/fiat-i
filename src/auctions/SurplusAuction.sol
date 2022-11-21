@@ -3,6 +3,8 @@
 pragma solidity ^0.8.4;
 
 import {IERC20} from "openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC20Burnable} from "openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+
 import {SafeERC20} from "openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {ICodex} from "../interfaces/ICodex.sol";
@@ -174,7 +176,7 @@ contract SurplusAuction is Guarded, ISurplusAuction {
                     auctions[auctionId].auctionExpiry < block.timestamp))
         ) revert SurplusAuction__closeAuction_notFinished();
         codex.transferCredit(address(this), auctions[auctionId].recipient, auctions[auctionId].creditToSell);
-        token.safeTransfer(governance, auctions[auctionId].bid);
+        ERC20Burnable(address(token)).burn(auctions[auctionId].bid);
         delete auctions[auctionId];
     }
 
