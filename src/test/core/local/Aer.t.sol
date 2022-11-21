@@ -32,7 +32,7 @@ contract AerTest is Test {
 
         gov = new Token();
         debtAuction = new DebtAuction(address(codex), address(gov));
-        surplusAuction = new SurplusAuction(address(codex), address(gov));
+        surplusAuction = new SurplusAuction(address(codex), address(gov),address(this));
 
         aer = new Aer(address(codex), address(surplusAuction), address(debtAuction));
         surplusAuction.allowCaller(keccak256("ANY_SIG"), address(aer));
@@ -118,7 +118,7 @@ contract AerTest is Test {
     }
 
     function test_change_surplusAuction_debtAuction() public {
-        SurplusAuction newFlap = new SurplusAuction(address(codex), address(gov));
+        SurplusAuction newFlap = new SurplusAuction(address(codex), address(gov),address(this));
         DebtAuction newFlop = new DebtAuction(address(codex), address(gov));
 
         newFlap.allowCaller(keccak256("ANY_SIG"), address(aer));

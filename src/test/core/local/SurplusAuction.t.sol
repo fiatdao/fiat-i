@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import {Test} from "forge-std/Test.sol";
 
 import {DSToken} from "../../utils/dapphub/DSToken.sol";
+import {ERC20} from "openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import {Codex} from "../../../core/Codex.sol";
 import {SurplusAuction} from "../../../auctions/SurplusAuction.sol";
@@ -53,12 +54,18 @@ contract Guy {
     }
 }
 
+contract OZToken is ERC20("OZ ERC20","0Z20") {
+    function mint(address to, uint value) external {
+        _mint(to,value);
+    }
+}
 contract SurplusAuctionTest is Test {
     Hevm hevm;
 
     SurplusAuction surplusAuction;
     Codex codex;
     DSToken token;
+    OZToken ozToken;
 
     address ali;
     address bob;
@@ -69,9 +76,10 @@ contract SurplusAuctionTest is Test {
 
         codex = new Codex();
         token = new DSToken("");
+        ozToken = new OZToken();
 
-        surplusAuction = new SurplusAuction(address(codex), address(token));
-
+        surplusAuction = new SurplusAuction(address(codex), address(token),address(this));
+        
         ali = address(new Guy(surplusAuction));
         bob = address(new Guy(surplusAuction));
 
@@ -85,6 +93,8 @@ contract SurplusAuctionTest is Test {
 
         token.push(ali, 200 ether);
         token.push(bob, 200 ether);
+        
+        ozToken.mint(address(this),1000 ether);
     }
 
     function test_startAuction() public {
@@ -153,4 +163,33 @@ contract SurplusAuctionTest is Test {
         // check biddable
         assertTrue(Guy(ali).try_submitBid(id, 100 ether, 1 ether));
     }
+
+    function test_cancelAuction() public {
+        // start an auction
+        uint256 id = surplusAuction.startAuction({creditToSell: 100 ether, bid: 0});
+        surplusAuction.lock(0);
+        surplusAuction.cancelAuction(id);
+    }
+    
+    function testFail_OZ_transferFrom() public {
+        ozToken.transferFrom(address(this),address(2),1000 ether); 
+    }
+
+    function test_transferFrom() public {
+        token.transferFrom(address(this),address(2),600 ether);    
+        assertEq(token.balanceOf(address(2)),600 ether);  
+        assertEq(token.balanceOf(address(this)),0);  
+    }
+
+    function testFail_OZ_transfer_to_ZERO_address() public {
+        ozToken.transfer(address(0),600 ether);    
+    }
+
+    function test_transfer_to_ZERO_address() public {
+        token.transfer(address(0),600 ether); 
+        assertEq(token.balanceOf(address(0)),600 ether);
+        assertEq(token.balanceOf(address(this)),0);     
+    }
+    
+    
 }

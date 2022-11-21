@@ -24,7 +24,7 @@ contract AerGuardTest is Test {
     function setUp() public {
         codex = new Codex();
         debtAuction = new DebtAuction(address(codex), address(new DSToken("")));
-        surplusAuction = new SurplusAuction(address(codex), address(new DSToken("")));
+        surplusAuction = new SurplusAuction(address(codex), address(new DSToken("")), address(this));
         aer = new Aer(address(codex), address(surplusAuction), address(debtAuction));
 
         aerGuard = new AerGuard(address(this), address(this), 1, address(aer));

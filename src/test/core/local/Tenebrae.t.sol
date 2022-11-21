@@ -190,7 +190,7 @@ contract TenebraeTest is Test {
         codex = new Codex();
         DSToken gov = new DSToken("GOV");
 
-        surplusAuction = new SurplusAuction(address(codex), address(gov));
+        surplusAuction = new SurplusAuction(address(codex), address(gov),address(this));
         debtAuction = new DebtAuction(address(codex), address(gov));
         gov.setOwner(address(debtAuction));
 
