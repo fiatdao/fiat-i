@@ -17,3 +17,6 @@ verbosity = 4
 [fmt]
 int_types = "preserve"
 number_underscore = "preserve"
+
+[rpc_endpoints]
+mainnet = "https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API_KEY}"

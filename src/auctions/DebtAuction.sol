@@ -9,8 +9,8 @@ import {ICodex} from "../interfaces/ICodex.sol";
 import {ICollybus} from "../interfaces/ICollybus.sol";
 import {IDebtAuction} from "../interfaces/IDebtAuction.sol";
 
-import {Guarded} from "../utils/Guarded.sol";
-import {WAD, min, add48, mul} from "../utils/Math.sol";
+import {Guarded} from "../core/utils/Guarded.sol";
+import {WAD, min, add48, mul} from "../core/utils/Math.sol";
 
 /// @title DebtAuction
 /// @notice

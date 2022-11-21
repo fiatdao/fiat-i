@@ -3,12 +3,13 @@
 pragma solidity ^0.8.4;
 
 import {IERC20} from "openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {ICodex} from "../interfaces/ICodex.sol";
 import {ISurplusAuction} from "../interfaces/ISurplusAuction.sol";
 
-import {Guarded} from "../utils/Guarded.sol";
-import {WAD, add48, sub, mul} from "../utils/Math.sol";
+import {Guarded} from "../core/utils/Guarded.sol";
+import {WAD, add48, sub, mul} from "../core/utils/Math.sol";
 
 /// @title SurplusAuction
 /// @notice
@@ -18,6 +19,7 @@ import {WAD, add48, sub, mul} from "../utils/Math.sol";
 /// - uses a method signature based authentication scheme
 /// - supports ERC1155, ERC721 style assets by TokenId
 contract SurplusAuction is Guarded, ISurplusAuction {
+    using SafeERC20 for IERC20;
     /// ======== Custom Errors ======== ///
 
     error SurplusAuction__setParam_unrecognizedParam();
@@ -61,7 +63,8 @@ contract SurplusAuction is Guarded, ISurplusAuction {
     ICodex public immutable override codex;
     /// @notice Tokens to receive for credit
     IERC20 public immutable override token;
-
+    /// @notice Governance address (will receive tokens)
+    address public immutable governance;
     /// @notice 5% minimum bid increase
     uint256 public override minBidBump = 1.05e18;
     /// @notice 3 hours bid duration [seconds]
@@ -78,9 +81,10 @@ contract SurplusAuction is Guarded, ISurplusAuction {
 
     event StartAuction(uint256 id, uint256 creditToSell, uint256 bid);
 
-    constructor(address codex_, address token_) Guarded() {
+    constructor(address codex_, address token_,address governance_) Guarded() {
         codex = ICodex(codex_);
         token = IERC20(token_);
+        governance = governance_;
         live = 1;
     }
 
@@ -170,7 +174,7 @@ contract SurplusAuction is Guarded, ISurplusAuction {
                     auctions[auctionId].auctionExpiry < block.timestamp))
         ) revert SurplusAuction__closeAuction_notFinished();
         codex.transferCredit(address(this), auctions[auctionId].recipient, auctions[auctionId].creditToSell);
-        token.transfer(address(0), auctions[auctionId].bid);
+        token.safeTransfer(governance, auctions[auctionId].bid);
         delete auctions[auctionId];
     }
 
@@ -189,7 +193,7 @@ contract SurplusAuction is Guarded, ISurplusAuction {
     function cancelAuction(uint256 auctionId) external override {
         if (live == 1) revert SurplusAuction__cancelAuction_stillLive();
         if (auctions[auctionId].recipient == address(0)) revert SurplusAuction__cancelAuction_recipientNotSet();
-        token.transferFrom(address(this), auctions[auctionId].recipient, auctions[auctionId].bid);
+        token.safeTransfer(auctions[auctionId].recipient, auctions[auctionId].bid);
         delete auctions[auctionId];
     }
 }
