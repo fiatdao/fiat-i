@@ -6,15 +6,12 @@ import {SafeERC20} from "openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"
 import {NoLossCollateralAuctionActionsBase} from "./NoLossCollateralAuctionActionsBase.sol";
 import {IBalancerVault} from "../helper/ConvergentCurvePoolHelper.sol";
 import {IVault} from "../../interfaces/IVault.sol";
+import {ITranche} from "../vault/VaultEPTActions.sol";
 import {WAD, toInt256, sub, mul, div, wmul, wdiv} from "../../core/utils/Math.sol";
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // WARNING: These functions meant to be used as a a library for a PRBProxy. Some are unsafe if you call them directly.
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-interface ITranche {
-    function withdrawPrincipal(uint256 _amount, address _destination) external returns (uint256);
-}
 
 /// @title NoLossCollateralAuctionActions
 /// @notice A set of actions for buying and redeeming collateral from NoLossCollateralAuction

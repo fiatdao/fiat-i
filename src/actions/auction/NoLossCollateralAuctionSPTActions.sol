@@ -5,34 +5,12 @@ import {IERC20} from "openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {NoLossCollateralAuctionActionsBase} from "./NoLossCollateralAuctionActionsBase.sol";
 import {IVault} from "../../interfaces/IVault.sol";
+import {IPeriphery, IDivider, IAdapter} from "../vault/VaultSPTActions.sol";
 import {WAD, toInt256, sub, mul, div, wmul, wdiv} from "../../core/utils/Math.sol";
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // WARNING: These functions meant to be used as a a library for a PRBProxy. Some are unsafe if you call them directly.
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-interface IPeriphery {
-    function swapPTsForUnderlying(
-        address adapter,
-        uint256 maturity,
-        uint256 ptBal,
-        uint256 minAccepted
-    ) external returns (uint256 uBal);
-
-    function divider() external view returns (address divider);
-}
-
-interface IDivider {
-    function redeem(
-        address adapter,
-        uint256 maturity,
-        uint256 uBal
-    ) external returns (uint256 tBal);
-}
-
-interface IAdapter {
-    function unwrapTarget(uint256 amount) external returns (uint256);
-}
 
 /// @title NoLossCollateralAuctionActions
 /// @notice A set of actions for buying and redeeming collateral from NoLossCollateralAuction
