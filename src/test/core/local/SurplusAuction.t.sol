@@ -78,7 +78,7 @@ contract SurplusAuctionTest is Test {
         token = new DSToken("");
         ozToken = new OZToken();
 
-        surplusAuction = new SurplusAuction(address(codex), address(token),address(this));
+        surplusAuction = new SurplusAuction(address(codex), address(token));
         
         ali = address(new Guy(surplusAuction));
         bob = address(new Guy(surplusAuction));

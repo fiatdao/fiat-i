@@ -65,8 +65,6 @@ contract SurplusAuction is Guarded, ISurplusAuction {
     ICodex public immutable override codex;
     /// @notice Tokens to receive for credit
     IERC20 public immutable override token;
-    /// @notice Governance address (will receive tokens)
-    address public immutable governance;
     /// @notice 5% minimum bid increase
     uint256 public override minBidBump = 1.05e18;
     /// @notice 3 hours bid duration [seconds]
@@ -83,10 +81,9 @@ contract SurplusAuction is Guarded, ISurplusAuction {
 
     event StartAuction(uint256 id, uint256 creditToSell, uint256 bid);
 
-    constructor(address codex_, address token_,address governance_) Guarded() {
+    constructor(address codex_, address token_) Guarded() {
         codex = ICodex(codex_);
         token = IERC20(token_);
-        governance = governance_;
         live = 1;
     }
 
