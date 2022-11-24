@@ -9,14 +9,14 @@ import {DSToken} from "../../utils/dapphub/DSToken.sol";
 import {DSValue} from "../../utils/dapphub/DSValue.sol";
 
 import {Codex} from "../../../core/Codex.sol";
-import {CollateralAuction} from "../../../auctions/CollateralAuction.sol";
+import {CollateralAuction} from "../../../core/auctions/CollateralAuction.sol";
 import {Collybus} from "../../../core/Collybus.sol";
-import {DebtAuction} from "../../../auctions/DebtAuction.sol";
+import {DebtAuction} from "../../../core/auctions/DebtAuction.sol";
 import {Aer} from "../../../core/Aer.sol";
 import {Limes} from "../../../core/Limes.sol";
 import {WAD, wmul} from "../../../core/utils/Math.sol";
 import {Vault20} from "../../../vaults/Vault.sol";
-import {SurplusAuction} from "../../../auctions/SurplusAuction.sol";
+import {SurplusAuction} from "../../../core/auctions/SurplusAuction.sol";
 import {Tenebrae} from "../../../core/Tenebrae.sol";
 
 uint256 constant tokenId = 0;

@@ -4,13 +4,13 @@ pragma solidity ^0.8.4;
 
 import {IERC20} from "openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {IAer} from "../interfaces/IAer.sol";
-import {ICodex} from "../interfaces/ICodex.sol";
-import {ICollybus} from "../interfaces/ICollybus.sol";
-import {IDebtAuction} from "../interfaces/IDebtAuction.sol";
+import {IAer} from "../../interfaces/IAer.sol";
+import {ICodex} from "../../interfaces/ICodex.sol";
+import {ICollybus} from "../../interfaces/ICollybus.sol";
+import {IDebtAuction} from "../../interfaces/IDebtAuction.sol";
 
-import {Guarded} from "../core/utils/Guarded.sol";
-import {WAD, min, add48, mul} from "../core/utils/Math.sol";
+import {Guarded} from "../utils/Guarded.sol";
+import {WAD, min, add48, mul} from "../utils/Math.sol";
 
 /// @title DebtAuction
 /// @notice

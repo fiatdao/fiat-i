@@ -8,8 +8,8 @@ import {Codex} from "../core/Codex.sol";
 import {Publican} from "../core/Publican.sol";
 import {Limes} from "../core/Limes.sol";
 import {Collybus} from "../core/Collybus.sol";
-import {NoLossCollateralAuction} from "../auctions/NoLossCollateralAuction.sol";
-import {LinearDecrease, StairstepExponentialDecrease, ExponentialDecrease} from "../auctions/PriceCalculator.sol";
+import {NoLossCollateralAuction} from "../core/auctions/NoLossCollateralAuction.sol";
+import {LinearDecrease, StairstepExponentialDecrease, ExponentialDecrease} from "../core/auctions/PriceCalculator.sol";
 import {WAD} from "../core/utils/Math.sol";
 
 import {Delayed} from "./Delayed.sol";

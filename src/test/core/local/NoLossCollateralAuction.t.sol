@@ -9,14 +9,14 @@ import {DSValue} from "../../utils/dapphub/DSValue.sol";
 import {IVault} from "../../../interfaces/IVault.sol";
 
 import {Codex} from "../../../core/Codex.sol";
-import {NoLossCollateralAuction} from "../../../auctions/NoLossCollateralAuction.sol";
+import {NoLossCollateralAuction} from "../../../core/auctions/NoLossCollateralAuction.sol";
 import {Collybus} from "../../../core/Collybus.sol";
 import {Aer} from "../../../core/Aer.sol";
 import {Limes} from "../../../core/Limes.sol";
 import {WAD, sub, mul, wdiv} from "../../../core/utils/Math.sol";
 import {Vault20} from "../../../vaults/Vault.sol";
 import {Moneta} from "../../../core/Moneta.sol";
-import {StairstepExponentialDecrease, LinearDecrease} from "../../../auctions/PriceCalculator.sol";
+import {StairstepExponentialDecrease, LinearDecrease} from "../../../core/auctions/PriceCalculator.sol";
 
 uint256 constant tokenId = 0;
 
