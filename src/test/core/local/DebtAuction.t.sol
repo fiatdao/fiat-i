@@ -6,7 +6,7 @@ import {Test} from "forge-std/Test.sol";
 import {DSToken} from "../../utils/dapphub/DSToken.sol";
 
 import {Codex} from "../../../core/Codex.sol";
-import {DebtAuction} from "../../../auctions/DebtAuction.sol";
+import {DebtAuction} from "../../../core/auctions/DebtAuction.sol";
 import {WAD, sub} from "../../../core/utils/Math.sol";
 
 contract Guy {

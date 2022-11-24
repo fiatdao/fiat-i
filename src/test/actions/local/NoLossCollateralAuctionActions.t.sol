@@ -11,11 +11,11 @@ import {PRBProxy} from "proxy/contracts/PRBProxy.sol";
 
 import {Aer} from "../../../core/Aer.sol";
 import {Codex} from "../../../core/Codex.sol";
-import {NoLossCollateralAuction} from "../../../auctions/NoLossCollateralAuction.sol";
+import {NoLossCollateralAuction} from "../../../core/auctions/NoLossCollateralAuction.sol";
 import {Collybus} from "../../../core/Collybus.sol";
 import {FIAT} from "../../../core/FIAT.sol";
 import {Limes} from "../../../core/Limes.sol";
-import {LinearDecrease} from "../../../auctions/PriceCalculator.sol";
+import {LinearDecrease} from "../../../core/auctions/PriceCalculator.sol";
 import {Moneta} from "../../../core/Moneta.sol";
 import {Publican} from "../../../core/Publican.sol";
 import {Vault20} from "../../../vaults/Vault.sol";

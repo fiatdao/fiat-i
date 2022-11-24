@@ -2,44 +2,45 @@
 // Copyright (C) 2020-2021 Maker Ecosystem Growth Holdings, INC.
 pragma solidity ^0.8.4;
 
-import {IPriceCalculator} from "../interfaces/IPriceCalculator.sol";
-import {ICodex} from "../interfaces/ICodex.sol";
-import {ICollateralAuction, CollateralAuctionCallee} from "../interfaces/ICollateralAuction.sol";
-import {ICollybus} from "../interfaces/ICollybus.sol";
-import {IAer} from "../interfaces/IAer.sol";
-import {ILimes} from "../interfaces/ILimes.sol";
-import {IVault} from "../interfaces/IVault.sol";
+import {IPriceCalculator} from "../../interfaces/IPriceCalculator.sol";
+import {ICodex} from "../../interfaces/ICodex.sol";
+import {CollateralAuctionCallee} from "../../interfaces/ICollateralAuction.sol";
+import {INoLossCollateralAuction} from "../../interfaces/INoLossCollateralAuction.sol";
+import {ICollybus} from "../../interfaces/ICollybus.sol";
+import {IAer} from "../../interfaces/IAer.sol";
+import {ILimes} from "../../interfaces/ILimes.sol";
+import {IVault} from "../../interfaces/IVault.sol";
 
-import {Guarded} from "../core/utils/Guarded.sol";
-import {WAD, max, min, add, sub, mul, wmul, wdiv} from "../core/utils/Math.sol";
+import {Guarded} from "../utils/Guarded.sol";
+import {WAD, max, min, add, sub, mul, wmul, wdiv} from "../utils/Math.sol";
 
-/// @title CollateralAuction
-/// @notice
+/// @title NoLossCollateralAuction
+/// @notice Same as CollateralAuction but enforces a floor price of debt / collateral
 /// Uses Clip.sol from DSS (MakerDAO) as a blueprint
 /// Changes from Clip.sol:
 /// - only WAD precision is used (no RAD and RAY)
 /// - uses a method signature based authentication scheme
 /// - supports ERC1155, ERC721 style assets by TokenId
-contract CollateralAuction is Guarded, ICollateralAuction {
+contract NoLossCollateralAuction is Guarded, INoLossCollateralAuction {
     /// ======== Custom Errors ======== ///
 
-    error CollateralAuction__init_vaultAlreadyInit();
-    error CollateralAuction__checkReentrancy_reentered();
-    error CollateralAuction__isStopped_stoppedIncorrect();
-    error CollateralAuction__setParam_unrecognizedParam();
-    error CollateralAuction__startAuction_zeroDebt();
-    error CollateralAuction__startAuction_zeroCollateralToSell();
-    error CollateralAuction__startAuction_zeroUser();
-    error CollateralAuction__startAuction_overflow();
-    error CollateralAuction__startAuction_zeroStartPrice();
-    error CollateralAuction__redoAuction_notRunningAuction();
-    error CollateralAuction__redoAuction_cannotReset();
-    error CollateralAuction__redoAuction_zeroStartPrice();
-    error CollateralAuction__takeCollateral_notRunningAuction();
-    error CollateralAuction__takeCollateral_needsReset();
-    error CollateralAuction__takeCollateral_tooExpensive();
-    error CollateralAuction__takeCollateral_noPartialPurchase();
-    error CollateralAuction__cancelAuction_notRunningAction();
+    error NoLossCollateralAuction__init_vaultAlreadyInit();
+    error NoLossCollateralAuction__checkReentrancy_reentered();
+    error NoLossCollateralAuction__isStopped_stoppedIncorrect();
+    error NoLossCollateralAuction__setParam_unrecognizedParam();
+    error NoLossCollateralAuction__startAuction_zeroDebt();
+    error NoLossCollateralAuction__startAuction_zeroCollateralToSell();
+    error NoLossCollateralAuction__startAuction_zeroUser();
+    error NoLossCollateralAuction__startAuction_overflow();
+    error NoLossCollateralAuction__startAuction_zeroStartPrice();
+    error NoLossCollateralAuction__redoAuction_notRunningAuction();
+    error NoLossCollateralAuction__redoAuction_cannotReset();
+    error NoLossCollateralAuction__redoAuction_zeroStartPrice();
+    error NoLossCollateralAuction__takeCollateral_notRunningAuction();
+    error NoLossCollateralAuction__takeCollateral_needsReset();
+    error NoLossCollateralAuction__takeCollateral_tooExpensive();
+    error NoLossCollateralAuction__takeCollateral_noPartialPurchase();
+    error NoLossCollateralAuction__cancelAuction_notRunningAction();
 
     /// ======== Storage ======== ///
 
@@ -49,8 +50,6 @@ contract CollateralAuction is Guarded, ICollateralAuction {
         uint256 multiplier;
         // Time elapsed before auction reset [seconds]
         uint256 maxAuctionDuration;
-        // Percentage drop before auction reset [percentage in wad]
-        uint256 maxDiscount;
         // Cache (v.debtFloor * v.liquidationPenalty) to prevent excessive SLOADs [wad]
         uint256 auctionDebtFloor;
         // Collateral price module
@@ -169,13 +168,13 @@ contract CollateralAuction is Guarded, ICollateralAuction {
             entered = 1;
             _;
             entered = 0;
-        } else revert CollateralAuction__checkReentrancy_reentered();
+        } else revert NoLossCollateralAuction__checkReentrancy_reentered();
     }
 
     modifier isStopped(uint256 level) {
         if (stopped < level) {
             _;
-        } else revert CollateralAuction__isStopped_stoppedIncorrect();
+        } else revert NoLossCollateralAuction__isStopped_stoppedIncorrect();
     }
 
     /// ======== Configuration ======== ///
@@ -185,7 +184,8 @@ contract CollateralAuction is Guarded, ICollateralAuction {
     /// @param vault Address of the Vault
     /// @param collybus Address of the Collybus the Vault uses for pricing
     function init(address vault, address collybus) external override checkCaller {
-        if (vaults[vault].calculator != IPriceCalculator(address(0))) revert CollateralAuction__init_vaultAlreadyInit();
+        if (vaults[vault].calculator != IPriceCalculator(address(0)))
+            revert NoLossCollateralAuction__init_vaultAlreadyInit();
         vaults[vault].multiplier = WAD;
         vaults[vault].collybus = ICollybus(collybus);
 
@@ -203,7 +203,7 @@ contract CollateralAuction is Guarded, ICollateralAuction {
             flatTip = uint192(data); // Flat fee to incentivize keepers (max: 2^192 - 1 => 6.277T WAD)
         else if (param == "stopped")
             stopped = data; // Set breaker (0, 1, 2, or 3)
-        else revert CollateralAuction__setParam_unrecognizedParam();
+        else revert NoLossCollateralAuction__setParam_unrecognizedParam();
         emit SetParam(param, data);
     }
 
@@ -214,7 +214,7 @@ contract CollateralAuction is Guarded, ICollateralAuction {
     function setParam(bytes32 param, address data) external override checkCaller checkReentrancy {
         if (param == "limes") limes = ILimes(data);
         else if (param == "aer") aer = IAer(data);
-        else revert CollateralAuction__setParam_unrecognizedParam();
+        else revert NoLossCollateralAuction__setParam_unrecognizedParam();
         emit SetParam(param, data);
     }
 
@@ -231,9 +231,7 @@ contract CollateralAuction is Guarded, ICollateralAuction {
         if (param == "multiplier") vaults[vault].multiplier = data;
         else if (param == "maxAuctionDuration")
             vaults[vault].maxAuctionDuration = data; // Time elapsed before auction reset
-        else if (param == "maxDiscount")
-            vaults[vault].maxDiscount = data; // Percentage drop before auction reset
-        else revert CollateralAuction__setParam_unrecognizedParam();
+        else revert NoLossCollateralAuction__setParam_unrecognizedParam();
         emit SetParam(vault, param, data);
     }
 
@@ -249,16 +247,13 @@ contract CollateralAuction is Guarded, ICollateralAuction {
     ) external override checkCaller checkReentrancy {
         if (param == "collybus") vaults[vault].collybus = ICollybus(data);
         else if (param == "calculator") vaults[vault].calculator = IPriceCalculator(data);
-        else revert CollateralAuction__setParam_unrecognizedParam();
+        else revert NoLossCollateralAuction__setParam_unrecognizedParam();
         emit SetParam(vault, param, data);
     }
 
-    /// ======== Collateral Auction ======== ///
+    /// ======== No Loss Collateral Auction ======== ///
 
-    // Get the price directly from the OSM
-    // Could get this from wmul(Codex.vaults(vault).collybus, Collybus.liquidationRatio()) instead, but
-    // if liquidationRatio has changed since the last poke, the resulting value will be
-    // incorrect.
+    // get price at maturity
     function _getPrice(address vault, uint256 tokenId) internal view returns (uint256) {
         return IVault(vault).fairPrice(tokenId, false, true);
     }
@@ -287,13 +282,13 @@ contract CollateralAuction is Guarded, ICollateralAuction {
         address keeper
     ) external override checkCaller checkReentrancy isStopped(1) returns (uint256 auctionId) {
         // Input validation
-        if (debt <= 0) revert CollateralAuction__startAuction_zeroDebt();
-        if (collateralToSell <= 0) revert CollateralAuction__startAuction_zeroCollateralToSell();
-        if (user == address(0)) revert CollateralAuction__startAuction_zeroUser();
+        if (debt == 0) revert NoLossCollateralAuction__startAuction_zeroDebt();
+        if (collateralToSell == 0) revert NoLossCollateralAuction__startAuction_zeroCollateralToSell();
+        if (user == address(0)) revert NoLossCollateralAuction__startAuction_zeroUser();
         unchecked {
             auctionId = ++auctionCounter;
         }
-        if (auctionId <= 0) revert CollateralAuction__startAuction_overflow();
+        if (auctionId == 0) revert NoLossCollateralAuction__startAuction_overflow();
 
         activeAuctions.push(auctionId);
 
@@ -308,7 +303,7 @@ contract CollateralAuction is Guarded, ICollateralAuction {
 
         uint256 startPrice;
         startPrice = wmul(_getPrice(vault, tokenId), vaults[vault].multiplier);
-        if (startPrice <= 0) revert CollateralAuction__startAuction_zeroStartPrice();
+        if (startPrice <= 0) revert NoLossCollateralAuction__startAuction_zeroStartPrice();
         auctions[auctionId].startPrice = startPrice;
 
         // incentive to startAuction auction
@@ -333,13 +328,13 @@ contract CollateralAuction is Guarded, ICollateralAuction {
         // Read auction data
         Auction memory auction = auctions[auctionId];
 
-        if (auction.user == address(0)) revert CollateralAuction__redoAuction_notRunningAuction();
+        if (auction.user == address(0)) revert NoLossCollateralAuction__redoAuction_notRunningAuction();
 
         // Check that auction needs reset
         // and compute current price [wad]
         {
-            (bool done, ) = status(auction.vault, auction.startsAt, auction.startPrice);
-            if (!done) revert CollateralAuction__redoAuction_cannotReset();
+            (bool done, ) = status(auction);
+            if (!done) revert NoLossCollateralAuction__redoAuction_cannotReset();
         }
 
         uint256 debt = auctions[auctionId].debt;
@@ -348,7 +343,7 @@ contract CollateralAuction is Guarded, ICollateralAuction {
 
         uint256 price = _getPrice(auction.vault, auction.tokenId);
         uint256 startPrice = wmul(price, vaults[auction.vault].multiplier);
-        if (startPrice == 0) revert CollateralAuction__redoAuction_zeroStartPrice();
+        if (startPrice <= 0) revert NoLossCollateralAuction__redoAuction_zeroStartPrice();
         auctions[auctionId].startPrice = startPrice;
 
         // incentive to redoAuction auction
@@ -395,6 +390,9 @@ contract CollateralAuction is Guarded, ICollateralAuction {
     ///
     /// If `debt <= auctionDebtFloor`, partial purchases are no longer possible; that is, the remaining
     /// collateral can only be purchased entirely, or not at all.
+    ///
+    /// Enforces a price floor of debt / collateral
+    ///
     /// @dev Reverts if circuit breaker is set to 3 (no new auctions, no redos of auctions and no collateral buying)
     /// @param auctionId Id of the auction to buy collateral from
     /// @param collateralAmount Upper limit on amount of collateral to buy [wad]
@@ -402,25 +400,25 @@ contract CollateralAuction is Guarded, ICollateralAuction {
     /// @param recipient Receiver of collateral and external call address
     /// @param data Data to pass in external call; if length 0, no call is done
     function takeCollateral(
-        uint256 auctionId,
-        uint256 collateralAmount,
-        uint256 maxPrice,
-        address recipient,
-        bytes calldata data
+        uint256 auctionId, // Auction id
+        uint256 collateralAmount, // Upper limit on amount of collateral to buy [wad]
+        uint256 maxPrice, // Maximum acceptable price (Credit / collateral) [wad]
+        address recipient, // Receiver of collateral and external call address
+        bytes calldata data // Data to pass in external call; if length 0, no call is done
     ) external override checkReentrancy isStopped(3) {
         Auction memory auction = auctions[auctionId];
 
-        if (auction.user == address(0)) revert CollateralAuction__takeCollateral_notRunningAuction();
+        if (auction.user == address(0)) revert NoLossCollateralAuction__takeCollateral_notRunningAuction();
 
         uint256 price;
         {
             bool done;
-            (done, price) = status(auction.vault, auction.startsAt, auction.startPrice);
+            (done, price) = status(auction);
 
             // Check that auction doesn't need reset
-            if (done) revert CollateralAuction__takeCollateral_needsReset();
+            if (done) revert NoLossCollateralAuction__takeCollateral_needsReset();
             // Ensure price is acceptable to buyer
-            if (maxPrice < price) revert CollateralAuction__takeCollateral_tooExpensive();
+            if (maxPrice < price) revert NoLossCollateralAuction__takeCollateral_tooExpensive();
         }
 
         uint256 collateralToSell = auction.collateralToSell;
@@ -436,20 +434,16 @@ contract CollateralAuction is Guarded, ICollateralAuction {
                 // Credit needed to buy a collateralSlice of this auction
                 owe = wmul(collateralSlice, price);
 
-                // Don't collect more than debt of Credit
-                if (owe > debt) {
-                    // Total debt will be paid
-                    owe = debt; // owe' <= owe
-                    // Adjust collateralSlice
-                    // collateralSlice' = owe' / price <= owe / price == collateralSlice <= collateralToSell
-                    collateralSlice = wdiv(owe, price);
-                } else if (owe < debt && collateralSlice < collateralToSell) {
+                // owe can be greater than debt and thus user would pay a premium to the recipient
+
+                if (owe < debt && collateralSlice < collateralToSell) {
                     // If collateralSlice == collateralToSell => auction completed => debtFloor doesn't matter
                     uint256 _auctionDebtFloor = vaults[auction.vault].auctionDebtFloor;
                     if (debt - owe < _auctionDebtFloor) {
                         // safe as owe < debt
                         // If debt <= auctionDebtFloor, buyers have to take the entire collateralToSell.
-                        if (debt <= _auctionDebtFloor) revert CollateralAuction__takeCollateral_noPartialPurchase();
+                        if (debt <= _auctionDebtFloor)
+                            revert NoLossCollateralAuction__takeCollateral_noPartialPurchase();
                         // Adjust amount to pay
                         owe = debt - _auctionDebtFloor; // owe' <= owe
                         // Adjust collateralSlice
@@ -458,8 +452,6 @@ contract CollateralAuction is Guarded, ICollateralAuction {
                     }
                 }
 
-                // Calculate remaining debt after operation
-                debt = debt - owe; // safe since owe <= debt
                 // Calculate remaining collateralToSell after operation
                 collateralToSell = collateralToSell - collateralSlice;
 
@@ -478,7 +470,12 @@ contract CollateralAuction is Guarded, ICollateralAuction {
                 codex.transferCredit(msg.sender, address(aer), owe);
 
                 // Removes Credit out for liquidation from accumulator
-                limes_.liquidated(auction.vault, auction.tokenId, collateralToSell == 0 ? add(debt, owe) : owe);
+                // if all collateral has been sold or owe is larger than remaining debt
+                //  then just remove the remaining debt from the accumulator
+                limes_.liquidated(auction.vault, auction.tokenId, (collateralToSell == 0 || debt < owe) ? debt : owe);
+
+                // Calculate remaining debt after operation
+                debt = (owe < debt) ? debt - owe : 0; // safe since owe <= debt
             }
         }
 
@@ -507,7 +504,7 @@ contract CollateralAuction is Guarded, ICollateralAuction {
 
     // Removes an auction from the active auctions array
     function _remove(uint256 auctionId) internal {
-        uint256 _move = activeAuctions[activeAuctions.length - 1]; // longest running auction
+        uint256 _move = activeAuctions[activeAuctions.length - 1];
         if (auctionId != _move) {
             uint256 _index = auctions[auctionId].index;
             activeAuctions[_index] = _move;
@@ -546,28 +543,25 @@ contract CollateralAuction is Guarded, ICollateralAuction {
             uint256 debt
         )
     {
-        // Read auction data
-        address vault = auctions[auctionId].vault;
-        address user = auctions[auctionId].user;
-        uint96 startsAt = auctions[auctionId].startsAt;
+        Auction memory auction = auctions[auctionId];
 
         bool done;
-        (done, price) = status(vault, startsAt, auctions[auctionId].startPrice);
+        (done, price) = status(auction);
 
-        needsRedo = user != address(0) && done;
-        collateralToSell = auctions[auctionId].collateralToSell;
-        debt = auctions[auctionId].debt;
+        needsRedo = auction.user != address(0) && done;
+        collateralToSell = auction.collateralToSell;
+        debt = auction.debt;
     }
 
     // Internally returns boolean for if an auction needs a redo
-    function status(
-        address vault,
-        uint96 startsAt,
-        uint256 startPrice
-    ) internal view returns (bool done, uint256 price) {
-        price = vaults[vault].calculator.price(startPrice, sub(block.timestamp, startsAt));
-        done = (sub(block.timestamp, startsAt) > vaults[vault].maxAuctionDuration ||
-            wdiv(price, startPrice) < vaults[vault].maxDiscount);
+    function status(Auction memory auction) internal view returns (bool done, uint256 price) {
+        uint256 floorPrice = wdiv(auction.debt, auction.collateralToSell);
+        price = max(
+            floorPrice,
+            vaults[auction.vault].calculator.price(auction.startPrice, sub(block.timestamp, auction.startsAt))
+        );
+        done = (sub(block.timestamp, auction.startsAt) > vaults[auction.vault].maxAuctionDuration ||
+            price == floorPrice);
     }
 
     /// @notice Public function to update the cached vault.debtFloor*vault.liquidationPenalty value
@@ -585,7 +579,7 @@ contract CollateralAuction is Guarded, ICollateralAuction {
     /// @dev Sender has to be allowed to call this method
     /// @param auctionId Id of the auction to cancel
     function cancelAuction(uint256 auctionId) external override checkCaller checkReentrancy {
-        if (auctions[auctionId].user == address(0)) revert CollateralAuction__cancelAuction_notRunningAction();
+        if (auctions[auctionId].user == address(0)) revert NoLossCollateralAuction__cancelAuction_notRunningAction();
         address vault = auctions[auctionId].vault;
         uint256 tokenId = auctions[auctionId].tokenId;
         limes.liquidated(vault, tokenId, auctions[auctionId].debt);
