@@ -9,8 +9,8 @@ import {Codex} from "../../../core/Codex.sol";
 import {Publican} from "../../../core/Publican.sol";
 import {Limes} from "../../../core/Limes.sol";
 import {Collybus} from "../../../core/Collybus.sol";
-import {NoLossCollateralAuction} from "../../../auctions/NoLossCollateralAuction.sol";
-import {LinearDecrease} from "../../../auctions/PriceCalculator.sol";
+import {NoLossCollateralAuction} from "../../../core/auctions/NoLossCollateralAuction.sol";
+import {LinearDecrease} from "../../../core/auctions/PriceCalculator.sol";
 import {Vault20} from "../../../vaults/Vault.sol";
 import {WAD} from "../../../core/utils/Math.sol";
 

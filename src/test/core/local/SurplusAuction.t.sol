@@ -7,7 +7,7 @@ import {DSToken} from "../../utils/dapphub/DSToken.sol";
 import {ERC20} from "openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import {Codex} from "../../../core/Codex.sol";
-import {SurplusAuction} from "../../../auctions/SurplusAuction.sol";
+import {SurplusAuction} from "../../../core/auctions/SurplusAuction.sol";
 
 interface Hevm {
     function warp(uint256) external;

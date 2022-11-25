@@ -5,8 +5,8 @@ import {Test} from "forge-std/Test.sol";
 
 import {Aer} from "../../../core/Aer.sol";
 import {Codex} from "../../../core/Codex.sol";
-import {SurplusAuction} from "../../../auctions/SurplusAuction.sol";
-import {DebtAuction} from "../../../auctions/DebtAuction.sol";
+import {SurplusAuction} from "../../../core/auctions/SurplusAuction.sol";
+import {DebtAuction} from "../../../core/auctions/DebtAuction.sol";
 import {WAD} from "../../../core/utils/Math.sol";
 
 import {DSToken} from "../../../test/utils/dapphub/DSToken.sol";

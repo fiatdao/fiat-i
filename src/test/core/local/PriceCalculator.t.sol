@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 import {Test} from "forge-std/Test.sol";
 
-import {StairstepExponentialDecrease, ExponentialDecrease, LinearDecrease} from "../../../auctions/PriceCalculator.sol";
+import {StairstepExponentialDecrease, ExponentialDecrease, LinearDecrease} from "../../../core/auctions/PriceCalculator.sol";
 import {WAD} from "../../../core/utils/Math.sol";
 
 contract CollateralAuctionTest is Test {

@@ -5,25 +5,12 @@ import {IERC20} from "openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {NoLossCollateralAuctionActionsBase} from "./NoLossCollateralAuctionActionsBase.sol";
 import {IVault} from "../../interfaces/IVault.sol";
+import {IFYPool,IFYToken} from "../vault/VaultFYActions.sol";
 import {WAD, toInt256, sub, mul, div, wmul, wdiv} from "../../core/utils/Math.sol";
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // WARNING: These functions meant to be used as a a library for a PRBProxy. Some are unsafe if you call them directly.
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-interface IFYPool {
-    function sellBasePreview(uint128 baseIn) external view returns (uint128);
-
-    function sellBase(address to, uint128 min) external returns (uint128);
-
-    function sellFYTokenPreview(uint128 fyTokenIn) external view returns (uint128);
-
-    function sellFYToken(address to, uint128 min) external returns (uint128);
-}
-
-interface IFYToken {
-    function redeem(address to, uint256 amount) external returns (uint256 redeemed);
-}
 
 /// @title NoLossCollateralAuctionActions
 /// @notice A set of actions for buying and redeeming collateral from NoLossCollateralAuction

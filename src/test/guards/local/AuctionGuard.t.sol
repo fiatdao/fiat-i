@@ -7,8 +7,8 @@ import {ICollybus} from "../../../interfaces/ICollybus.sol";
 import {IPriceCalculator} from "../../../interfaces/IPriceCalculator.sol";
 import {Codex} from "../../../core/Codex.sol";
 import {Limes} from "../../../core/Limes.sol";
-import {NoLossCollateralAuction} from "../../../auctions/NoLossCollateralAuction.sol";
-import {LinearDecrease} from "../../../auctions/PriceCalculator.sol";
+import {NoLossCollateralAuction} from "../../../core/auctions/NoLossCollateralAuction.sol";
+import {LinearDecrease} from "../../../core/auctions/PriceCalculator.sol";
 import {WAD} from "../../../core/utils/Math.sol";
 
 import {DSToken} from "../../../test/utils/dapphub/DSToken.sol";

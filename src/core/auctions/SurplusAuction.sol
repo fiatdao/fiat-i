@@ -7,11 +7,11 @@ import {ERC20Burnable} from "openzeppelin/contracts/token/ERC20/extensions/ERC20
 
 import {SafeERC20} from "openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {ICodex} from "../interfaces/ICodex.sol";
-import {ISurplusAuction} from "../interfaces/ISurplusAuction.sol";
+import {ICodex} from "../../interfaces/ICodex.sol";
+import {ISurplusAuction} from "../../interfaces/ISurplusAuction.sol";
 
-import {Guarded} from "../core/utils/Guarded.sol";
-import {WAD, add48, sub, mul} from "../core/utils/Math.sol";
+import {Guarded} from "../utils/Guarded.sol";
+import {WAD, add48, sub, mul} from "../utils/Math.sol";
 
 /// @title SurplusAuction
 /// @notice
