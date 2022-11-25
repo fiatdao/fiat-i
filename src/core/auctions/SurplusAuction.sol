@@ -3,6 +3,8 @@
 pragma solidity ^0.8.4;
 
 import {IERC20} from "openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC20Burnable} from "openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+
 import {SafeERC20} from "openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {ICodex} from "../../interfaces/ICodex.sol";
@@ -63,8 +65,6 @@ contract SurplusAuction is Guarded, ISurplusAuction {
     ICodex public immutable override codex;
     /// @notice Tokens to receive for credit
     IERC20 public immutable override token;
-    /// @notice Governance address (will receive tokens)
-    address public immutable governance;
     /// @notice 5% minimum bid increase
     uint256 public override minBidBump = 1.05e18;
     /// @notice 3 hours bid duration [seconds]
@@ -81,10 +81,9 @@ contract SurplusAuction is Guarded, ISurplusAuction {
 
     event StartAuction(uint256 id, uint256 creditToSell, uint256 bid);
 
-    constructor(address codex_, address token_,address governance_) Guarded() {
+    constructor(address codex_, address token_) Guarded() {
         codex = ICodex(codex_);
         token = IERC20(token_);
-        governance = governance_;
         live = 1;
     }
 
@@ -174,7 +173,7 @@ contract SurplusAuction is Guarded, ISurplusAuction {
                     auctions[auctionId].auctionExpiry < block.timestamp))
         ) revert SurplusAuction__closeAuction_notFinished();
         codex.transferCredit(address(this), auctions[auctionId].recipient, auctions[auctionId].creditToSell);
-        token.safeTransfer(governance, auctions[auctionId].bid);
+        ERC20Burnable(address(token)).burn(auctions[auctionId].bid);
         delete auctions[auctionId];
     }
 
