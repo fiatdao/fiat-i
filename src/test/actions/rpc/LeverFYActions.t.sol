@@ -41,6 +41,7 @@ contract LeverFYActions_RPC_tests is Test {
     VaultFYActions internal vaultActions;
     VaultFactory internal vaultFactory;
     VaultFY internal impl;
+    VaultFY internal implDAI;
 
     FIAT internal fiat;
     Collybus internal collybus;
@@ -50,14 +51,21 @@ contract LeverFYActions_RPC_tests is Test {
     address internal me = address(this);
 
     IVault internal fyUSDC2212Vault;
+    IVault internal fyDAI2212Vault;
 
     Flash internal flash;
 
     LeverFYActions internal leverActions;
 
     IERC20 internal usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+    IERC20 internal dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
+
+    // Yield 
     address internal fyUSDC2212 = address(0x38b8BF13c94082001f784A642165517F8760988f);
     address internal fyUSDC2212LP = address(0xB2fff7FEA1D455F0BCdd38DA7DeE98af0872a13a);
+    address internal fyDAI2212 = address(0xcDfBf28Db3B1B7fC8efE08f988D955270A5c4752);
+    address internal fyDAI2212LP = address(0x52956Fb3DC3361fd24713981917f2B6ef493DCcC);
+    
     uint256 internal ONE_USDC = 1e6;
     uint256 internal maturity = 1672412400;
 
@@ -76,6 +84,13 @@ contract LeverFYActions_RPC_tests is Test {
         );
         string memory sig = "mint(address,uint256)";
         (bool ok, ) = address(usdc).call(abi.encodeWithSignature(sig, to, amount));
+        assert(ok);
+    }
+
+    function _mintDAI(address to, uint256 amount) internal {
+        vm.store(address(dai), keccak256(abi.encode(address(address(this)), uint256(0))), bytes32(uint256(1)));
+        string memory sig = "mint(address,uint256)";
+        (bool ok, ) = address(dai).call(abi.encodeWithSignature(sig, to, amount));
         assert(ok);
     }
 
@@ -240,22 +255,39 @@ contract LeverFYActions_RPC_tests is Test {
             )
         );
 
+        implDAI = new VaultFY(address(codex), address(dai));
+        fyDAI2212Vault = IVault(
+            vaultFactory.createVault(
+                address(implDAI),
+                abi.encode(address(fyDAI2212), address(collybus))
+            )
+        );
+
         vaultActions = new VaultFYActions(address(codex), address(moneta), address(fiat), address(publican));
 
-        // set Vault
-        codex.init(address(fyUSDC2212Vault));
         codex.allowCaller(codex.transferCredit.selector, address(moneta));
+
+        // set Vaults
+        codex.init(address(fyUSDC2212Vault));
+        codex.init(address(fyDAI2212Vault));   
         codex.setParam("globalDebtCeiling", 10000000 ether);
         codex.setParam(address(fyUSDC2212Vault), "debtCeiling", 1000000 ether);
         collybus.setParam(address(fyUSDC2212Vault), "liquidationRatio", 1 ether);
+        codex.setParam(address(fyDAI2212Vault), "debtCeiling", 1000000 ether);
+        collybus.setParam(address(fyDAI2212Vault), "liquidationRatio", 1 ether);
         collybus.updateSpot(address(usdc), 1 ether);
+        collybus.updateSpot(address(dai), 1 ether);
         publican.init(address(fyUSDC2212Vault));
         codex.allowCaller(codex.modifyBalance.selector, address(fyUSDC2212Vault));
+        publican.init(address(fyDAI2212Vault));
+        codex.allowCaller(codex.modifyBalance.selector, address(fyDAI2212Vault));
 
-        // get test USDC
+        // get USDC and DAI
         user = new Caller();
         _mintUSDC(address(user), 10000 * ONE_USDC);
         _mintUSDC(me, 10000 * ONE_USDC);
+        _mintDAI(address(user), 10000 ether);
+        _mintDAI(me, 10000 ether);
 
         flash = new Flash(address(moneta));
         fiat.allowCaller(fiat.mint.selector, address(moneta));
@@ -279,11 +311,19 @@ contract LeverFYActions_RPC_tests is Test {
         IERC20(address(fyUSDC2212)).approve(address(userProxy), type(uint256).max);
         IERC20(address(fyUSDC2212LP)).approve(address(userProxy), type(uint256).max);
 
+        IERC20(address(dai)).approve(address(userProxy), type(uint256).max);
+        IERC20(address(fyDAI2212)).approve(address(userProxy), type(uint256).max);
+        IERC20(address(fyDAI2212LP)).approve(address(userProxy), type(uint256).max);
+
         fiat.approve(address(userProxy), type(uint256).max);
 
         user.externalCall(
             address(usdc),
             abi.encodeWithSelector(usdc.approve.selector, address(userProxy), type(uint256).max)
+        );
+        user.externalCall(
+            address(dai),
+            abi.encodeWithSelector(dai.approve.selector, address(userProxy), type(uint256).max)
         );
     }
 
@@ -306,6 +346,31 @@ contract LeverFYActions_RPC_tests is Test {
         assertGe(_normalDebt(address(fyUSDC2212Vault), address(userProxy)), 1000 * WAD);
     }
 
+    function test_buyCollateralAndIncreaseLever_DAI_simple() public {
+        uint256 lendFIAT = 1000 * WAD;
+        uint256 upfrontUnderlier = 1000 * WAD;
+        uint256 totalUnderlier = 2000 * WAD;
+        console.log(leverActions.underlierToFYToken(1 ether, address(fyDAI2212LP)));
+        console.log(leverActions.fyTokenToUnderlier(1 ether, address(fyDAI2212LP)));
+        
+        uint256 estDeltaCollateral = leverActions.underlierToFYToken(totalUnderlier, address(fyDAI2212LP));
+
+        _buyCollateralAndIncreaseLever(
+            address(fyDAI2212Vault),
+            me,
+            upfrontUnderlier,
+            lendFIAT,
+            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether), // borrowed underliers - fees
+            _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP)) // swap all for pTokens
+        );
+        
+        assertGe(_collateral(address(fyDAI2212Vault), address(userProxy)), 2000 * WAD - 5 ether);
+        assertGe(_normalDebt(address(fyDAI2212Vault), address(userProxy)), 1000 * WAD);
+        // already formatted
+        assertEq(WAD,fyDAI2212Vault.underlierScale());
+        assertApproxEqAbs(estDeltaCollateral-5 ether,IERC20(address(fyDAI2212)).balanceOf(address(fyDAI2212Vault)), 2 ether); // approx 2 DAI delta
+    }
+
     function test_buyCollateralAndIncreaseLever() public {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
@@ -314,7 +379,7 @@ contract LeverFYActions_RPC_tests is Test {
         uint256 meInitialBalance = usdc.balanceOf(me);
         uint256 vaultInitialBalance = IERC20(address(fyUSDC2212)).balanceOf(address(fyUSDC2212Vault));
         uint256 initialCollateral = _collateral(address(fyUSDC2212Vault), address(userProxy));
-
+        assertEq(initialCollateral,0);
         uint256 estDeltaCollateral = leverActions.underlierToFYToken(totalUnderlier, address(fyUSDC2212LP));
 
         _buyCollateralAndIncreaseLever(
@@ -331,10 +396,14 @@ contract LeverFYActions_RPC_tests is Test {
             ERC20(address(fyUSDC2212)).balanceOf(address(fyUSDC2212Vault)),
             vaultInitialBalance + (estDeltaCollateral - 10 * ONE_USDC) // subtract fees
         );
-        // assertGe(
-        //     _collateral(address(fyUSDC2212Vault), address(userProxy)),
-        //     initialCollateral + wdiv(estDeltaCollateral, 10 * ONE_USDC) - ONE_USDC // subtract fees
-        // );
+        assertGe(
+            _collateral(address(fyUSDC2212Vault), address(userProxy)),
+            wdiv(estDeltaCollateral, 10 * fyUSDC2212Vault.tokenScale()) - WAD // subtract fees
+        );
+        console.log(estDeltaCollateral);
+        console.log(wdiv(estDeltaCollateral, 10 * fyUSDC2212Vault.tokenScale()));
+        console.log(wdiv(estDeltaCollateral, 10 * fyUSDC2212Vault.underlierScale()));
+        console.log(_collateral(address(fyUSDC2212Vault), address(userProxy)));
     }
 
     function test_buyCollateralAndIncreaseLever_for_user() public {
@@ -345,7 +414,6 @@ contract LeverFYActions_RPC_tests is Test {
 
         uint256 userInitialBalance = usdc.balanceOf(address(user));
         uint256 vaultInitialBalance = IERC20(fyUSDC2212).balanceOf(address(fyUSDC2212Vault));
-        uint256 initialCollateral = _collateral(address(fyUSDC2212Vault), address(userProxy));
 
         uint256 estDeltaCollateral = leverActions.underlierToFYToken(totalUnderlier, address(fyUSDC2212LP));
 
@@ -363,10 +431,10 @@ contract LeverFYActions_RPC_tests is Test {
             ERC20(address(fyUSDC2212)).balanceOf(address(fyUSDC2212Vault)),
             vaultInitialBalance + (estDeltaCollateral - 5 * ONE_USDC) // subtract fees
         );
-        // assertGe(
-        //     _collateral(address(fyUSDC2212Vault), address(userProxy)),
-        //     initialCollateral + wdiv(estDeltaCollateral, 5 ether) - WAD // subtract fees
-        // );
+        assertGe(
+            _collateral(address(fyUSDC2212Vault), address(userProxy)),
+             wdiv(estDeltaCollateral, 10 * fyUSDC2212Vault.tokenScale()) - WAD // subtract fees
+        );
     }
 
     function test_buyCollateralAndIncreaseLever_for_zero_proxy() public {
