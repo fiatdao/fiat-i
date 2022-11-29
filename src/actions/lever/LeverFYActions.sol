@@ -19,7 +19,7 @@ import {IFYPool,IFYToken} from "../vault/VaultFYActions.sol";
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /// @title LeverFYActions
-/// @notice A set of vault actions for modifying positions collateralized by Yield pTokens
+/// @notice A set of vault actions for modifying positions collateralized by Yield fyTokens
 contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBorrower {
     using SafeERC20 for IERC20;
 
@@ -72,11 +72,11 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
         address position;
         // Address of the account who receives the withdrawn / swapped underliers
         address collateralizer;
-        // Amount of pTokens to withdraw and swap for underliers [tokenScale]
-        uint256 subPTokenAmount;
+        // Amount of fyTokens to withdraw and swap for underliers [tokenScale]
+        uint256 subFYTokenAmount;
         // Swap config for the underlier to FIAT swap
         BuyFIATSwapParams fiatSwapParams;
-        // Swap config for the pToken to underlier swap
+        // Swap config for the fyToken to underlier swap
         CollateralSwapParams collateralSwapParams;
     }
 
@@ -89,8 +89,8 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
         address position;
         // Address of the account who receives the withdrawn / swapped underliers
         address collateralizer;
-        // Amount of pTokens to withdraw and swap for underliers [tokenScale]
-        uint256 subPTokenAmount;
+        // Amount of fyTokens to withdraw and swap for underliers [tokenScale]
+        uint256 subFYTokenAmount;
         // Swap config for the underlier to FIAT swap
         BuyFIATSwapParams fiatSwapParams;
     }
@@ -108,14 +108,14 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
     /// ======== Position Management ======== ///
 
     /// @notice Increases the leverage factor of a position by flash minting `addDebt` amount of FIAT
-    /// and selling it on top of the `underlierAmount` the `collateralizer` provided for more pTokens.
+    /// and selling it on top of the `underlierAmount` the `collateralizer` provided for more fyTokens.
     /// @param vault Address of the Vault
     /// @param position Address of the position's owner
     /// @param collateralizer Address of the account who puts up the upfront amount of underliers
     /// @param upfrontUnderliers Amount of underliers the `collateralizer` puts up upfront [underlierScale]
     /// @param addDebt Amount of debt to generate in total [wad]
     /// @param fiatSwapParams Parameters of the flash lent FIAT to underlier swap
-    /// @param collateralSwapParams Parameters of the underlier to pToken swap
+    /// @param collateralSwapParams Parameters of the underlier to fyToken swap
     function buyCollateralAndIncreaseLever(
         address vault,
         address position,
@@ -192,8 +192,8 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
         underlierAmount = add(underlierAmount, params.upfrontUnderliers);
 
         // sell underlier for collateral token
-        uint256 pTokenSwapped = _buyPToken(underlierAmount, params.collateralSwapParams);
-        uint256 addCollateral = wdiv(pTokenSwapped, IVault(params.vault).tokenScale());
+        uint256 fyTokenSwapped = _buyFYToken(underlierAmount, params.collateralSwapParams);
+        uint256 addCollateral = wdiv(fyTokenSwapped, IVault(params.vault).tokenScale());
 
         // update position and mint fiat
         addCollateralAndDebt(
@@ -209,20 +209,20 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
     }
 
     /// @notice Decreases the leverage factor of a position by flash lending `subNormalDebt * rate` amount of FIAT
-    /// to decrease the outstanding debt (incl. interest), selling the withdrawn collateral (pToken) of the position
+    /// to decrease the outstanding debt (incl. interest), selling the withdrawn collateral (fyToken) of the position
     /// for underliers and selling a portion of the underliers for FIAT to repay the flash lent amount.
     /// @param vault Address of the Vault
     /// @param position Address of the position's owner
-    /// @param collateralizer Address of the account receives the excess collateral (pToken)
-    /// @param subPTokenAmount Amount of pToken to withdraw from the position [tokenScale]
+    /// @param collateralizer Address of the account receives the excess collateral (fyToken)
+    /// @param subFYTokenAmount Amount of fyToken to withdraw from the position [tokenScale]
     /// @param subNormalDebt Amount of normalized debt of the position to reduce [wad]
     /// @param fiatSwapParams Parameters of the underlier to FIAT swap
-    /// @param collateralSwapParams Parameters of the pToken to underlier swap
+    /// @param collateralSwapParams Parameters of the fyToken to underlier swap
     function sellCollateralAndDecreaseLever(
         address vault,
         address position,
         address collateralizer,
-        uint256 subPTokenAmount,
+        uint256 subFYTokenAmount,
         uint256 subNormalDebt,
         BuyFIATSwapParams calldata fiatSwapParams,
         CollateralSwapParams calldata collateralSwapParams
@@ -238,7 +238,7 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
                         collateralSwapParams.assetIn,
                         position,
                         collateralizer,
-                        subPTokenAmount,
+                        subFYTokenAmount,
                         fiatSwapParams,
                         collateralSwapParams
                     )
@@ -256,12 +256,12 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
     }
 
     /// @notice Decreases the leverage factor of a position by flash lending `subNormalDebt * rate` amount of FIAT
-    /// to decrease the outstanding debt (incl. interest), redeeming the withdrawn collateral (pToken) of the position
+    /// to decrease the outstanding debt (incl. interest), redeeming the withdrawn collateral (fyToken) of the position
     /// for underliers and selling a portion of the underliers for FIAT to repay the flash lent amount.
     /// @param vault Address of the Vault
     /// @param position Address of the position's owner
     /// @param collateralizer Address of the account receives the excess collateral (redeemed underliers)
-    /// @param subPTokenAmount Amount of pToken to withdraw from the position [tokenScale]
+    /// @param subFYTokenAmount Amount of fyToken to withdraw from the position [tokenScale]
     /// @param subNormalDebt Amount of normalized debt of the position to reduce [wad]
     /// @param fiatSwapParams Parameters of the underlier to FIAT swap
     function redeemCollateralAndDecreaseLever(
@@ -269,7 +269,7 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
         address token,
         address position,
         address collateralizer,
-        uint256 subPTokenAmount,
+        uint256 subFYTokenAmount,
         uint256 subNormalDebt,
         BuyFIATSwapParams calldata fiatSwapParams
     ) public {
@@ -284,7 +284,7 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
                         token,
                         position,
                         collateralizer,
-                        subPTokenAmount,
+                        subFYTokenAmount,
                         fiatSwapParams
                     )
                 )
@@ -341,12 +341,12 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
             0,
             params.position,
             address(this),
-            wdiv(params.subPTokenAmount, IVault(params.vault).tokenScale()),
+            wdiv(params.subFYTokenAmount, IVault(params.vault).tokenScale()),
             borrowed
         );
 
         // sell collateral for underlier
-        uint256 underlierAmount = _sellPToken(params.subPTokenAmount, params.collateralSwapParams);
+        uint256 underlierAmount = _sellFYToken(params.subFYTokenAmount, params.collateralSwapParams);
 
         // sell part of underlier for FIAT
         uint256 underlierSwapped = _buyFIATExactOut(params.fiatSwapParams, borrowed);
@@ -375,12 +375,12 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
             0,
             params.position,
             address(this),
-            wdiv(params.subPTokenAmount, IVault(params.vault).tokenScale()),
+            wdiv(params.subFYTokenAmount, IVault(params.vault).tokenScale()),
             borrowed
         );
 
-        // redeem pToken for underlier
-        uint256 underlierAmount = IFYToken(params.token).redeem(address(this),params.subPTokenAmount);
+        // redeem fyToken for underlier
+        uint256 underlierAmount = IFYToken(params.token).redeem(address(this),params.subFYTokenAmount);
 
         // sell part of underlier for FIAT
         uint256 underlierSwapped = _buyFIATExactOut(params.fiatSwapParams, borrowed);
@@ -392,7 +392,7 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
         );
     }
 
-    function _buyPToken(
+    function _buyFYToken(
         uint256 underlierAmount,
         CollateralSwapParams memory swapParams
     ) internal returns (uint256) {
@@ -401,11 +401,11 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
         return uint256(IFYPool(swapParams.yieldSpacePool).sellBase(address(this), _toUint128(swapParams.minAssetOut)));
     }
 
-       function _sellPToken(
+       function _sellFYToken(
         uint256 fyTokenAmount,
         CollateralSwapParams memory swapParams
     ) internal returns (uint256) {
-        // Sele pToken for underlier
+        // Sele fyToken for underlier
         IERC20(swapParams.assetIn).safeTransfer(swapParams.yieldSpacePool, fyTokenAmount);
         return uint256(IFYPool(swapParams.yieldSpacePool).sellFYToken(address(this), _toUint128(swapParams.minAssetOut)));
     }

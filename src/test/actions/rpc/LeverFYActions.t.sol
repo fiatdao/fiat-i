@@ -154,7 +154,7 @@ contract LeverFYActions_RPC_tests is Test {
     function _sellCollateralAndDecreaseLever(
         address vault,
         address collateralizer,
-        uint256 pTokenAmount,
+        uint256 fyTokenAmount,
         uint256 deltaNormalDebt,
         LeverFYActions.BuyFIATSwapParams memory fiatSwapParams,
         LeverFYActions.CollateralSwapParams memory collateralSwapParams
@@ -166,7 +166,7 @@ contract LeverFYActions_RPC_tests is Test {
                 vault,
                 address(userProxy),
                 collateralizer,
-                pTokenAmount,
+                fyTokenAmount,
                 deltaNormalDebt,
                 fiatSwapParams,
                 collateralSwapParams
@@ -178,7 +178,7 @@ contract LeverFYActions_RPC_tests is Test {
         address vault,
         address token,
         address collateralizer,
-        uint256 pTokenAmount,
+        uint256 fyTokenAmount,
         uint256 deltaNormalDebt,
         LeverFYActions.BuyFIATSwapParams memory fiatSwapParams
     ) internal {
@@ -190,7 +190,7 @@ contract LeverFYActions_RPC_tests is Test {
                 token,
                 address(userProxy),
                 collateralizer,
-                pTokenAmount,
+                fyTokenAmount,
                 deltaNormalDebt,
                 fiatSwapParams
             )
@@ -338,7 +338,7 @@ contract LeverFYActions_RPC_tests is Test {
             upfrontUnderlier,
             lendFIAT,
             _getSellFIATSwapParams(address(usdc), totalUnderlier - upfrontUnderlier - 5 * ONE_USDC), // borrowed underliers - fees
-            _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP)) // swap all for pTokens
+            _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP)) // swap all for fyTokens
         );
         
         assertGe(_collateral(address(fyUSDC2212Vault), address(userProxy)), 2000 * WAD);
@@ -358,7 +358,7 @@ contract LeverFYActions_RPC_tests is Test {
             upfrontUnderlier,
             lendFIAT,
             _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether), // borrowed underliers - fees
-            _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP)) // swap all for pTokens
+            _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP)) // swap all for fyTokens
         );
         
         assertGe(_collateral(address(fyDAI2212Vault), address(userProxy)), 2000 * WAD - 5 ether);
@@ -385,7 +385,7 @@ contract LeverFYActions_RPC_tests is Test {
             upfrontUnderlier,
             lendFIAT,
             _getSellFIATSwapParams(address(usdc), totalUnderlier - upfrontUnderlier - 10 * ONE_USDC), // borrowed underliers - fees
-            _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP)) // swap all for pTokens
+            _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP)) // swap all for fyTokens
         );
 
         assertEq(usdc.balanceOf(me), meInitialBalance - upfrontUnderlier);
@@ -417,7 +417,7 @@ contract LeverFYActions_RPC_tests is Test {
             upfrontUnderlier,
             lendFIAT,
             _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 10 * WAD), // borrowed underliers - fees
-            _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP)) // swap all for pTokens
+            _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP)) // swap all for fyTokens
         );
 
         assertEq(dai.balanceOf(me), meInitialBalance - upfrontUnderlier);
@@ -449,7 +449,7 @@ contract LeverFYActions_RPC_tests is Test {
             upfrontUnderlier,
             lendFIAT,
             _getSellFIATSwapParams(address(usdc), totalUnderlier - upfrontUnderlier - 5 * ONE_USDC), // borrowed underliers - fees
-            _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP)) // swap all for pTokens
+            _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP)) // swap all for fyTokens
         );
 
         assertEq(usdc.balanceOf(address(user)), userInitialBalance - upfrontUnderlier);
@@ -481,7 +481,7 @@ contract LeverFYActions_RPC_tests is Test {
             upfrontUnderlier,
             lendFIAT,
             _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 * WAD), // borrowed underliers - fees
-            _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP)) // swap all for pTokens
+            _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP)) // swap all for fyTokens
         );
 
         assertEq(dai.balanceOf(address(user)), userInitialBalance - upfrontUnderlier);
@@ -507,7 +507,7 @@ contract LeverFYActions_RPC_tests is Test {
             upfrontUnderlier,
             lendFIAT,
             _getSellFIATSwapParams(address(usdc), totalUnderlier - upfrontUnderlier - 5 * ONE_USDC), // borrowed underliers - fees
-            _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP)) // swap all for pTokens
+            _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP)) // swap all for fyTokens
         );
 
         assertEq(usdc.balanceOf(address(userProxy)), userProxyInitialBalance - upfrontUnderlier);
@@ -533,7 +533,7 @@ contract LeverFYActions_RPC_tests is Test {
             upfrontUnderlier,
             lendFIAT,
             _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 * WAD), // borrowed underliers - fees
-            _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP)) // swap all for pTokens
+            _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP)) // swap all for fyTokens
         );
         assertEq(dai.balanceOf(address(userProxy)), userProxyInitialBalance - upfrontUnderlier);
         assertApproxEqAbs(estDeltaCollateral-5 * WAD,IERC20(address(fyDAI2212)).balanceOf(address(fyDAI2212Vault)), 5 * WAD); // approx 5 DAI delta
@@ -558,7 +558,7 @@ contract LeverFYActions_RPC_tests is Test {
             upfrontUnderlier,
             lendFIAT,
             _getSellFIATSwapParams(address(usdc), totalUnderlier - upfrontUnderlier - 5 * ONE_USDC), // borrowed underliers - fees
-            _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP)) // swap all for pTokens
+            _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP)) // swap all for fyTokens
         );
 
         assertEq(usdc.balanceOf(address(userProxy)), userProxyInitialBalance - upfrontUnderlier);
@@ -585,7 +585,7 @@ contract LeverFYActions_RPC_tests is Test {
             upfrontUnderlier,
             lendFIAT,
             _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 * WAD), // borrowed underliers - fees
-            _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP)) // swap all for pTokens
+            _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP)) // swap all for fyTokens
         );
 
         assertEq(dai.balanceOf(address(userProxy)), userProxyInitialBalance - upfrontUnderlier);
@@ -613,9 +613,9 @@ contract LeverFYActions_RPC_tests is Test {
 
         assertApproxEqAbs(estDeltaCollateral-5 * ONE_USDC,IERC20(address(fyUSDC2212)).balanceOf(address(fyUSDC2212Vault)), 5 * ONE_USDC); // approx 5 USDC delta
 
-        uint256 pTokenAmount = _collateral(address(fyUSDC2212Vault), address(userProxy));
+        uint256 fyTokenAmount = _collateral(address(fyUSDC2212Vault), address(userProxy));
         uint256 normalDebt = _normalDebt(address(fyUSDC2212Vault), address(userProxy));
-        uint256 sellCollateral = wmul(pTokenAmount,fyUSDC2212Vault.tokenScale());
+        uint256 sellCollateral = wmul(fyTokenAmount,fyUSDC2212Vault.tokenScale());
         uint256 estSellDeltaCollateral = leverActions.fyTokenToUnderlier(sellCollateral, address(fyUSDC2212LP));
 
         _sellCollateralAndDecreaseLever(
@@ -654,9 +654,9 @@ contract LeverFYActions_RPC_tests is Test {
             _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP))
         );
 
-        uint256 pTokenAmount = _collateral(address(fyUSDC2212Vault), address(userProxy));
+        uint256 fyTokenAmount = _collateral(address(fyUSDC2212Vault), address(userProxy));
         uint256 normalDebt = _normalDebt(address(fyUSDC2212Vault), address(userProxy));
-        uint256 sellCollateral = wmul(pTokenAmount,fyUSDC2212Vault.tokenScale());
+        uint256 sellCollateral = wmul(fyTokenAmount,fyUSDC2212Vault.tokenScale());
         uint256 estSellDeltaCollateral = leverActions.fyTokenToUnderlier(sellCollateral, address(fyUSDC2212LP));
 
         _sellCollateralAndDecreaseLever(
@@ -694,9 +694,9 @@ contract LeverFYActions_RPC_tests is Test {
             _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP))
         );
 
-        uint256 pTokenAmount = _collateral(address(fyUSDC2212Vault), address(userProxy));
+        uint256 fyTokenAmount = _collateral(address(fyUSDC2212Vault), address(userProxy));
         uint256 normalDebt = _normalDebt(address(fyUSDC2212Vault), address(userProxy));
-        uint256 sellCollateral = wmul(pTokenAmount,fyUSDC2212Vault.tokenScale());
+        uint256 sellCollateral = wmul(fyTokenAmount,fyUSDC2212Vault.tokenScale());
         uint256 estSellDeltaCollateral = leverActions.fyTokenToUnderlier(sellCollateral, address(fyUSDC2212LP));
 
         _sellCollateralAndDecreaseLever(
@@ -733,9 +733,9 @@ contract LeverFYActions_RPC_tests is Test {
             _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP))
         );
 
-        uint256 pTokenAmount = _collateral(address(fyUSDC2212Vault), address(userProxy));
+        uint256 fyTokenAmount = _collateral(address(fyUSDC2212Vault), address(userProxy));
         uint256 normalDebt = _normalDebt(address(fyUSDC2212Vault), address(userProxy));
-        uint256 sellCollateral = wmul(pTokenAmount,fyUSDC2212Vault.tokenScale());
+        uint256 sellCollateral = wmul(fyTokenAmount,fyUSDC2212Vault.tokenScale());
         uint256 estSellDeltaCollateral = leverActions.fyTokenToUnderlier(sellCollateral, address(fyUSDC2212LP));
 
         _sellCollateralAndDecreaseLever(
@@ -775,7 +775,7 @@ contract LeverFYActions_RPC_tests is Test {
         assertGt(IERC20(fyUSDC2212).balanceOf(address(fyUSDC2212Vault)), vaultInitialBalance);
         assertGt(_collateral(address(fyUSDC2212Vault), address(userProxy)), initialCollateral);
 
-        uint256 pTokenAmount = wmul(_collateral(address(fyUSDC2212Vault), address(userProxy)),fyUSDC2212Vault.tokenScale());
+        uint256 fyTokenAmount = wmul(_collateral(address(fyUSDC2212Vault), address(userProxy)),fyUSDC2212Vault.tokenScale());
         uint256 normalDebt = _normalDebt(address(fyUSDC2212Vault), address(userProxy));
 
         vm.warp(maturity);
@@ -784,7 +784,7 @@ contract LeverFYActions_RPC_tests is Test {
             address(fyUSDC2212Vault),
             fyUSDC2212Vault.token(),
             me,
-            pTokenAmount,
+            fyTokenAmount,
             normalDebt,
             _getBuyFIATSwapParams(address(usdc),normalDebt)
         );
@@ -816,7 +816,7 @@ contract LeverFYActions_RPC_tests is Test {
         assertGt(IERC20(fyDAI2212).balanceOf(address(fyDAI2212Vault)), vaultInitialBalance);
         assertGt(_collateral(address(fyDAI2212Vault), address(userProxy)), initialCollateral);
 
-        uint256 pTokenAmount = wmul(_collateral(address(fyDAI2212Vault), address(userProxy)),fyDAI2212Vault.tokenScale());
+        uint256 fyTokenAmount = wmul(_collateral(address(fyDAI2212Vault), address(userProxy)),fyDAI2212Vault.tokenScale());
         uint256 normalDebt = _normalDebt(address(fyDAI2212Vault), address(userProxy));
 
         vm.warp(maturity);
@@ -825,7 +825,7 @@ contract LeverFYActions_RPC_tests is Test {
             address(fyDAI2212Vault),
             fyDAI2212Vault.token(),
             me,
-            pTokenAmount,
+            fyTokenAmount,
             normalDebt,
             _getBuyFIATSwapParams(address(dai), normalDebt)
         );
@@ -858,7 +858,7 @@ contract LeverFYActions_RPC_tests is Test {
         assertGt(IERC20(fyUSDC2212).balanceOf(address(fyUSDC2212Vault)), vaultInitialBalance);
         assertGt(_collateral(address(fyUSDC2212Vault), address(userProxy)), initialCollateral);
 
-        uint256 pTokenAmount = wmul(_collateral(address(fyUSDC2212Vault), address(userProxy)),fyUSDC2212Vault.tokenScale());
+        uint256 fyTokenAmount = wmul(_collateral(address(fyUSDC2212Vault), address(userProxy)),fyUSDC2212Vault.tokenScale());
         uint256 normalDebt = _normalDebt(address(fyUSDC2212Vault), address(userProxy));
 
         vm.warp(maturity);
@@ -867,7 +867,7 @@ contract LeverFYActions_RPC_tests is Test {
             address(fyUSDC2212Vault),
             fyUSDC2212Vault.token(),
             address(user),
-            pTokenAmount,
+            fyTokenAmount,
             normalDebt,
             _getBuyFIATSwapParams(address(usdc),normalDebt)
         );
@@ -900,7 +900,7 @@ contract LeverFYActions_RPC_tests is Test {
         assertGt(IERC20(fyDAI2212).balanceOf(address(fyDAI2212Vault)), vaultInitialBalance);
         assertGt(_collateral(address(fyDAI2212Vault), address(userProxy)), initialCollateral);
 
-        uint256 pTokenAmount = wmul(_collateral(address(fyDAI2212Vault), address(userProxy)),fyDAI2212Vault.tokenScale());
+        uint256 fyTokenAmount = wmul(_collateral(address(fyDAI2212Vault), address(userProxy)),fyDAI2212Vault.tokenScale());
         uint256 normalDebt = _normalDebt(address(fyDAI2212Vault), address(userProxy));
 
         vm.warp(maturity);
@@ -909,7 +909,7 @@ contract LeverFYActions_RPC_tests is Test {
             address(fyDAI2212Vault),
             fyDAI2212Vault.token(),
             address(user),
-            pTokenAmount,
+            fyTokenAmount,
             normalDebt,
             _getBuyFIATSwapParams(address(dai),normalDebt)
         );
@@ -942,7 +942,7 @@ contract LeverFYActions_RPC_tests is Test {
         assertGt(IERC20(fyUSDC2212).balanceOf(address(fyUSDC2212Vault)), vaultInitialBalance);
         assertGt(_collateral(address(fyUSDC2212Vault), address(userProxy)), initialCollateral);
 
-        uint256 pTokenAmount = wmul(_collateral(address(fyUSDC2212Vault), address(userProxy)),fyUSDC2212Vault.tokenScale());
+        uint256 fyTokenAmount = wmul(_collateral(address(fyUSDC2212Vault), address(userProxy)),fyUSDC2212Vault.tokenScale());
         uint256 normalDebt = _normalDebt(address(fyUSDC2212Vault), address(userProxy));
 
         vm.warp(maturity);
@@ -951,7 +951,7 @@ contract LeverFYActions_RPC_tests is Test {
             address(fyUSDC2212Vault),
             fyUSDC2212Vault.token(),
             address(0),
-            pTokenAmount,
+            fyTokenAmount,
             normalDebt,
             _getBuyFIATSwapParams(address(usdc),normalDebt)
         );
@@ -984,7 +984,7 @@ contract LeverFYActions_RPC_tests is Test {
         assertGt(IERC20(fyDAI2212).balanceOf(address(fyDAI2212Vault)), vaultInitialBalance);
         assertGt(_collateral(address(fyDAI2212Vault), address(userProxy)), initialCollateral);
 
-        uint256 pTokenAmount = wmul(_collateral(address(fyDAI2212Vault), address(userProxy)),fyDAI2212Vault.tokenScale());
+        uint256 fyTokenAmount = wmul(_collateral(address(fyDAI2212Vault), address(userProxy)),fyDAI2212Vault.tokenScale());
         uint256 normalDebt = _normalDebt(address(fyDAI2212Vault), address(userProxy));
 
         vm.warp(maturity);
@@ -993,7 +993,7 @@ contract LeverFYActions_RPC_tests is Test {
             address(fyDAI2212Vault),
             fyDAI2212Vault.token(),
             address(0),
-            pTokenAmount,
+            fyTokenAmount,
             normalDebt,
             _getBuyFIATSwapParams(address(dai),normalDebt)
         );
@@ -1026,7 +1026,7 @@ contract LeverFYActions_RPC_tests is Test {
         assertGt(IERC20(fyUSDC2212).balanceOf(address(fyUSDC2212Vault)), vaultInitialBalance);
         assertGt(_collateral(address(fyUSDC2212Vault), address(userProxy)), initialCollateral);
 
-        uint256 pTokenAmount = wmul(_collateral(address(fyUSDC2212Vault), address(userProxy)),fyUSDC2212Vault.tokenScale());
+        uint256 fyTokenAmount = wmul(_collateral(address(fyUSDC2212Vault), address(userProxy)),fyUSDC2212Vault.tokenScale());
         uint256 normalDebt = _normalDebt(address(fyUSDC2212Vault), address(userProxy));
 
         vm.warp(maturity);
@@ -1035,7 +1035,7 @@ contract LeverFYActions_RPC_tests is Test {
             address(fyUSDC2212Vault),
             fyUSDC2212Vault.token(),
             address(userProxy),
-            pTokenAmount,
+            fyTokenAmount,
             normalDebt,
             _getBuyFIATSwapParams(address(usdc),normalDebt)
         );
@@ -1068,7 +1068,7 @@ contract LeverFYActions_RPC_tests is Test {
         assertGt(IERC20(fyDAI2212).balanceOf(address(fyDAI2212Vault)), vaultInitialBalance);
         assertGt(_collateral(address(fyDAI2212Vault), address(userProxy)), initialCollateral);
 
-        uint256 pTokenAmount = wmul(_collateral(address(fyDAI2212Vault), address(userProxy)),fyDAI2212Vault.tokenScale());
+        uint256 fyTokenAmount = wmul(_collateral(address(fyDAI2212Vault), address(userProxy)),fyDAI2212Vault.tokenScale());
         uint256 normalDebt = _normalDebt(address(fyDAI2212Vault), address(userProxy));
 
         vm.warp(maturity);
@@ -1077,7 +1077,7 @@ contract LeverFYActions_RPC_tests is Test {
             address(fyDAI2212Vault),
             fyDAI2212Vault.token(),
             address(userProxy),
-            pTokenAmount,
+            fyTokenAmount,
             normalDebt,
             _getBuyFIATSwapParams(address(dai),normalDebt)
         );
@@ -1087,18 +1087,18 @@ contract LeverFYActions_RPC_tests is Test {
         assertEq(_collateral(address(fyDAI2212Vault), address(userProxy)), initialCollateral);
     }
 
-    function test_underlierToPToken() external {
-        uint256 pTokenAmountNow = leverActions.underlierToFYToken(100 * ONE_USDC, address(fyUSDC2212LP));
-        assertGt(pTokenAmountNow, 0);
+    function test_underlierToFYoken() external {
+        uint256 fyTokenAmountNow = leverActions.underlierToFYToken(100 * ONE_USDC, address(fyUSDC2212LP));
+        assertGt(fyTokenAmountNow, 0);
         // advance some months
         vm.warp(block.timestamp + 10 days);
-        uint256 pTokenAmountBeforeMaturity = leverActions.underlierToFYToken(100 * ONE_USDC, address(fyUSDC2212LP));
+        uint256 fyTokenAmountBeforeMaturity = leverActions.underlierToFYToken(100 * ONE_USDC, address(fyUSDC2212LP));
         // closest to the maturity we get less sPT for same underlier amount
-        assertGt(pTokenAmountNow, pTokenAmountBeforeMaturity);
+        assertGt(fyTokenAmountNow, fyTokenAmountBeforeMaturity);
 
     }
 
-    function test_pTokenToUnderlier() external {
+    function test_fyTokenToUnderlier() external {
         uint256 underlierNow = leverActions.fyTokenToUnderlier(100 * ONE_USDC,address(fyUSDC2212LP));
         assertGt(underlierNow, 0);
 
