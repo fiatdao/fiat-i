@@ -1087,7 +1087,7 @@ contract LeverFYActions_RPC_tests is Test {
         assertEq(_collateral(address(fyDAI2212Vault), address(userProxy)), initialCollateral);
     }
 
-    function test_underlierToFYoken() external {
+    function test_underlierToFYToken() external {
         uint256 fyTokenAmountNow = leverActions.underlierToFYToken(100 * ONE_USDC, address(fyUSDC2212LP));
         assertGt(fyTokenAmountNow, 0);
         // advance some months
