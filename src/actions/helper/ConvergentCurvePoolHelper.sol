@@ -15,6 +15,9 @@ interface IConvergentCurvePool {
 
     function totalSupply() external view returns (uint256);
 }
+interface IAsset {
+    // solhint-disable-previous-line no-empty-blocks
+}
 
 interface IBalancerVault {
     enum SwapKind {
@@ -37,6 +40,14 @@ interface IBalancerVault {
         uint256 amount;
         bytes userData;
     }
+    
+    struct BatchSwapStep {
+        bytes32 poolId;
+        uint256 assetInIndex;
+        uint256 assetOutIndex;
+        uint256 amount;
+        bytes userData;
+    }
 
     function swap(
         SingleSwap memory singleSwap,
@@ -44,6 +55,15 @@ interface IBalancerVault {
         uint256 limit,
         uint256 deadline
     ) external payable returns (uint256);
+
+    function batchSwap(
+        SwapKind kind,
+        BatchSwapStep[] memory swaps,
+        IAsset[] memory assets,
+        FundManagement memory funds,
+        int256[] memory limits,
+        uint256 deadline
+    ) external payable returns (int256[] memory);
 
     function getPoolTokens(bytes32 poolId)
         external

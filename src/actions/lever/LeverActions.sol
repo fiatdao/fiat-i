@@ -12,7 +12,7 @@ import {IFlash, ICreditFlashBorrower, IERC3156FlashBorrower} from "../../interfa
 import {IPublican} from "../../interfaces/IPublican.sol";
 import {WAD, toInt256, add, wmul, wdiv, sub} from "../../core/utils/Math.sol";
 
-import {IBalancerVault} from "../helper/ConvergentCurvePoolHelper.sol";
+import {IBalancerVault, IAsset} from "../helper/ConvergentCurvePoolHelper.sol";
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // WARNING: These functions meant to be used as a a library for a PRBProxy. Some are unsafe if you call them directly.
@@ -35,19 +35,23 @@ abstract contract LeverActions {
     }
 
     struct SellFIATSwapParams {
-        // Paired asset with FIAT (e.g. DAI, USDC)
-        address assetOut;
+        // Batch Swap
+        IBalancerVault.BatchSwapStep[] swaps;
+        // IAssets for Batch Swap 
+        IAsset[] assets;
         // Min. amount of tokens we would accept to receive from the swap
-        uint256 minAmountOut;
+        int256[] limits;
         // Timestamp at which swap must be confirmed by [seconds]
         uint256 deadline;
     }
 
     struct BuyFIATSwapParams {
-        // Paired asset with FIAT (e.g. DAI, USDC)
-        address assetIn;
+        // Batch Swap
+        IBalancerVault.BatchSwapStep[] swaps;
+        // IAssets for Batch Swap 
+        IAsset[] assets;
         // Max. amount of tokens to be swapped for exactAmountOut of FIAT
-        uint256 maxAmountIn;
+        int256[] limits;
         // Timestamp at which swap must be confirmed by [seconds]
         uint256 deadline;
     }
@@ -208,40 +212,40 @@ abstract contract LeverActions {
     }
 
     function _sellFIATExactIn(SellFIATSwapParams memory params, uint256 exactAmountIn) internal returns (uint256) {
-        IBalancerVault.SingleSwap memory singleSwap = IBalancerVault.SingleSwap(
-            fiatPoolId,
-            IBalancerVault.SwapKind.GIVEN_IN,
-            address(fiat),
-            params.assetOut,
-            exactAmountIn,
-            new bytes(0)
-        );
         IBalancerVault.FundManagement memory funds = IBalancerVault.FundManagement(
             address(this),
             false,
             payable(address(this)),
             false
         );
+        // Set FIAT exact amount In
+        params.swaps[0].amount = exactAmountIn;
 
-        return IBalancerVault(fiatBalancerVault).swap(singleSwap, funds, params.minAmountOut, params.deadline);
+        // BatchSwap
+        int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(IBalancerVault.SwapKind.GIVEN_IN, params.swaps, params.assets, funds, params.limits, params.deadline);
+        
+        // Vault deltas are in the same order as Assets, underlier is the last one
+        return uint(deltas[params.assets.length-1]);
     }
 
-    function _buyFIATExactOut(BuyFIATSwapParams memory params, uint256 exactAmountOut) internal returns (uint256) {
-        IBalancerVault.SingleSwap memory singleSwap = IBalancerVault.SingleSwap(
-            fiatPoolId,
-            IBalancerVault.SwapKind.GIVEN_OUT,
-            params.assetIn,
-            address(fiat),
-            exactAmountOut,
-            new bytes(0)
-        );
+    function _buyFIATExactOut(BuyFIATSwapParams memory params, uint256 exactAmountOut) internal returns (uint256,address) {
         IBalancerVault.FundManagement memory funds = IBalancerVault.FundManagement(
             address(this),
             false,
             payable(address(this)),
             false
         );
+     
+        // If more than 1 swap is performed, there might be some residual token units due to that we use GIVEN_OUT
+        // TODO: estimate the exactAmountOut for the first swap in order to get FIAT exactAmountOut
+        
+        // Set FIAT exact amount Out
+        params.swaps[params.swaps.length-1].amount = exactAmountOut;
 
-        return IBalancerVault(fiatBalancerVault).swap(singleSwap, funds, params.maxAmountIn, params.deadline);
+        // BatchSwap
+        int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(IBalancerVault.SwapKind.GIVEN_OUT, params.swaps, params.assets, funds, params.limits, params.deadline);
+        
+        // Vault deltas are in the same order as Assets, underlier is the first
+        return (uint(deltas[0]),address(params.assets[0]));
     }
 }
