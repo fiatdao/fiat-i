@@ -29,7 +29,7 @@ import {LeverSPTActions} from "../../../actions/lever/LeverSPTActions.sol";
 import {IBalancerVault, IAsset} from "../../../actions/helper/ConvergentCurvePoolHelper.sol";
 
 import {IVault} from "../../../interfaces/IVault.sol";
-
+import {console} from "forge-std/console.sol";
 interface IPeriphery {
     function swapUnderlyingForPTs(
         address adapter,
@@ -631,10 +631,10 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 normalDebt = _normalDebt(address(maDAIVault), address(userProxy));
 
         // Prepare buy FIAT params
-        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
-        swaps.push(buy);
-        IBalancerVault.BatchSwapStep memory buy2= IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0)); 
-        swaps.push(buy2);
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
+        swaps.push(step);
+        IBalancerVault.BatchSwapStep memory step2= IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0)); 
+        swaps.push(step2);
 
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(usdc)));
@@ -1185,5 +1185,37 @@ contract LeverSPTActions_RPC_tests is Test {
         vm.warp(maturity + 10 days);
         uint256 underlierAfterMaturity = leverActions.pTokenToUnderlier(address(maDAISpace), balancerVault, 100 ether);
         assertEq(underlierAtMaturity, underlierAfterMaturity);
+    }
+
+    function test_underlierToExactFIATOut() public {
+        uint256 fiatOut = 500 * WAD;
+         // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,fiatOut,new bytes(0));
+        swaps.push(buy);
+        IBalancerVault.BatchSwapStep memory buy2= IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0)); 
+        swaps.push(buy2);
+
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(usdc)));
+        assets.push(IAsset(address(fiat)));
+
+        uint underlierIn = leverActions.underlierToExactFIATOut(swaps, assets);
+        console.log(underlierIn);
+    }
+
+    function test_exactFIATInToUnderlier() public {
+        uint256 fiatIn = 500 * WAD;
+         // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,fiatIn,new bytes(0));
+        swaps.push(step);
+        IBalancerVault.BatchSwapStep memory step2 = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
+        swaps.push(step2);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(usdc)));
+        assets.push(IAsset(address(dai)));
+        
+        uint underlierOut = leverActions.exactFIATInToUnderlier(swaps, assets);
+        console.log(underlierOut);
     }
 }

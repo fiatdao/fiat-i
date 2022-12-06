@@ -264,11 +264,13 @@ abstract contract LeverActions {
         return (abs(deltas[0]), address(params.assets[0]));
     }
 
-    function FIATToUnderlier(
+    // return underlier amount we'll get
+    function exactFIATInToUnderlier(
         IBalancerVault.BatchSwapStep[] memory swaps,
-        IAsset[] memory assets,
-        IBalancerVault.FundManagement memory funds
+        IAsset[] memory assets
     ) external returns (uint256) {
+        IBalancerVault.FundManagement memory funds;
+
         int256[] memory assetDeltas = IBalancerVault(fiatBalancerVault).queryBatchSwap(
             IBalancerVault.SwapKind.GIVEN_IN,
             swaps,
@@ -278,20 +280,22 @@ abstract contract LeverActions {
         // Underlier is the last one
         return abs(assetDeltas[assetDeltas.length-1]);
     }
-
-    function underlierToFIAT(
+    
+    // return underlier amount required to get Exact Amount of FIAT
+    function underlierToExactFIATOut(
         IBalancerVault.BatchSwapStep[] memory swaps,
-        IAsset[] memory assets,
-        IBalancerVault.FundManagement memory funds
+        IAsset[] memory assets
     ) external returns (uint256) {
+        IBalancerVault.FundManagement memory funds;
+
         int256[] memory assetDeltas = IBalancerVault(fiatBalancerVault).queryBatchSwap(
             IBalancerVault.SwapKind.GIVEN_OUT,
             swaps,
             assets,
             funds
         );
-        // FIAT is the last one 
-        return abs(assetDeltas[assetDeltas.length-1]);
+        // underlier is the first one
+        return abs(assetDeltas[0]);
     }
 
     /**
