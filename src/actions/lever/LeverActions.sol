@@ -37,7 +37,7 @@ abstract contract LeverActions {
     struct SellFIATSwapParams {
         // Batch Swap
         IBalancerVault.BatchSwapStep[] swaps;
-        // IAssets for Batch Swap 
+        // IAssets for Batch Swap
         IAsset[] assets;
         // Min. amount of tokens we would accept to receive from the swap
         int256[] limits;
@@ -48,7 +48,7 @@ abstract contract LeverActions {
     struct BuyFIATSwapParams {
         // Batch Swap
         IBalancerVault.BatchSwapStep[] swaps;
-        // IAssets for Batch Swap 
+        // IAssets for Batch Swap
         IAsset[] assets;
         // Max. amount of tokens to be swapped for exactAmountOut of FIAT
         int256[] limits;
@@ -220,54 +220,84 @@ abstract contract LeverActions {
         );
         // Set FIAT exact amount In
         params.swaps[0].amount = exactAmountIn;
-        params.limits[0] = int(exactAmountIn); 
+        params.limits[0] = int256(exactAmountIn);
 
         // BatchSwap
-        int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(IBalancerVault.SwapKind.GIVEN_IN, params.swaps, params.assets, funds, params.limits, params.deadline);
+        int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(
+            IBalancerVault.SwapKind.GIVEN_IN,
+            params.swaps,
+            params.assets,
+            funds,
+            params.limits,
+            params.deadline
+        );
 
         // Vault deltas are in the same order as Assets, underlier is the last one, return the absolut value
-        return abs(deltas[params.assets.length-1]);
+        return abs(deltas[params.assets.length - 1]);
     }
 
-    function _buyFIATExactOut(BuyFIATSwapParams memory params, uint256 exactAmountOut) internal returns (uint256,address) {
+    function _buyFIATExactOut(BuyFIATSwapParams memory params, uint256 exactAmountOut)
+        internal
+        returns (uint256, address)
+    {
         IBalancerVault.FundManagement memory funds = IBalancerVault.FundManagement(
             address(this),
             false,
             payable(address(this)),
             false
         );
-
-        // If more than 1 swap is performed, there might be some residual token units due to that we use GIVEN_OUT
-        // TODO: estimate the exactAmountOut for the first swap in order to get FIAT exactAmountOut, probably better off-chain
-
         // Set FIAT exact amount Out
-        params.swaps[params.swaps.length-1].amount = exactAmountOut;
-        params.limits[params.swaps.length-1] = int(exactAmountOut); 
+        params.swaps[0].amount = exactAmountOut;
+        params.limits[0] = int256(exactAmountOut);
 
         // BatchSwap
-        int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(IBalancerVault.SwapKind.GIVEN_OUT, params.swaps, params.assets, funds, params.limits, params.deadline);
-        
+        int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(
+            IBalancerVault.SwapKind.GIVEN_OUT,
+            params.swaps,
+            params.assets,
+            funds,
+            params.limits,
+            params.deadline
+        );
+
         // Vault deltas are in the same order as Assets, underlier is the first
-        return (abs(deltas[0]),address(params.assets[0]));
+        return (abs(deltas[0]), address(params.assets[0]));
     }
 
-    function FIATToUnderlier() external view returns (uint){
-     
+    function FIATToUnderlier(
+        IBalancerVault.BatchSwapStep[] memory swaps,
+        IAsset[] memory assets,
+        IBalancerVault.FundManagement memory funds
+    ) external returns (uint256) {
+        int256[] memory assetDeltas = IBalancerVault(fiatBalancerVault).queryBatchSwap(
+            IBalancerVault.SwapKind.GIVEN_IN,
+            swaps,
+            assets,
+            funds
+        );
+        // Underlier is the last one
+        return abs(assetDeltas[assetDeltas.length-1]);
     }
 
-    function underlierToFIAT() external view returns (uint){
-        
+    function underlierToFIAT(
+        IBalancerVault.BatchSwapStep[] memory swaps,
+        IAsset[] memory assets,
+        IBalancerVault.FundManagement memory funds
+    ) external returns (uint256) {
+        int256[] memory assetDeltas = IBalancerVault(fiatBalancerVault).queryBatchSwap(
+            IBalancerVault.SwapKind.GIVEN_OUT,
+            swaps,
+            assets,
+            funds
+        );
+        // FIAT is the last one 
+        return abs(assetDeltas[assetDeltas.length-1]);
     }
 
     /**
      * @dev Returns the absolute value of a signed integer.
      */
     function abs(int256 a) internal pure returns (uint256 result) {
-        // Equivalent to:
-        // result = a > 0 ? uint256(a) : uint256(-a)
-        assembly {
-            let s := sar(255, a)
-            result := sub(xor(a, s), s)
-        }
+        result = a > 0 ? uint256(a) : uint256(-a);
     }
 }

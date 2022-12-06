@@ -631,9 +631,9 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 normalDebt = _normalDebt(address(maDAIVault), address(userProxy));
 
         // Prepare buy FIAT params
-        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,497*1e6,new bytes(0)); 
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
         swaps.push(buy);
-        IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
+        IBalancerVault.BatchSwapStep memory buy2= IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0)); 
         swaps.push(buy2);
 
         assets.push(IAsset(address(dai)));
