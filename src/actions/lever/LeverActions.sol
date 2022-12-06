@@ -13,7 +13,7 @@ import {IPublican} from "../../interfaces/IPublican.sol";
 import {WAD, toInt256, add, wmul, wdiv, sub} from "../../core/utils/Math.sol";
 
 import {IBalancerVault, IAsset} from "../helper/ConvergentCurvePoolHelper.sol";
-import {console} from "forge-std/console.sol";
+
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // WARNING: These functions meant to be used as a a library for a PRBProxy. Some are unsafe if you call them directly.
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -243,7 +243,7 @@ abstract contract LeverActions {
         // Set FIAT exact amount Out
         params.swaps[params.swaps.length-1].amount = exactAmountOut;
         params.limits[params.swaps.length-1] = int(exactAmountOut); 
-        
+
         // BatchSwap
         int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(IBalancerVault.SwapKind.GIVEN_OUT, params.swaps, params.assets, funds, params.limits, params.deadline);
         

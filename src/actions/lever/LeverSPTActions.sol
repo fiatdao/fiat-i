@@ -16,7 +16,7 @@ import {WAD, toInt256, add, wmul, wdiv, sub} from "../../core/utils/Math.sol";
 
 import {Lever20Actions} from "./Lever20Actions.sol";
 import {IPeriphery, IDivider, IAdapter} from "../vault/VaultSPTActions.sol";
-import {console} from "forge-std/console.sol";
+
 interface ISenseSpace {
     function decimals() external view returns (uint256);
 
