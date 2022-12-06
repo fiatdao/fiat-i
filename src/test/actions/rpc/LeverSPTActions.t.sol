@@ -631,10 +631,10 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 normalDebt = _normalDebt(address(maDAIVault), address(userProxy));
 
         // Prepare buy FIAT params
-        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
-        swaps.push(step);
-        IBalancerVault.BatchSwapStep memory step2= IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0)); 
-        swaps.push(step2);
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
+        swaps.push(buy);
+        IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0)); 
+        swaps.push(buy2);
 
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(usdc)));
@@ -1200,7 +1200,22 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
 
         uint underlierIn = leverActions.underlierToExactFIATOut(swaps, assets);
-        console.log(underlierIn);
+
+        delete swaps;
+        delete assets;
+
+        // Prepare sell FIAT params
+        uint fiatIn = fiatOut;
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,fiatIn,new bytes(0));
+        swaps.push(step);
+        IBalancerVault.BatchSwapStep memory step2 = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
+        swaps.push(step2);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(usdc)));
+        assets.push(IAsset(address(dai)));
+        
+        assertApproxEqAbs(underlierIn,leverActions.exactFIATInToUnderlier(swaps, assets),0.25 ether); // 0.25 delta
     }
 
     function test_exactFIATInToUnderlier() public {
@@ -1216,6 +1231,21 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(dai)));
         
         uint underlierOut = leverActions.exactFIATInToUnderlier(swaps, assets);
-        console.log(underlierOut);
+
+        delete swaps;
+        delete assets;
+
+        uint256 fiatOut = fiatIn;
+         // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,fiatOut,new bytes(0));
+        swaps.push(buy);
+        IBalancerVault.BatchSwapStep memory buy2= IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0)); 
+        swaps.push(buy2);
+
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(usdc)));
+        assets.push(IAsset(address(fiat)));
+
+        assertApproxEqAbs(underlierOut,leverActions.underlierToExactFIATOut(swaps, assets),0.25 ether);
     }
 }
