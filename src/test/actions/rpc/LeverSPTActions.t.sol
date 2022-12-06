@@ -385,16 +385,17 @@ contract LeverSPTActions_RPC_tests is Test {
         // Prepare sell FIAT params
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
-        IBalancerVault.BatchSwapStep memory stepUSDC = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
-        //swaps.push(stepUSDC);
+        IBalancerVault.BatchSwapStep memory step2 = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
+        swaps.push(step2);
 
         assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(dai)));
-       // assets.push(IAsset(address(usdc)));
         
         limits.push(0); 
+        limits.push(int(990 * 1e6)); // min USDC out after fees
         limits.push(int(lendFIAT-10 ether)); // min DAI out after fees
-      //  limits.push(-int(900 * 1e6));
+      
 
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
@@ -628,13 +629,17 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 normalDebt = _normalDebt(address(maDAIVault), address(userProxy));
 
         // Prepare buy FIAT params
-        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,497*1e6,new bytes(0)); 
         swaps.push(buy);
+        IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
+        swaps.push(buy2);
 
         assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(fiat)));
         
-        limits.push(int(lendFIAT)+ 5 ether); // max DAI In
+        limits.push(int(lendFIAT)+10 ether); // max DAI In
+        limits.push(0); 
         limits.push(0); // limit set as exact amount out in the contract actions
 
         _sellCollateralAndDecreaseLever(
@@ -646,7 +651,7 @@ contract LeverSPTActions_RPC_tests is Test {
             _getCollateralSwapParams(address(sP_maDAI), address(dai), address(maDAIAdapter), type(uint256).max, 0)
         );
 
-        assertGt(dai.balanceOf(me), meInitialBalance - 5 ether); // subtract fees / rounding errors
+        assertGt(dai.balanceOf(me), meInitialBalance - 15 ether); // subtract fees / rounding errors
         assertEq(IERC20(address(sP_maDAI)).balanceOf(address(maDAIVault)), vaultInitialBalance);
         assertEq(_collateral(address(maDAIVault), address(userProxy)), initialCollateral);
     }
