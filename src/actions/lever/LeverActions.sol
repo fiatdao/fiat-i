@@ -13,7 +13,7 @@ import {IPublican} from "../../interfaces/IPublican.sol";
 import {WAD, toInt256, add, wmul, wdiv, sub} from "../../core/utils/Math.sol";
 
 import {IBalancerVault, IAsset} from "../helper/ConvergentCurvePoolHelper.sol";
-
+import {console} from "forge-std/console.sol";
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // WARNING: These functions meant to be used as a a library for a PRBProxy. Some are unsafe if you call them directly.
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -220,12 +220,13 @@ abstract contract LeverActions {
         );
         // Set FIAT exact amount In
         params.swaps[0].amount = exactAmountIn;
+        params.limits[0] = int(exactAmountIn); 
 
         // BatchSwap
         int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(IBalancerVault.SwapKind.GIVEN_IN, params.swaps, params.assets, funds, params.limits, params.deadline);
-        
-        // Vault deltas are in the same order as Assets, underlier is the last one
-        return uint(deltas[params.assets.length-1]);
+
+        // Vault deltas are in the same order as Assets, underlier is the last one, return the absolut value
+        return abs(deltas[params.assets.length-1]);
     }
 
     function _buyFIATExactOut(BuyFIATSwapParams memory params, uint256 exactAmountOut) internal returns (uint256,address) {
@@ -235,17 +236,38 @@ abstract contract LeverActions {
             payable(address(this)),
             false
         );
-     
+
         // If more than 1 swap is performed, there might be some residual token units due to that we use GIVEN_OUT
-        // TODO: estimate the exactAmountOut for the first swap in order to get FIAT exactAmountOut
-        
+        // TODO: estimate the exactAmountOut for the first swap in order to get FIAT exactAmountOut, probably better off-chain
+
         // Set FIAT exact amount Out
         params.swaps[params.swaps.length-1].amount = exactAmountOut;
-
+        params.limits[params.swaps.length-1] = int(exactAmountOut); 
+        
         // BatchSwap
         int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(IBalancerVault.SwapKind.GIVEN_OUT, params.swaps, params.assets, funds, params.limits, params.deadline);
         
         // Vault deltas are in the same order as Assets, underlier is the first
-        return (uint(deltas[0]),address(params.assets[0]));
+        return (abs(deltas[0]),address(params.assets[0]));
+    }
+
+    function FIATToUnderlier() external view returns (uint){
+     
+    }
+
+    function underlierToFIAT() external view returns (uint){
+        
+    }
+
+    /**
+     * @dev Returns the absolute value of a signed integer.
+     */
+    function abs(int256 a) internal pure returns (uint256 result) {
+        // Equivalent to:
+        // result = a > 0 ? uint256(a) : uint256(-a)
+        assembly {
+            let s := sar(255, a)
+            result := sub(xor(a, s), s)
+        }
     }
 }
