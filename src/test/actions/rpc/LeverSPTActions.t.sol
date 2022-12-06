@@ -611,6 +611,8 @@ contract LeverSPTActions_RPC_tests is Test {
 
         limits.push(0); // Limit In set in the contracts as exactAmountIn
         limits.push(int(totalUnderlier-upfrontUnderlier-5 ether)); // min DAI out after fees
+        
+        assertEq(usdc.balanceOf(address(leverActions)),0);
 
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
@@ -650,7 +652,7 @@ contract LeverSPTActions_RPC_tests is Test {
             _getBuyFIATSwapParams(swaps,assets,limits),
             _getCollateralSwapParams(address(sP_maDAI), address(dai), address(maDAIAdapter), type(uint256).max, 0)
         );
-
+        assertEq(usdc.balanceOf(address(leverActions)),0);
         assertGt(dai.balanceOf(me), meInitialBalance - 15 ether); // subtract fees / rounding errors
         assertEq(IERC20(address(sP_maDAI)).balanceOf(address(maDAIVault)), vaultInitialBalance);
         assertEq(_collateral(address(maDAIVault), address(userProxy)), initialCollateral);
