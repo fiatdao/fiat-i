@@ -37,9 +37,9 @@ abstract contract LeverActions {
     struct SellFIATSwapParams {
         // Batch Swap
         IBalancerVault.BatchSwapStep[] swaps;
-        // IAssets for Batch Swap
+        // IAssets for Batch Swap, assets array has to be in swap order FIAT => B => underlier (FIAT index field can be left empty)
         IAsset[] assets;
-        // Min. amount of tokens we would accept to receive from the swap
+        // An array of maximum amounts of each asset to be transferred. For token going into the Vault (+), for tokens going out of the Vault (-)
         int256[] limits;
         // Timestamp at which swap must be confirmed by [seconds]
         uint256 deadline;
@@ -48,9 +48,9 @@ abstract contract LeverActions {
     struct BuyFIATSwapParams {
         // Batch Swap
         IBalancerVault.BatchSwapStep[] swaps;
-        // IAssets for Batch Swap
+        // IAssets for Batch Swap, assets array has to be in swap order underlier => B => FIAT  (FIAT index field can be left empty)
         IAsset[] assets;
-        // Max. amount of tokens to be swapped for exactAmountOut of FIAT
+        // An array of maximum amounts of each asset to be transferred. For token going into the Vault (+), for tokens going out of the Vault (-)
         int256[] limits;
         // Timestamp at which swap must be confirmed by [seconds]
         uint256 deadline;
@@ -264,9 +264,11 @@ abstract contract LeverActions {
         return (abs(deltas[0]), address(params.assets[0]));
     }
 
-    // @dev assets array has to be in swap order FIAT => B => C 
-    // Fiat index can be left empty
-    // return underlier amount we'll get
+    /// @notice Preview underlier amount for Exact Amount of FIAT In
+    /// @dev Assets array has to be in swap order FIAT => B => underlier (FIAT index field can be left empty)
+    /// @param swaps BatchSwapStep structs from Balancer V2
+    /// @param assets Assets array (FIAT => B => C => Underlier)
+    /// @return underlierAmount Amount of underlier back
     function exactFIATInToUnderlier(
         IBalancerVault.BatchSwapStep[] memory swaps,
         IAsset[] memory assets
@@ -284,8 +286,11 @@ abstract contract LeverActions {
         return abs(assetDeltas[assetDeltas.length-1]);
     }
     
-    // @dev assets array has to be in swap order A => B => FIAT 
-    // return underlier amount required to get Exact Amount of FIAT
+    /// @notice Preview underlier amount required to get Exact Amount of FIAT
+    /// @dev Assets array has to be in swap order underlier => B => FIAT  (FIAT index field can be left empty)
+    /// @param swaps BatchSwapStep structs from Balancer V2
+    /// @param assets Assets array (underlier => A => B => FIAT)
+    /// @return underlierAmount Amount of underlier back
     function underlierToExactFIATOut(
         IBalancerVault.BatchSwapStep[] memory swaps,
         IAsset[] memory assets
