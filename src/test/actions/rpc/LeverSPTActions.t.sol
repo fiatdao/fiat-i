@@ -381,6 +381,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 1000 * WAD;
         uint256 upfrontUnderlier = 1000 * WAD;
         uint256 totalUnderlier = 2000 * WAD;
+        uint256 fee = 20 * WAD;
 
         // Prepare sell FIAT params
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
@@ -392,9 +393,9 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(dai)));
         
+        limits.push(int(lendFIAT)); 
         limits.push(0); 
-        limits.push(int(990 * 1e6)); // min USDC out after fees
-        limits.push(int(lendFIAT-10 ether)); // min DAI out after fees
+        limits.push(-int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
       
 
         _buyCollateralAndIncreaseLever(
@@ -414,7 +415,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
-
+        uint256 fee = 5 * WAD;
         uint256 meInitialBalance = dai.balanceOf(me);
         uint256 vaultInitialBalance = IERC20(address(sP_maDAI)).balanceOf(address(maDAIVault));
         uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
@@ -432,8 +433,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
 
-        limits.push(0); 
-        limits.push(int(lendFIAT-10 ether)); // min DAI out after fees
+        limits.push(int(lendFIAT));  // max FIAT amount in 
+        limits.push(-int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
 
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
@@ -459,6 +460,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(user), upfrontUnderlier);
 
         uint256 userInitialBalance = dai.balanceOf(address(user));
@@ -478,8 +480,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
 
-        limits.push(0); 
-        limits.push(int(lendFIAT- 5 ether)); // min DAI out after fees
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
 
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
@@ -505,6 +507,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = dai.balanceOf(address(userProxy));
@@ -524,8 +527,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
 
-        limits.push(0); 
-        limits.push(int(totalUnderlier-upfrontUnderlier-5 ether)); // min DAI out after fees
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
 
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
@@ -551,6 +554,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = dai.balanceOf(address(userProxy));
@@ -570,8 +574,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
 
-        limits.push(0); 
-        limits.push(int(totalUnderlier-upfrontUnderlier-5 ether)); // min DAI out after fees
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
 
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
@@ -597,6 +601,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
 
         uint256 meInitialBalance = dai.balanceOf(me);
         uint256 vaultInitialBalance = IERC20(sP_maDAI).balanceOf(address(maDAIVault));
@@ -609,8 +614,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
 
-        limits.push(0); // Limit In set in the contracts as exactAmountIn
-        limits.push(int(totalUnderlier-upfrontUnderlier-5 ether)); // min DAI out after fees
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
         
         assertEq(usdc.balanceOf(address(leverActions)),0);
 
@@ -640,9 +645,9 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(fiat)));
         
-        limits.push(int(lendFIAT)+10 ether); // max DAI In
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
         limits.push(0); 
-        limits.push(0); // limit set as exact amount out in the contract actions
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
 
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -662,6 +667,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(user), upfrontUnderlier);
 
         uint256 userInitialBalance = dai.balanceOf(address(user));
@@ -675,8 +681,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
 
-        limits.push(0); // Limit In set in the contracts as exactAmountIn
-        limits.push(int(totalUnderlier-upfrontUnderlier-5 ether)); // min DAI out after fees
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
 
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
@@ -701,8 +707,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(fiat)));
         
-        limits.push(int(lendFIAT)+ 5 ether); // max DAI In
-        limits.push(0); // limit set as exact amount out in the contract actions
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
 
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -722,6 +728,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = dai.balanceOf(address(userProxy));
@@ -735,8 +742,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
 
-        limits.push(0); // Limit In set in the contracts as exactAmountIn
-        limits.push(int(totalUnderlier-upfrontUnderlier-5 ether)); // min DAI out after fees
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
         
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
@@ -761,8 +768,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(fiat)));
         
-        limits.push(int(lendFIAT)+ 5 ether); // max DAI In
-        limits.push(0); // limit set as exact amount out in the contract actions
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
 
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -782,6 +789,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = dai.balanceOf(address(userProxy));
@@ -795,8 +803,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
 
-        limits.push(0); // Limit In set in the contracts as exactAmountIn
-        limits.push(int(totalUnderlier-upfrontUnderlier-5 ether)); // min DAI out after fees
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
         
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
@@ -821,8 +829,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(fiat)));
         
-        limits.push(int(lendFIAT)+ 5 ether); // max DAI In
-        limits.push(0); // limit set as exact amount out in the contract actions
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
 
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -842,7 +850,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
-
+        uint256 fee = 5 * WAD;
         uint256 meInitialBalance = dai.balanceOf(me);
         uint256 vaultInitialBalance = IERC20(sP_maDAI).balanceOf(address(maDAIVault));
         uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
@@ -854,8 +862,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
 
-        limits.push(0); // Limit In set in the contracts as exactAmountIn
-        limits.push(int(totalUnderlier-upfrontUnderlier-5 ether)); // min DAI out after fees
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
         
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
@@ -896,8 +904,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(fiat)));
         
-        limits.push(int(lendFIAT)+ 5 ether); // max DAI In
-        limits.push(0); // limit set as exact amount out in the contract actions
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
 
         _redeemCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -918,6 +926,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(user), upfrontUnderlier);
 
         uint256 userInitialBalance = dai.balanceOf(address(user));
@@ -931,8 +940,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
 
-        limits.push(0); // Limit In set in the contracts as exactAmountIn
-        limits.push(int(totalUnderlier-upfrontUnderlier-5 ether)); // min DAI out after fees
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
         
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
@@ -973,8 +982,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(fiat)));
         
-        limits.push(int(lendFIAT)+ 5 ether); // max DAI In
-        limits.push(0); // limit set as exact amount out in the contract actions
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
 
         _redeemCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -995,6 +1004,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = dai.balanceOf(address(userProxy));
@@ -1008,8 +1018,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
 
-        limits.push(0); // Limit In set in the contracts as exactAmountIn
-        limits.push(int(totalUnderlier-upfrontUnderlier-5 ether)); // min DAI out after fees
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
         
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
@@ -1048,8 +1058,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(fiat)));
         
-        limits.push(int(lendFIAT)+ 5 ether); // max DAI In
-        limits.push(0); // limit set as exact amount out in the contract actions
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
 
         _redeemCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -1070,6 +1080,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = dai.balanceOf(address(userProxy));
@@ -1083,8 +1094,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
 
-        limits.push(0); // Limit In set in the contracts as exactAmountIn
-        limits.push(int(totalUnderlier-upfrontUnderlier-5 ether)); // min DAI out after fees
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
         
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
@@ -1123,8 +1134,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(fiat)));
         
-        limits.push(int(lendFIAT)+ 5 ether); // max DAI In
-        limits.push(0); // limit set as exact amount out in the contract actions
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
 
         _redeemCollateralAndDecreaseLever(
             address(maDAIVault),

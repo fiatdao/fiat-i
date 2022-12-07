@@ -220,7 +220,7 @@ abstract contract LeverActions {
         );
         // Set FIAT exact amount In
         params.swaps[0].amount = exactAmountIn;
-        params.limits[0] = int256(exactAmountIn);
+        params.assets[0] = IAsset(address(fiat));
 
         // BatchSwap
         int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(
@@ -248,8 +248,8 @@ abstract contract LeverActions {
         );
         // Set FIAT exact amount Out
         params.swaps[0].amount = exactAmountOut;
-        params.limits[0] = int256(exactAmountOut);
-
+        params.assets[params.assets.length-1] = IAsset(address(fiat));
+        
         // BatchSwap
         int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(
             IBalancerVault.SwapKind.GIVEN_OUT,
@@ -264,13 +264,16 @@ abstract contract LeverActions {
         return (abs(deltas[0]), address(params.assets[0]));
     }
 
+    // @dev assets array has to be in swap order FIAT => B => C 
+    // Fiat index can be left empty
     // return underlier amount we'll get
     function exactFIATInToUnderlier(
         IBalancerVault.BatchSwapStep[] memory swaps,
         IAsset[] memory assets
     ) external returns (uint256) {
         IBalancerVault.FundManagement memory funds;
-
+        assets[0] = IAsset(address(fiat));
+        
         int256[] memory assetDeltas = IBalancerVault(fiatBalancerVault).queryBatchSwap(
             IBalancerVault.SwapKind.GIVEN_IN,
             swaps,
@@ -281,12 +284,14 @@ abstract contract LeverActions {
         return abs(assetDeltas[assetDeltas.length-1]);
     }
     
+    // @dev assets array has to be in swap order A => B => FIAT 
     // return underlier amount required to get Exact Amount of FIAT
     function underlierToExactFIATOut(
         IBalancerVault.BatchSwapStep[] memory swaps,
         IAsset[] memory assets
     ) external returns (uint256) {
         IBalancerVault.FundManagement memory funds;
+        assets[assets.length-1] = IAsset(address(fiat));
 
         int256[] memory assetDeltas = IBalancerVault(fiatBalancerVault).queryBatchSwap(
             IBalancerVault.SwapKind.GIVEN_OUT,
