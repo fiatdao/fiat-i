@@ -1094,4 +1094,76 @@ contract LeverEPTActions_RPC_tests is Test {
         assertEq(ERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22)), vaultInitialBalance);
         assertEq(_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)), initialCollateral);
     }
+
+    function test_update_rate_and_redeemCollateralAndDecreaseLever() public {
+        uint256 lendFIAT = 500 * WAD;
+        uint256 upfrontUnderlier = 100 * ONE_USDC;
+        uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
+
+        uint256 meInitialBalance = underlierUSDC.balanceOf(me);
+        uint256 vaultInitialBalance = IERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22));
+        uint256 initialCollateral = _collateral(address(vault_yvUSDC_16SEP22), address(userProxy));
+
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
+        
+        publican.setParam(address(vault_yvUSDC_16SEP22),'interestPerSecond',1.000000000700000 ether);
+        publican.collect(address(vault_yvUSDC_16SEP22));
+        
+        _buyCollateralAndIncreaseLever(
+            address(vault_yvUSDC_16SEP22),
+            me,
+            upfrontUnderlier,
+            lendFIAT,
+            _getSellFIATSwapParams(swaps, assets, limits),
+            _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0)
+        );
+
+        assertLt(underlierUSDC.balanceOf(me), meInitialBalance);
+        assertGt(IERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22)), vaultInitialBalance);
+        assertGt(_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)), initialCollateral);
+
+        uint256 pTokenAmount = (_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)) * ONE_USDC) / WAD;
+        uint256 normalDebt = _normalDebt(address(vault_yvUSDC_16SEP22), address(userProxy));
+
+        vm.warp(vault_yvUSDC_16SEP22.maturity(0));
+        
+        publican.collect(address(vault_yvUSDC_16SEP22));
+        codex.createUnbackedDebt(address(moneta), address(moneta),2 *WAD);
+        
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(underlierUSDC)));
+        assets.push(IAsset(address(0))); // setting FIAT address is not required
+
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+
+        _redeemCollateralAndDecreaseLever(
+            address(vault_yvUSDC_16SEP22),
+            vault_yvUSDC_16SEP22.token(),
+            me,
+            pTokenAmount,
+            normalDebt,
+            _getBuyFIATSwapParams(swaps, assets, limits)
+        );
+
+        assertGt(underlierUSDC.balanceOf(me), meInitialBalance);
+        assertEq(ERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22)), vaultInitialBalance);
+        assertEq(_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)), initialCollateral);
+    }
 }

@@ -1151,6 +1151,89 @@ contract LeverSPTActions_RPC_tests is Test {
         assertEq(IERC20(address(sP_maDAI)).balanceOf(address(maDAIVault)), vaultInitialBalance);
         assertEq(_collateral(address(maDAIVault), address(userProxy)), initialCollateral);
     }
+
+    function test_update_rate_and_redeemCollateralAndDecreaseLever() public {
+        
+        uint256 lendFIAT = 100 * WAD;
+        uint256 upfrontUnderlier = 600 * WAD;
+        uint256 totalUnderlier = 700 * WAD;
+        uint256 fee = 5 * WAD;
+        uint256 meInitialBalance = dai.balanceOf(me);
+        uint256 vaultInitialBalance = IERC20(sP_maDAI).balanceOf(address(maDAIVault));
+        uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+
+        publican.setParam(address(maDAIVault),'interestPerSecond',1.000000000790000 ether);
+        publican.collect(address(maDAIVault));
+        
+        _buyCollateralAndIncreaseLever(
+            address(maDAIVault),
+            me,
+            upfrontUnderlier,
+            lendFIAT,
+            _getSellFIATSwapParams(swaps,assets,limits),
+            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
+        );
+
+        assertLt(dai.balanceOf(me), meInitialBalance);
+        assertGt(IERC20(sP_maDAI).balanceOf(address(maDAIVault)), vaultInitialBalance);
+        assertGt(_collateral(address(maDAIVault), address(userProxy)), initialCollateral);
+
+        uint256 pTokenAmount = _collateral(address(maDAIVault), address(userProxy));
+        uint256 normalDebt = _normalDebt(address(maDAIVault), address(userProxy));
+ 
+        // we now move AFTER maturity, settle serie and redeem
+        // get Sponsor address
+        IDivider.Series memory serie = divider.series(maDAIAdapter, maturity);
+        address sponsor = serie.sponsor;
+        
+        // Move post maturity
+        vm.warp(maturity+1);
+
+        publican.collect(address(maDAIVault));
+        codex.createUnbackedDebt(address(moneta), address(moneta),2 *WAD);
+
+        // Settle serie from sponsor
+        vm.prank(sponsor);
+        divider.settleSeries(maDAIAdapter, maturity);
+
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(fiat)));
+        
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
+
+        _redeemCollateralAndDecreaseLever(
+            address(maDAIVault),
+            address(sP_maDAI),
+            me,
+            pTokenAmount,
+            normalDebt,
+            _getBuyFIATSwapParams(swaps,assets,limits),
+            _getRedeemParams(address(maDAIAdapter))
+        );
+
+        assertGt(dai.balanceOf(me), meInitialBalance);
+        assertEq(IERC20(address(sP_maDAI)).balanceOf(address(maDAIVault)), vaultInitialBalance);
+        assertEq(_collateral(address(maDAIVault), address(userProxy)), initialCollateral);
+    }
+
     
     function test_underlierToPToken() external {
         uint256 pTokenAmountNow = leverActions.underlierToPToken(address(maDAISpace), balancerVault, 100 ether);
