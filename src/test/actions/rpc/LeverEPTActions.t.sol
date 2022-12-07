@@ -25,7 +25,7 @@ import {Caller} from "../../../test/utils/Caller.sol";
 
 import {VaultEPTActions} from "../../../actions/vault/VaultEPTActions.sol";
 import {LeverEPTActions} from "../../../actions/lever/LeverEPTActions.sol";
-import {IBalancerVault} from "../../../actions/helper/ConvergentCurvePoolHelper.sol";
+import {IBalancerVault, IAsset} from "../../../actions/helper/ConvergentCurvePoolHelper.sol";
 
 interface ITrancheFactory {
     function deployTranche(uint256 expiration, address wpAddress) external returns (address);
@@ -79,10 +79,15 @@ contract LeverEPTActions_RPC_tests is Test {
 
     bytes32 internal fiatPoolId = 0x178e029173417b1f9c8bc16dcec6f697bc32374600000000000000000000025d;
     address internal fiatBalancerVault = address(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
-
+    IERC20 internal dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
     uint256 internal tokenId = 0;
     address internal me = address(this);
     uint256 internal ONE_USDC = 1e6;
+
+    // Batch swaps
+    IBalancerVault.BatchSwapStep[] internal swaps;
+    IAsset[] internal assets;
+    int256[] internal limits;
 
     function _mintUSDC(address to, uint256 amount) internal {
         // USDC minters
@@ -214,23 +219,25 @@ contract LeverEPTActions_RPC_tests is Test {
         collateralSwapParams.deadline = block.timestamp + 12 weeks;
     }
 
-    function _getSellFIATSwapParams(address assetOut, uint256 minAmountOut)
-        internal
-        view
-        returns (LeverEPTActions.SellFIATSwapParams memory fiatSwapParams)
-    {
-        fiatSwapParams.assetOut = assetOut;
-        fiatSwapParams.minAmountOut = minAmountOut;
+    function _getSellFIATSwapParams(
+        IBalancerVault.BatchSwapStep[] memory _swaps,
+        IAsset[] memory _assets,
+        int256[] memory _limits
+    ) internal view returns (LeverEPTActions.SellFIATSwapParams memory fiatSwapParams) {
+        fiatSwapParams.swaps = _swaps;
+        fiatSwapParams.assets = _assets;
+        fiatSwapParams.limits = _limits;
         fiatSwapParams.deadline = block.timestamp + 12 weeks;
     }
 
-    function _getBuyFIATSwapParams(address assetIn, uint256 maxAmountIn)
-        internal
-        view
-        returns (LeverEPTActions.BuyFIATSwapParams memory fiatSwapParams)
-    {
-        fiatSwapParams.assetIn = assetIn;
-        fiatSwapParams.maxAmountIn = maxAmountIn;
+    function _getBuyFIATSwapParams(
+        IBalancerVault.BatchSwapStep[] memory _swaps,
+        IAsset[] memory _assets,
+        int256[] memory _limits
+    ) internal view returns (LeverEPTActions.BuyFIATSwapParams memory fiatSwapParams) {
+        fiatSwapParams.swaps = _swaps;
+        fiatSwapParams.assets = _assets;
+        fiatSwapParams.limits = _limits;
         fiatSwapParams.deadline = block.timestamp + 12 weeks;
     }
 
@@ -313,7 +320,7 @@ contract LeverEPTActions_RPC_tests is Test {
         );
 
         vm.mockCall(collybus, abi.encodeWithSelector(Collybus.read.selector), abi.encode(uint256(WAD)));
-        
+
         userProxy.execute(
             address(leverActions),
             abi.encodeWithSelector(leverActions.approveFIAT.selector, address(moneta), type(uint256).max)
@@ -352,13 +359,28 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 500 * ONE_USDC;
         uint256 totalUnderlier = 1000 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
+
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+        IBalancerVault.BatchSwapStep memory step2 = IBalancerVault.BatchSwapStep(fiatPoolId, 1, 2, 0, new bytes(0));
+        swaps.push(step2);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT));
+        limits.push(0);
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee));
 
         _buyCollateralAndIncreaseLever(
             address(vault_yvUSDC_16SEP22),
             me,
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(underlierUSDC), totalUnderlier - upfrontUnderlier - ONE_USDC), // borrowed underliers - fees
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0) // swap all for pTokens
         );
 
@@ -370,6 +392,7 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
         uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
 
         uint256 meInitialBalance = underlierUSDC.balanceOf(me);
         uint256 vaultInitialBalance = IERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22));
@@ -382,12 +405,22 @@ contract LeverEPTActions_RPC_tests is Test {
             totalUnderlier
         );
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
+
         _buyCollateralAndIncreaseLever(
             address(vault_yvUSDC_16SEP22),
             me,
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(underlierUSDC), totalUnderlier - upfrontUnderlier - ONE_USDC), // borrowed underliers - fees
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0) // swap all for pTokens
         );
 
@@ -406,6 +439,7 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
         uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
         underlierUSDC.transfer(address(user), upfrontUnderlier);
 
         uint256 userInitialBalance = underlierUSDC.balanceOf(address(user));
@@ -419,12 +453,22 @@ contract LeverEPTActions_RPC_tests is Test {
             totalUnderlier
         );
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
+
         _buyCollateralAndIncreaseLever(
             address(vault_yvUSDC_16SEP22),
             address(user),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(underlierUSDC), totalUnderlier - upfrontUnderlier - ONE_USDC), // borrowed underliers - fees
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0) // swap all for pTokens
         );
 
@@ -443,6 +487,8 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
         uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
+
         underlierUSDC.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = underlierUSDC.balanceOf(address(userProxy));
@@ -456,12 +502,22 @@ contract LeverEPTActions_RPC_tests is Test {
             totalUnderlier
         );
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
+
         _buyCollateralAndIncreaseLever(
             address(vault_yvUSDC_16SEP22),
             address(0),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(underlierUSDC), totalUnderlier - upfrontUnderlier - ONE_USDC), // borrowed underliers - fees
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0) // swap all for pTokens
         );
 
@@ -480,6 +536,8 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
         uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
+
         underlierUSDC.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = underlierUSDC.balanceOf(address(userProxy));
@@ -493,12 +551,22 @@ contract LeverEPTActions_RPC_tests is Test {
             totalUnderlier
         );
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
+
         _buyCollateralAndIncreaseLever(
             address(vault_yvUSDC_16SEP22),
             address(userProxy),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(underlierUSDC), totalUnderlier - upfrontUnderlier - ONE_USDC), // borrowed underliers - fees
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0) // swap all for pTokens
         );
 
@@ -517,29 +585,58 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
         uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
 
         uint256 meInitialBalance = underlierUSDC.balanceOf(me);
         uint256 vaultInitialBalance = IERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22));
         uint256 initialCollateral = _collateral(address(vault_yvUSDC_16SEP22), address(userProxy));
+
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
 
         _buyCollateralAndIncreaseLever(
             address(vault_yvUSDC_16SEP22),
             me,
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(underlierUSDC), totalUnderlier - upfrontUnderlier - ONE_USDC),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0)
         );
 
         uint256 pTokenAmount = (_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)) * ONE_USDC) / WAD;
         uint256 normalDebt = _normalDebt(address(vault_yvUSDC_16SEP22), address(userProxy));
 
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 1, 2, 0, new bytes(0));
+        swaps.push(buy);
+        IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy2);
+
+        assets.push(IAsset(address(underlierUSDC)));
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(fiat)));
+
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
+        limits.push(0);
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+
         _sellCollateralAndDecreaseLever(
             address(vault_yvUSDC_16SEP22),
             me,
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(underlierUSDC), ((normalDebt * ONE_USDC) / WAD) + ONE_USDC),
+            _getBuyFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
         );
 
@@ -552,30 +649,55 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
         uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
         underlierUSDC.transfer(address(user), upfrontUnderlier);
 
         uint256 userInitialBalance = underlierUSDC.balanceOf(address(user));
         uint256 vaultInitialBalance = IERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22));
         uint256 initialCollateral = _collateral(address(vault_yvUSDC_16SEP22), address(userProxy));
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
+
         _buyCollateralAndIncreaseLever(
             address(vault_yvUSDC_16SEP22),
             address(user),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(underlierUSDC), totalUnderlier - upfrontUnderlier - ONE_USDC),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0)
         );
 
         uint256 pTokenAmount = (_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)) * ONE_USDC) / WAD;
         uint256 normalDebt = _normalDebt(address(vault_yvUSDC_16SEP22), address(userProxy));
 
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(underlierUSDC)));
+        assets.push(IAsset(address(0))); // setting FIAT address is not required
+
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+
         _sellCollateralAndDecreaseLever(
             address(vault_yvUSDC_16SEP22),
             address(user),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(underlierUSDC), ((normalDebt * ONE_USDC) / WAD) + ONE_USDC),
+            _getBuyFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
         );
 
@@ -588,30 +710,55 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
         uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
         underlierUSDC.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = underlierUSDC.balanceOf(address(userProxy));
         uint256 vaultInitialBalance = IERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22));
         uint256 initialCollateral = _collateral(address(vault_yvUSDC_16SEP22), address(userProxy));
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
+
         _buyCollateralAndIncreaseLever(
             address(vault_yvUSDC_16SEP22),
             address(0),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(underlierUSDC), totalUnderlier - upfrontUnderlier - ONE_USDC),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0)
         );
 
         uint256 pTokenAmount = (_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)) * ONE_USDC) / WAD;
         uint256 normalDebt = _normalDebt(address(vault_yvUSDC_16SEP22), address(userProxy));
 
+        delete swaps;
+        delete assets;
+        delete limits;
+        
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(underlierUSDC)));
+        assets.push(IAsset(address(0))); // setting FIAT address is not required
+
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+
         _sellCollateralAndDecreaseLever(
             address(vault_yvUSDC_16SEP22),
             address(0),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(underlierUSDC), ((normalDebt * ONE_USDC) / WAD) + ONE_USDC),
+            _getBuyFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
         );
 
@@ -624,30 +771,55 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
         uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
         underlierUSDC.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = underlierUSDC.balanceOf(address(userProxy));
         uint256 vaultInitialBalance = IERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22));
         uint256 initialCollateral = _collateral(address(vault_yvUSDC_16SEP22), address(userProxy));
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
+
         _buyCollateralAndIncreaseLever(
             address(vault_yvUSDC_16SEP22),
             address(userProxy),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(underlierUSDC), totalUnderlier - upfrontUnderlier - ONE_USDC),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0)
         );
 
         uint256 pTokenAmount = (_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)) * ONE_USDC) / WAD;
         uint256 normalDebt = _normalDebt(address(vault_yvUSDC_16SEP22), address(userProxy));
 
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(underlierUSDC)));
+        assets.push(IAsset(address(0))); // setting FIAT address is not required
+
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+
         _sellCollateralAndDecreaseLever(
             address(vault_yvUSDC_16SEP22),
             address(userProxy),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(underlierUSDC), ((normalDebt * ONE_USDC) / WAD) + ONE_USDC),
+            _getBuyFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
         );
 
@@ -660,17 +832,28 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
         uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
 
         uint256 meInitialBalance = underlierUSDC.balanceOf(me);
         uint256 vaultInitialBalance = IERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22));
         uint256 initialCollateral = _collateral(address(vault_yvUSDC_16SEP22), address(userProxy));
+
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
 
         _buyCollateralAndIncreaseLever(
             address(vault_yvUSDC_16SEP22),
             me,
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(underlierUSDC), totalUnderlier - upfrontUnderlier - ONE_USDC),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0)
         );
 
@@ -682,6 +865,20 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 normalDebt = _normalDebt(address(vault_yvUSDC_16SEP22), address(userProxy));
 
         vm.warp(vault_yvUSDC_16SEP22.maturity(0));
+        
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(underlierUSDC)));
+        assets.push(IAsset(address(0))); // setting FIAT address is not required
+
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
 
         _redeemCollateralAndDecreaseLever(
             address(vault_yvUSDC_16SEP22),
@@ -689,7 +886,7 @@ contract LeverEPTActions_RPC_tests is Test {
             me,
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(underlierUSDC), ((normalDebt * ONE_USDC) / WAD) + ONE_USDC)
+            _getBuyFIATSwapParams(swaps, assets, limits)
         );
 
         assertGt(underlierUSDC.balanceOf(me), meInitialBalance);
@@ -701,18 +898,29 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
         uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
         underlierUSDC.transfer(address(user), upfrontUnderlier);
 
         uint256 userInitialBalance = underlierUSDC.balanceOf(address(user));
         uint256 vaultInitialBalance = IERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22));
         uint256 initialCollateral = _collateral(address(vault_yvUSDC_16SEP22), address(userProxy));
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
+
         _buyCollateralAndIncreaseLever(
             address(vault_yvUSDC_16SEP22),
             address(user),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(underlierUSDC), totalUnderlier - upfrontUnderlier - ONE_USDC),
+            _getSellFIATSwapParams(swaps,assets,limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0)
         );
 
@@ -725,13 +933,27 @@ contract LeverEPTActions_RPC_tests is Test {
 
         vm.warp(vault_yvUSDC_16SEP22.maturity(0));
 
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(underlierUSDC)));
+        assets.push(IAsset(address(0))); // setting FIAT address is not required
+
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+
         _redeemCollateralAndDecreaseLever(
             address(vault_yvUSDC_16SEP22),
             vault_yvUSDC_16SEP22.token(),
             address(user),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(underlierUSDC), ((normalDebt * ONE_USDC) / WAD) + ONE_USDC)
+            _getBuyFIATSwapParams(swaps, assets, limits)
         );
 
         assertGt(underlierUSDC.balanceOf(address(user)), userInitialBalance);
@@ -743,18 +965,29 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
         uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
         underlierUSDC.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = underlierUSDC.balanceOf(address(userProxy));
         uint256 vaultInitialBalance = IERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22));
         uint256 initialCollateral = _collateral(address(vault_yvUSDC_16SEP22), address(userProxy));
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
+
         _buyCollateralAndIncreaseLever(
             address(vault_yvUSDC_16SEP22),
             address(0),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(underlierUSDC), totalUnderlier - upfrontUnderlier - ONE_USDC),
+            _getSellFIATSwapParams(swaps,assets,limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0)
         );
 
@@ -767,13 +1000,27 @@ contract LeverEPTActions_RPC_tests is Test {
 
         vm.warp(vault_yvUSDC_16SEP22.maturity(0));
 
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(underlierUSDC)));
+        assets.push(IAsset(address(0))); // setting FIAT address is not required
+
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+
         _redeemCollateralAndDecreaseLever(
             address(vault_yvUSDC_16SEP22),
             vault_yvUSDC_16SEP22.token(),
             address(0),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(underlierUSDC), ((normalDebt * ONE_USDC) / WAD) + ONE_USDC)
+            _getBuyFIATSwapParams(swaps,assets,limits)
         );
 
         assertGt(underlierUSDC.balanceOf(address(userProxy)), userProxyInitialBalance);
@@ -785,18 +1032,29 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
         uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5* ONE_USDC;
         underlierUSDC.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = underlierUSDC.balanceOf(address(userProxy));
         uint256 vaultInitialBalance = IERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22));
         uint256 initialCollateral = _collateral(address(vault_yvUSDC_16SEP22), address(userProxy));
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
+
         _buyCollateralAndIncreaseLever(
             address(vault_yvUSDC_16SEP22),
             address(userProxy),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(underlierUSDC), totalUnderlier - upfrontUnderlier - ONE_USDC),
+            _getSellFIATSwapParams(swaps,assets,limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0)
         );
 
@@ -809,13 +1067,27 @@ contract LeverEPTActions_RPC_tests is Test {
 
         vm.warp(vault_yvUSDC_16SEP22.maturity(0));
 
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(underlierUSDC)));
+        assets.push(IAsset(address(0))); // setting FIAT address is not required
+
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+
         _redeemCollateralAndDecreaseLever(
             address(vault_yvUSDC_16SEP22),
             vault_yvUSDC_16SEP22.token(),
             address(userProxy),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(underlierUSDC), ((normalDebt * ONE_USDC) / WAD) + ONE_USDC)
+            _getBuyFIATSwapParams(swaps,assets,limits)
         );
 
         assertGt(underlierUSDC.balanceOf(address(userProxy)), userProxyInitialBalance);
