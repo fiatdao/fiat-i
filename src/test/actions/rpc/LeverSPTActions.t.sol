@@ -29,7 +29,7 @@ import {LeverSPTActions} from "../../../actions/lever/LeverSPTActions.sol";
 import {IBalancerVault, IAsset} from "../../../actions/helper/ConvergentCurvePoolHelper.sol";
 
 import {IVault} from "../../../interfaces/IVault.sol";
-import {console} from "forge-std/console.sol";
+
 interface IPeriphery {
     function swapUnderlyingForPTs(
         address adapter,
@@ -647,7 +647,7 @@ contract LeverSPTActions_RPC_tests is Test {
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
         limits.push(0); 
-        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
 
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -708,7 +708,7 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
-        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
 
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -769,7 +769,7 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
-        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
 
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -830,7 +830,7 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
-        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
 
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -905,7 +905,7 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
-        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
 
         _redeemCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -983,7 +983,7 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
-        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
 
         _redeemCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -1059,7 +1059,7 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
-        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
 
         _redeemCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -1135,7 +1135,7 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
-        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
 
         _redeemCollateralAndDecreaseLever(
             address(maDAIVault),
