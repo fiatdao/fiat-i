@@ -74,6 +74,8 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
         address collateralizer;
         // Amount of fyTokens to withdraw and swap for underliers [tokenScale]
         uint256 subFYTokenAmount;
+        // Amount of normalized debt to pay back [wad]
+        uint256 subNormalDebt;
         // Swap config for the underlier to FIAT swap
         BuyFIATSwapParams fiatSwapParams;
         // Swap config for the fyToken to underlier swap
@@ -91,6 +93,8 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
         address collateralizer;
         // Amount of fyTokens to withdraw and swap for underliers [tokenScale]
         uint256 subFYTokenAmount;
+        // Amount of normalized debt to pay back [wad]
+        uint256 subNormalDebt;
         // Swap config for the underlier to FIAT swap
         BuyFIATSwapParams fiatSwapParams;
     }
@@ -239,6 +243,7 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
                         position,
                         collateralizer,
                         subFYTokenAmount,
+                        subNormalDebt,
                         fiatSwapParams,
                         collateralSwapParams
                     )
@@ -285,6 +290,7 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
                         position,
                         collateralizer,
                         subFYTokenAmount,
+                        subNormalDebt,
                         fiatSwapParams
                     )
                 )
@@ -342,7 +348,7 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
             params.position,
             address(this),
             wdiv(params.subFYTokenAmount, IVault(params.vault).tokenScale()),
-            borrowed
+            params.subNormalDebt
         );
 
         // sell collateral for underlier
@@ -376,7 +382,7 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
             params.position,
             address(this),
             wdiv(params.subFYTokenAmount, IVault(params.vault).tokenScale()),
-            borrowed
+            params.subNormalDebt
         );
 
         // redeem fyToken for underlier

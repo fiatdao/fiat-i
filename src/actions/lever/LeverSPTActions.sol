@@ -140,6 +140,8 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
         address collateralizer;
         // Amount of pTokens to withdraw and swap for underliers [tokenScale]
         uint256 subPTokenAmount;
+        // Amount of normalized debt to pay back [wad]
+        uint256 subNormalDebt;
         // Swap config for the underlier to FIAT swap
         BuyFIATSwapParams fiatSwapParams;
         // Swap config for the pToken to underlier swap
@@ -157,6 +159,8 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
         address collateralizer;
         // Amount of pTokens to withdraw and swap for underliers [tokenScale]
         uint256 subPTokenAmount;
+        // Amount of normalized debt to pay back [wad]
+        uint256 subNormalDebt;
         // Swap config for the underlier to FIAT swap
         BuyFIATSwapParams fiatSwapParams;
         // Config for the redemption of pToken for underlier
@@ -312,6 +316,7 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
                         position,
                         collateralizer,
                         subPTokenAmount,
+                        subNormalDebt,
                         fiatSwapParams,
                         collateralSwapParams
                     )
@@ -360,6 +365,7 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
                         position,
                         collateralizer,
                         subPTokenAmount,
+                        subNormalDebt,
                         fiatSwapParams,
                         redeemParams
                     )
@@ -418,7 +424,7 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
             params.position,
             address(this),
             wdiv(params.subPTokenAmount, IVault(params.vault).tokenScale()),
-            borrowed
+            params.subNormalDebt
         );
 
         // sell collateral for underlier
@@ -452,7 +458,7 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
             params.position,
             address(this),
             wdiv(params.subPTokenAmount, IVault(params.vault).tokenScale()),
-            borrowed
+            params.subNormalDebt
         );
 
         // redeem pTokens for `target` token
