@@ -706,6 +706,76 @@ contract LeverEPTActions_RPC_tests is Test {
         assertEq(_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)), initialCollateral);
     }
 
+    function test_update_rate_and_sellCollateralAndDecreaseLever_for_user() public {
+        uint256 lendFIAT = 500 * WAD;
+        uint256 upfrontUnderlier = 100 * ONE_USDC;
+        uint256 totalUnderlier = 600 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
+        underlierUSDC.transfer(address(user), upfrontUnderlier);
+
+        uint256 userInitialBalance = underlierUSDC.balanceOf(address(user));
+        uint256 vaultInitialBalance = IERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22));
+        uint256 initialCollateral = _collateral(address(vault_yvUSDC_16SEP22), address(userProxy));
+
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        limits.push(int256(lendFIAT)); // max FIAT in
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
+
+        publican.setParam(address(vault_yvUSDC_16SEP22),'interestPerSecond',1.000000000700000 ether);
+        publican.collect(address(vault_yvUSDC_16SEP22));
+
+        _buyCollateralAndIncreaseLever(
+            address(vault_yvUSDC_16SEP22),
+            address(user),
+            upfrontUnderlier,
+            lendFIAT,
+            _getSellFIATSwapParams(swaps, assets, limits),
+            _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0)
+        );
+
+        uint256 pTokenAmount = (_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)) * ONE_USDC) / WAD;
+        uint256 normalDebt = _normalDebt(address(vault_yvUSDC_16SEP22), address(userProxy));
+
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(underlierUSDC)));
+        assets.push(IAsset(address(0))); // setting FIAT address is not required
+
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+         
+        // Move some time
+        vm.warp(block.timestamp + 50 days);
+
+        publican.collect(address(vault_yvUSDC_16SEP22));
+        codex.createUnbackedDebt(address(moneta), address(moneta),2 *WAD);
+
+        _sellCollateralAndDecreaseLever(
+            address(vault_yvUSDC_16SEP22),
+            address(user),
+            pTokenAmount,
+            normalDebt,
+            _getBuyFIATSwapParams(swaps, assets, limits),
+            _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
+        );
+
+        assertGt(underlierUSDC.balanceOf(address(user)), userInitialBalance - ONE_USDC); // subtract fees / rounding errors
+        assertEq(ERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22)), vaultInitialBalance);
+        assertEq(_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)), initialCollateral);
+    }
+
     function test_sellCollateralAndDecreaseLever_for_zero_proxy() public {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * ONE_USDC;
@@ -1135,9 +1205,9 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 normalDebt = _normalDebt(address(vault_yvUSDC_16SEP22), address(userProxy));
 
         vm.warp(vault_yvUSDC_16SEP22.maturity(0));
-        
+
         publican.collect(address(vault_yvUSDC_16SEP22));
-        codex.createUnbackedDebt(address(moneta), address(moneta),2 *WAD);
+        codex.createUnbackedDebt(address(moneta), address(moneta),3 *WAD);
         
         delete swaps;
         delete assets;
