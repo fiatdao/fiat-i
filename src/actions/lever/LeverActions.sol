@@ -320,7 +320,7 @@ abstract contract LeverActions {
         IBalancerVault.FundManagement memory funds;
 
         for (uint256 i = 0; i < pathLength;){
-            uint index = pathLength - i;
+            uint256 index = pathLength - i;
             IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(
                 pathPoolIds[i], index-1, index, 0, new bytes(0)
             );
