@@ -431,10 +431,10 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
         uint256 underlierAmount = _sellPToken(params.subPTokenAmount, params.collateralSwapParams);
 
         // sell part of underlier for FIAT
-        (uint256 underlierSwapped,address underlier) = _buyFIATExactOut(params.fiatSwapParams, borrowed);
+        uint256 underlierSwapped = _buyFIATExactOut(params.fiatSwapParams, borrowed);
 
         // send underlier to collateralizer
-        IERC20(underlier).safeTransfer(
+        IERC20(address(params.fiatSwapParams.assets[0])).safeTransfer(
             (params.collateralizer == address(0)) ? initiator : params.collateralizer,
             sub(underlierAmount, underlierSwapped)
         );
@@ -476,10 +476,10 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
         uint256 underlierAmount = IAdapter(params.redeemParams.adapter).unwrapTarget(targetAmount);
 
         // sell part of underlier for FIAT
-        (uint256 underlierSwapped,address underlier) = _buyFIATExactOut(params.fiatSwapParams, borrowed);
+        uint256 underlierSwapped = _buyFIATExactOut(params.fiatSwapParams, borrowed);
 
         // send underlier to collateralizer
-        IERC20(underlier).safeTransfer(
+        IERC20(address(params.fiatSwapParams.assets[0])).safeTransfer(
             (params.collateralizer == address(0)) ? initiator : params.collateralizer,
             sub(underlierAmount, underlierSwapped)
         );

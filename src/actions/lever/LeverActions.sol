@@ -10,7 +10,7 @@ import {IMoneta} from "../../interfaces/IMoneta.sol";
 import {IFIAT} from "../../interfaces/IFIAT.sol";
 import {IFlash, ICreditFlashBorrower, IERC3156FlashBorrower} from "../../interfaces/IFlash.sol";
 import {IPublican} from "../../interfaces/IPublican.sol";
-import {WAD, toInt256, add, wmul, wdiv, sub} from "../../core/utils/Math.sol";
+import {WAD, toInt256, add, sub, wmul, wdiv, sub} from "../../core/utils/Math.sol";
 
 import {IBalancerVault, IAsset} from "../helper/ConvergentCurvePoolHelper.sol";
 
@@ -41,24 +41,32 @@ abstract contract LeverActions {
     }
 
     struct SellFIATSwapParams {
-        // Balancer BatchSwapStep array for swapping FIAT to underlier
+        // Balancer BatchSwapStep array (see Balancer docs for more info)
+        // Items have to be in swap order (e.g. FIAT, DAI, USDT)
         IBalancerVault.BatchSwapStep[] swaps;
-        // IAssets for Batch Swap, assets array has to be in swap order FIAT => B => underlier
+        // Balancer IAssets array (see Balancer docs for more info)
+        // Items have to be in swap order (e.g. FIAT, DAI, USDT)
         IAsset[] assets;
-        // An array of maximum amounts of each asset to be transferred. For token going into the Vault (+), for tokens going out of the Vault (-)
+        // Balancer Limits array (see Balancer docs for more info)
+        // Items have to be in swap order (e.g. FIAT, DAI, USDT)
+        // Input amount limits have to be positive, output amount limits have to be negative (e.g. 1 FIAT, -1 DAI)
         int256[] limits;
-        // Timestamp at which swap must be confirmed by [seconds]
+        // Timestamp at which the swap order expires [seconds]
         uint256 deadline;
     }
 
     struct BuyFIATSwapParams {
-        // Balancer BatchSwapStep array for swapping underlier to FIAT
+        // Balancer BatchSwapStep array (see Balancer docs for more info)
+        // Items have to be in swap order (e.g. USDT, DAI, FIAT)
         IBalancerVault.BatchSwapStep[] swaps;
-        // IAssets for Batch Swap, assets array has to be in swap order underlier => B => FIAT 
+        // Balancer IAssets array (see Balancer docs for more info)
+        // Items have to be in swap order (e.g. USDT, DAI, FIAT)
         IAsset[] assets;
-        // An array of maximum amounts of each asset to be transferred. For token going into the Vault (+), for tokens going out of the Vault (-)
+        // Balancer Limits array (see Balancer docs for more info)
+        // Items have to be in swap order (e.g. USDT, DAI, FIAT)
+        // Input amount limits have to be positive, output amount limits have to be negative (e.g. 1 DAI, -1 FIAT)
         int256[] limits;
-        // Timestamp at which swap must be confirmed by [seconds]
+        // Timestamp at which the swap order expires [seconds]
         uint256 deadline;
     }
 
@@ -218,60 +226,41 @@ abstract contract LeverActions {
     }
 
     function _sellFIATExactIn(SellFIATSwapParams memory params, uint256 exactAmountIn) internal returns (uint256) {
-        if (params.assets.length-1 != params.swaps.length) revert LeverActions__sellFIATExactIn_pathLengthMismatch();
-        if (address(params.assets[0]) != address(fiat)) revert LeverActions__sellFIATExactIn_wrongFIATAddress();
+        if (params.swaps.length != sub(params.assets.length, uint256(1)))
+            revert LeverActions__sellFIATExactIn_pathLengthMismatch();
+        if (address(params.assets[0]) != address(fiat))
+            revert LeverActions__sellFIATExactIn_wrongFIATAddress();
 
         IBalancerVault.FundManagement memory funds = IBalancerVault.FundManagement(
-            address(this),
-            false,
-            payable(address(this)),
-            false
+            address(this), false, payable(address(this)), false
         );
-        // Set FIAT exact amount In
+       
+        // set the exact amount of FIAT to swap
         params.swaps[0].amount = exactAmountIn;
 
-        // BatchSwap
-        int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(
-            IBalancerVault.SwapKind.GIVEN_IN,
-            params.swaps,
-            params.assets,
-            funds,
-            params.limits,
-            params.deadline
-        );
-
-        // Vault deltas are in the same order as Assets, underlier is the last one, return the absolut value
-        return abs(deltas[params.assets.length - 1]);
+        // return the absolute of the last swap delta for the underlier
+        return abs(IBalancerVault(fiatBalancerVault).batchSwap(
+            IBalancerVault.SwapKind.GIVEN_IN, params.swaps, params.assets, funds, params.limits, params.deadline
+        )[sub(params.assets.length, uint256(1))]);
     }
 
-    function _buyFIATExactOut(BuyFIATSwapParams memory params, uint256 exactAmountOut)
-        internal
-        returns (uint256, address)
-    {
-        if (params.assets.length-1 != params.swaps.length) revert LeverActions__buyFIATExactOut_pathLengthMismatch();
-        if (address(params.assets[params.assets.length-1]) != address(fiat)) revert LeverActions__buyFIATExactOut_wrongFIATAddress();
+    function _buyFIATExactOut(BuyFIATSwapParams memory params, uint256 exactAmountOut) internal returns (uint256) {
+        if (params.swaps.length != sub(params.assets.length, uint256(1)))
+            revert LeverActions__buyFIATExactOut_pathLengthMismatch();
+        if (address(params.assets[sub(params.assets.length, uint256(1))]) != address(fiat))
+            revert LeverActions__buyFIATExactOut_wrongFIATAddress();
 
         IBalancerVault.FundManagement memory funds = IBalancerVault.FundManagement(
-            address(this),
-            false,
-            payable(address(this)),
-            false
-        );
-        // Set FIAT exact amount Out
-        params.swaps[0].amount = exactAmountOut;
-        
-        // BatchSwap
-        int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(
-            IBalancerVault.SwapKind.GIVEN_OUT,
-            params.swaps,
-            params.assets,
-            funds,
-            params.limits,
-            params.deadline
+            address(this), false, payable(address(this)), false
         );
 
-        // Vault deltas are in the same order as Assets, underlier is the first
-        return (abs(deltas[0]), address(params.assets[0]));
+        // set the exact amount of FIAT to receive
+        params.swaps[0].amount = exactAmountOut;
+        
+        // return the absolute of the first swap delta for the underlier
+        return abs(IBalancerVault(fiatBalancerVault).batchSwap(
+            IBalancerVault.SwapKind.GIVEN_OUT, params.swaps, params.assets, funds, params.limits, params.deadline
+        )[0]);
     }
 
     /// @notice Returns an amount of underliers for a given amount of FIAT
