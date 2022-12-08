@@ -1348,7 +1348,10 @@ contract LeverSPTActions_RPC_tests is Test {
         assertEq(underlierAtMaturity, underlierAfterMaturity);
     }
 
-    function test_underlierToExactFIATOut() public {
+    LeverSPTActions.BatchSwap[] internal path;
+    LeverSPTActions.BatchSwap internal swap;
+
+    function test_underlierToFiatOut() public {
         uint256 fiatOut = 500 * WAD;
          // Prepare buy FIAT params
         IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,fiatOut,new bytes(0));
@@ -1360,7 +1363,13 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(fiat)));
 
-        uint underlierIn = leverActions.underlierToExactFIATOut(swaps, assets);
+        // Prepare arguments for preview method
+        swap.poolId = fiatPoolId;
+        swap.asset = address(dai);
+        path.push(swap);
+        swap.asset = address(usdc);
+        path.push(swap);
+        uint underlierIn = leverActions.underlierToFiatOut(fiatOut, path);
 
         delete swaps;
         delete assets;
@@ -1376,10 +1385,14 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(dai)));
         
-        assertApproxEqAbs(underlierIn,leverActions.exactFIATInToUnderlier(swaps, assets),0.25 ether); // 0.25 delta
+        delete path;
+        path.push(swap);
+        swap.asset = address(dai);
+        path.push(swap);
+        assertApproxEqAbs(underlierIn,leverActions.fiatInToUnderlier(fiatIn, path),0.25 ether); // 0.25 delta
     }
 
-    function test_exactFIATInToUnderlier() public {
+    function test_fiatInToUnderlier() public {
         uint256 fiatIn = 500 * WAD;
          // Prepare sell FIAT params
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,fiatIn,new bytes(0));
@@ -1391,7 +1404,14 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(dai)));
         
-        uint underlierOut = leverActions.exactFIATInToUnderlier(swaps, assets);
+         // Prepare arguments for preview method
+        swap.poolId = fiatPoolId;
+        swap.asset = address(usdc);
+        path.push(swap);
+        swap.asset = address(dai);
+        path.push(swap);
+
+        uint underlierOut = leverActions.fiatInToUnderlier(fiatIn, path);
 
         delete swaps;
         delete assets;
@@ -1406,7 +1426,11 @@ contract LeverSPTActions_RPC_tests is Test {
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(fiat)));
-
-        assertApproxEqAbs(underlierOut,leverActions.underlierToExactFIATOut(swaps, assets),0.25 ether);
+        
+        delete path;
+        path.push(swap);
+        swap.asset = address(usdc);
+        path.push(swap);
+        assertApproxEqAbs(underlierOut,leverActions.underlierToFiatOut(fiatOut,path),0.25 ether);
     }
 }

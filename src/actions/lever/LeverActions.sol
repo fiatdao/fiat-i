@@ -264,43 +264,72 @@ abstract contract LeverActions {
         return (abs(deltas[0]), address(params.assets[0]));
     }
 
-    /// @notice Preview underlier amount for Exact Amount of FIAT In
-    /// @dev Assets array has to be in swap order FIAT => B => underlier (FIAT index field can be left empty)
-    /// @param swaps BatchSwapStep structs from Balancer V2
-    /// @param assets Assets array (FIAT => B => C => Underlier)
-    /// @return underlierAmount Amount of underlier back
-    function exactFIATInToUnderlier(
-        IBalancerVault.BatchSwapStep[] memory swaps,
-        IAsset[] memory assets
+    struct BatchSwap {
+        bytes32 poolId;
+        address asset; // assetOut when fiatInToUnderlier, assetIn when underlierToFiat
+    }
+
+    /// @notice Returns an amount of underlier for a given amount of FIAT
+    /// @param amountIn FIAT amount In
+    /// @param path Swap path from FIAT to the underlier (excluding FIAT) (e.g. FIAT => B => C => Underlier)
+    /// @return underlierAmount Amount of underlier 
+    function fiatInToUnderlier(
+        uint256 amountIn, 
+        BatchSwap[] memory path
     ) external returns (uint256) {
         IBalancerVault.FundManagement memory funds;
-        assets[0] = IAsset(address(fiat));
+        IBalancerVault.BatchSwapStep[] memory balSwaps = new IBalancerVault.BatchSwapStep[](path.length);
+        IAsset[] memory assets = new IAsset[](path.length+1);
+
+        assets[0] =  IAsset(address(fiat));
+
+        for (uint i=0; i< path.length;++i){
+            IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(path[i].poolId,i,i+1,0,new bytes(0));
+            balSwaps[i] =swap;
+            assets[i+1] = IAsset(address(path[i].asset));
+        }
+        
+        balSwaps[0].amount = amountIn;
         
         int256[] memory assetDeltas = IBalancerVault(fiatBalancerVault).queryBatchSwap(
             IBalancerVault.SwapKind.GIVEN_IN,
-            swaps,
+            balSwaps,
             assets,
             funds
         );
+
         // Underlier is the last one
         return abs(assetDeltas[assetDeltas.length-1]);
     }
     
-    /// @notice Preview underlier amount required to get Exact Amount of FIAT
-    /// @dev Assets array has to be in swap order underlier => B => FIAT  (FIAT index field can be left empty)
-    /// @param swaps BatchSwapStep structs from Balancer V2
-    /// @param assets Assets array (underlier => A => B => FIAT)
-    /// @return underlierAmount Amount of underlier back
-    function underlierToExactFIATOut(
-        IBalancerVault.BatchSwapStep[] memory swaps,
-        IAsset[] memory assets
+    /// @notice Returns an amount of underlier for a given amount of FIAT
+    /// @param amountOut FIAT amount we want to receive
+    /// @param path Swap path from underlier to FIAT (excluding FIAT) (e.g. Underlier => C => B => FIAT)
+    /// @return underlierAmount Amount of underlier 
+    function underlierToFiatOut(
+        uint256 amountOut, 
+        BatchSwap[] memory path
     ) external returns (uint256) {
-        IBalancerVault.FundManagement memory funds;
-        assets[assets.length-1] = IAsset(address(fiat));
+        uint pathLength = path.length;
 
+        IBalancerVault.FundManagement memory funds;
+        IBalancerVault.BatchSwapStep[] memory balSwaps = new IBalancerVault.BatchSwapStep[](pathLength);
+        IAsset[] memory assets = new IAsset[](pathLength+1);
+
+        assets[pathLength] =  IAsset(address(fiat));
+
+        for (uint i= 0; i<path.length;++i){
+            IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(path[i].poolId,pathLength-1,pathLength,0,new bytes(0));
+            balSwaps[i] =swap;
+            assets[i] = IAsset(address(path[i].asset));
+            pathLength--;
+        }
+        
+        balSwaps[0].amount = amountOut;
+        
         int256[] memory assetDeltas = IBalancerVault(fiatBalancerVault).queryBatchSwap(
             IBalancerVault.SwapKind.GIVEN_OUT,
-            swaps,
+            balSwaps,
             assets,
             funds
         );
