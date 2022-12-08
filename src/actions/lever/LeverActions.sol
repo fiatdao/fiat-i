@@ -26,6 +26,10 @@ abstract contract LeverActions {
     error LeverActions__exitMoneta_zeroUserAddress();
     error LeverActions__fiatToUnderlier_pathLengthMismatch();
     error LeverActions__fiatForUnderlier_pathLengthMismatch();
+    error LeverActions__buyFIATExactOut_pathLengthMismatch();
+    error LeverActions__buyFIATExactOut_wrongFIATAddress();
+    error LeverActions__sellFIATExactIn_pathLengthMismatch();
+    error LeverActions__sellFIATExactIn_wrongFIATAddress();
 
     /// ======== Storage ======== ///
 
@@ -37,7 +41,7 @@ abstract contract LeverActions {
     }
 
     struct SellFIATSwapParams {
-        // Batch Swap
+        // Balancer BatchSwapStep array for swapping FIAT to underlier
         IBalancerVault.BatchSwapStep[] swaps;
         // IAssets for Batch Swap, assets array has to be in swap order FIAT => B => underlier (FIAT index field can be left empty)
         IAsset[] assets;
@@ -198,7 +202,7 @@ abstract contract LeverActions {
         uint256 subCollateral,
         uint256 subNormalDebt
     ) public {
-        // update collateral and debt balanaces
+        // update collateral and debt balances
         codex.modifyCollateralAndDebt(
             vault,
             tokenId,
@@ -214,6 +218,9 @@ abstract contract LeverActions {
     }
 
     function _sellFIATExactIn(SellFIATSwapParams memory params, uint256 exactAmountIn) internal returns (uint256) {
+        if (params.assets.length-1 != params.swaps.length) revert LeverActions__sellFIATExactIn_pathLengthMismatch();
+        if (address(params.assets[0]) != address(fiat)) revert LeverActions__sellFIATExactIn_wrongFIATAddress();
+
         IBalancerVault.FundManagement memory funds = IBalancerVault.FundManagement(
             address(this),
             false,
@@ -222,7 +229,6 @@ abstract contract LeverActions {
         );
         // Set FIAT exact amount In
         params.swaps[0].amount = exactAmountIn;
-        params.assets[0] = IAsset(address(fiat));
 
         // BatchSwap
         int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(
@@ -242,6 +248,9 @@ abstract contract LeverActions {
         internal
         returns (uint256, address)
     {
+        if (params.assets.length-1 != params.swaps.length) revert LeverActions__buyFIATExactOut_pathLengthMismatch();
+        if (address(params.assets[params.assets.length-1]) != address(fiat)) revert LeverActions__buyFIATExactOut_wrongFIATAddress();
+
         IBalancerVault.FundManagement memory funds = IBalancerVault.FundManagement(
             address(this),
             false,
@@ -250,7 +259,6 @@ abstract contract LeverActions {
         );
         // Set FIAT exact amount Out
         params.swaps[0].amount = exactAmountOut;
-        params.assets[params.assets.length-1] = IAsset(address(fiat));
         
         // BatchSwap
         int256[] memory deltas = IBalancerVault(fiatBalancerVault).batchSwap(

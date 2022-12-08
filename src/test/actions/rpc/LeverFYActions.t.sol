@@ -345,7 +345,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step2 = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
         swaps.push(step2);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(usdc)));
         
@@ -380,7 +380,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory sell2 = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
         swaps.push(sell2);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(dai)));
         
@@ -420,7 +420,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -463,7 +463,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory sell = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(sell);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
         
         limits.push(int(lendFIAT)); 
@@ -501,7 +501,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -549,7 +549,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory sell = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(sell);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
         
         limits.push(int(lendFIAT)); 
@@ -586,7 +586,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -623,7 +623,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory sell = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(sell);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
         
         limits.push(int(lendFIAT)); 
@@ -659,7 +659,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -697,7 +697,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory sell = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(sell);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
         
         limits.push(int(lendFIAT)); 
@@ -730,7 +730,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -764,7 +764,7 @@ contract LeverFYActions_RPC_tests is Test {
 
         assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(dai)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
         limits.push(0); 
@@ -802,7 +802,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -831,7 +831,7 @@ contract LeverFYActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In 
         limits.push(-int(lendFIAT)); 
@@ -867,7 +867,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -899,7 +899,7 @@ contract LeverFYActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In 
         limits.push(-int(lendFIAT)); 
@@ -939,7 +939,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -968,7 +968,7 @@ contract LeverFYActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In 
         limits.push(-int(lendFIAT)); 
@@ -1003,7 +1003,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -1032,7 +1032,7 @@ contract LeverFYActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In 
         limits.push(-int(lendFIAT)); 
@@ -1066,7 +1066,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -1099,7 +1099,7 @@ contract LeverFYActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In 
         limits.push(-int(lendFIAT)); 
@@ -1132,7 +1132,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
         
         limits.push(int(lendFIAT)); 
@@ -1168,7 +1168,7 @@ contract LeverFYActions_RPC_tests is Test {
 
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
         limits.push(0); 
@@ -1203,7 +1203,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -1236,7 +1236,7 @@ contract LeverFYActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In 
         limits.push(-int(lendFIAT)); 
@@ -1270,7 +1270,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
         
         limits.push(int(lendFIAT)); 
@@ -1303,7 +1303,7 @@ contract LeverFYActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(dai)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
         limits.push(-int(lendFIAT)); 
@@ -1337,7 +1337,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -1370,7 +1370,7 @@ contract LeverFYActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In 
         limits.push(-int(lendFIAT)); 
@@ -1404,7 +1404,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
         
         limits.push(int(lendFIAT)); 
@@ -1437,7 +1437,7 @@ contract LeverFYActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(dai)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
         limits.push(-int(lendFIAT)); 
@@ -1471,7 +1471,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -1504,7 +1504,7 @@ contract LeverFYActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In 
         limits.push(-int(lendFIAT)); 
@@ -1538,7 +1538,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
         
         limits.push(int(lendFIAT)); 
@@ -1571,7 +1571,7 @@ contract LeverFYActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(dai)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
         limits.push(-int(lendFIAT)); 
@@ -1605,7 +1605,7 @@ contract LeverFYActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0))); // not required will be set by the lever contract
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(usdc)));
         
         limits.push(int(lendFIAT)); 
@@ -1643,7 +1643,7 @@ contract LeverFYActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In 
         limits.push(-int(lendFIAT)); 

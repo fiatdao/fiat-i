@@ -687,7 +687,7 @@ contract LeverEPTActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(underlierUSDC)));
-        assets.push(IAsset(address(0))); // setting FIAT address is not required
+        assets.push(IAsset(address(fiat)));
 
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
         limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
@@ -751,7 +751,7 @@ contract LeverEPTActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(underlierUSDC)));
-        assets.push(IAsset(address(0))); // setting FIAT address is not required
+        assets.push(IAsset(address(fiat)));
 
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
         limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
@@ -818,7 +818,7 @@ contract LeverEPTActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(underlierUSDC)));
-        assets.push(IAsset(address(0))); // setting FIAT address is not required
+        assets.push(IAsset(address(fiat)));
 
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
         limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
@@ -879,7 +879,7 @@ contract LeverEPTActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(underlierUSDC)));
-        assets.push(IAsset(address(0))); // setting FIAT address is not required
+        assets.push(IAsset(address(fiat)));
 
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
         limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
@@ -945,7 +945,7 @@ contract LeverEPTActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(underlierUSDC)));
-        assets.push(IAsset(address(0))); // setting FIAT address is not required
+        assets.push(IAsset(address(fiat)));
 
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
         limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
@@ -1012,7 +1012,7 @@ contract LeverEPTActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(underlierUSDC)));
-        assets.push(IAsset(address(0))); // setting FIAT address is not required
+        assets.push(IAsset(address(fiat)));
 
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
         limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
@@ -1046,7 +1046,7 @@ contract LeverEPTActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(underlierUSDC)));
 
         limits.push(int256(lendFIAT)); // max FIAT in
@@ -1079,7 +1079,7 @@ contract LeverEPTActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(underlierUSDC)));
-        assets.push(IAsset(address(0))); // setting FIAT address is not required
+        assets.push(IAsset(address(fiat)));
 
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
         limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
@@ -1113,7 +1113,7 @@ contract LeverEPTActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
         swaps.push(step);
 
-        assets.push(IAsset(address(0)));
+        assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(underlierUSDC)));
 
         limits.push(int256(lendFIAT)); // max FIAT in
@@ -1146,7 +1146,7 @@ contract LeverEPTActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(underlierUSDC)));
-        assets.push(IAsset(address(0))); // setting FIAT address is not required
+        assets.push(IAsset(address(fiat)));
 
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
         limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
@@ -1218,7 +1218,7 @@ contract LeverEPTActions_RPC_tests is Test {
         swaps.push(buy);
 
         assets.push(IAsset(address(underlierUSDC)));
-        assets.push(IAsset(address(0))); // setting FIAT address is not required
+        assets.push(IAsset(address(fiat)));
 
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
         limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
