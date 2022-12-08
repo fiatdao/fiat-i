@@ -24,6 +24,8 @@ abstract contract LeverActions {
     /// ======== Custom Errors ======== ///
 
     error LeverActions__exitMoneta_zeroUserAddress();
+    error LeverActions__fiatToUnderlier_pathLengthMismatch();
+    error LeverActions__fiatForUnderlier_pathLengthMismatch();
 
     /// ======== Storage ======== ///
 
@@ -264,83 +266,82 @@ abstract contract LeverActions {
         return (abs(deltas[0]), address(params.assets[0]));
     }
 
-    struct BatchSwap {
-        bytes32 poolId;
-        address asset; // assetOut when fiatInToUnderlier, assetIn when underlierToFiat
-    }
-
-    /// @notice Returns an amount of underlier for a given amount of FIAT
-    /// @param amountIn FIAT amount In
-    /// @param path Swap path from FIAT to the underlier (excluding FIAT) (e.g. FIAT => B => C => Underlier)
-    /// @return underlierAmount Amount of underlier 
-    function fiatInToUnderlier(
-        uint256 amountIn, 
-        BatchSwap[] memory path
+    /// @notice Returns an amount of underliers for a given amount of FIAT
+    /// @dev This method should be exclusively called off-chain for estimation.
+    ///      `pathPoolIds` and `pathAssetsOut` must have the same length and be ordered from FIAT to the underlier.
+    /// @param pathPoolIds Balancer PoolIds for every step of the swap from FIAT to the underlier
+    /// @param pathAssetsOut Assets to be swapped at every step from FIAT to the underlier (excluding FIAT)
+    /// @param fiatAmount Amount of FIAT [wad]
+    /// @return underlierAmount Amount of underlier [underlierScale]
+    function fiatToUnderlier(
+        bytes32[] calldata pathPoolIds, address[] calldata pathAssetsOut, uint256 fiatAmount
     ) external returns (uint256) {
+        if (pathPoolIds.length != pathAssetsOut.length) revert LeverActions__fiatToUnderlier_pathLengthMismatch();
+        uint256 pathLength = pathPoolIds.length;
         IBalancerVault.FundManagement memory funds;
-        IBalancerVault.BatchSwapStep[] memory balSwaps = new IBalancerVault.BatchSwapStep[](path.length);
-        IAsset[] memory assets = new IAsset[](path.length+1);
-
+        IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
+        IAsset[] memory assets = new IAsset[](pathLength + 1);
         assets[0] =  IAsset(address(fiat));
 
-        for (uint i=0; i< path.length;++i){
-            IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(path[i].poolId,i,i+1,0,new bytes(0));
-            balSwaps[i] =swap;
-            assets[i+1] = IAsset(address(path[i].asset));
+        for (uint256 i = 0; i < pathLength;){
+            IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(
+                pathPoolIds[i], i, i + 1, 0, new bytes(0)
+            );
+            swaps[i] = swap;
+            unchecked {
+                assets[i + 1] = IAsset(address(pathAssetsOut[i]));
+                i += 1;
+            }
         }
         
-        balSwaps[0].amount = amountIn;
+        swaps[0].amount = fiatAmount;
         
-        int256[] memory assetDeltas = IBalancerVault(fiatBalancerVault).queryBatchSwap(
-            IBalancerVault.SwapKind.GIVEN_IN,
-            balSwaps,
-            assets,
-            funds
-        );
-
-        // Underlier is the last one
-        return abs(assetDeltas[assetDeltas.length-1]);
+        return abs(IBalancerVault(fiatBalancerVault).queryBatchSwap(
+            IBalancerVault.SwapKind.GIVEN_IN, swaps, assets, funds
+        )[0]);
     }
     
-    /// @notice Returns an amount of underlier for a given amount of FIAT
-    /// @param amountOut FIAT amount we want to receive
-    /// @param path Swap path from underlier to FIAT (excluding FIAT) (e.g. Underlier => C => B => FIAT)
-    /// @return underlierAmount Amount of underlier 
-    function underlierToFiatOut(
-        uint256 amountOut, 
-        BatchSwap[] memory path
+    /// @notice Returns the required input amount of underliers for a given amount of FIAT to receive in exchange
+    /// @dev This method should be exclusively called off-chain for estimation.
+    ///      `pathPoolIds` and `pathAssetsIn` must have the same length and be ordered from underlier to FIAT.
+    /// @param pathPoolIds Balancer PoolIds for every step of the swap from underlier to FIAT
+    /// @param pathAssetsIn Assets to be swapped at every step from underlier to FIAT (excluding FIAT)
+    /// @param fiatAmount Amount of FIAT to swap [wad]
+    /// @return underlierAmount Amount of underlier [underlierScale]
+    function fiatForUnderlier(
+        bytes32[] calldata pathPoolIds, address[] calldata pathAssetsIn, uint256 fiatAmount
     ) external returns (uint256) {
-        uint pathLength = path.length;
+        if (pathPoolIds.length != pathAssetsIn.length) revert LeverActions__fiatForUnderlier_pathLengthMismatch();
+        uint256 pathLength = pathPoolIds.length;
 
-        IBalancerVault.FundManagement memory funds;
-        IBalancerVault.BatchSwapStep[] memory balSwaps = new IBalancerVault.BatchSwapStep[](pathLength);
-        IAsset[] memory assets = new IAsset[](pathLength+1);
-
+        IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
+        IAsset[] memory assets = new IAsset[](pathLength + 1);
         assets[pathLength] =  IAsset(address(fiat));
+        IBalancerVault.FundManagement memory funds;
 
-        for (uint i= 0; i<path.length;++i){
-            IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(path[i].poolId,pathLength-1,pathLength,0,new bytes(0));
-            balSwaps[i] =swap;
-            assets[i] = IAsset(address(path[i].asset));
-            pathLength--;
+        for (uint256 i = 0; i < pathLength;){
+            uint index = pathLength - i;
+            IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(
+                pathPoolIds[i], index-1, index, 0, new bytes(0)
+            );
+            swaps[i] = swap;
+            assets[i] = IAsset(address(pathAssetsIn[i]));
+            unchecked {
+                i += 1;
+            }
         }
         
-        balSwaps[0].amount = amountOut;
+        swaps[0].amount = fiatAmount;
         
-        int256[] memory assetDeltas = IBalancerVault(fiatBalancerVault).queryBatchSwap(
-            IBalancerVault.SwapKind.GIVEN_OUT,
-            balSwaps,
-            assets,
-            funds
-        );
-        // underlier is the first one
-        return abs(assetDeltas[0]);
+        return abs(IBalancerVault(fiatBalancerVault).queryBatchSwap(
+            IBalancerVault.SwapKind.GIVEN_OUT, swaps, assets, funds
+        )[0]);
     }
 
-    /**
-     * @dev Returns the absolute value of a signed integer.
-     */
-    function abs(int256 a) internal pure returns (uint256 result) {
+    /// ======== Helpers ======== ///
+
+    /// @notice Returns the absolute value for a signed integer
+    function abs(int256 a) private pure returns (uint256 result) {
         result = a > 0 ? uint256(a) : uint256(-a);
     }
 }
