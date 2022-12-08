@@ -54,7 +54,7 @@ abstract contract LeverActions {
     struct BuyFIATSwapParams {
         // Balancer BatchSwapStep array for swapping underlier to FIAT
         IBalancerVault.BatchSwapStep[] swaps;
-        // Balancer IAssets for Batch Swap, assets array has to be in swap order underlier => B => FIAT 
+        // IAssets for Batch Swap, assets array has to be in swap order underlier => B => FIAT 
         IAsset[] assets;
         // An array of maximum amounts of each asset to be transferred. For token going into the Vault (+), for tokens going out of the Vault (-)
         int256[] limits;
