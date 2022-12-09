@@ -388,26 +388,21 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 fee = 20 * WAD;
 
         // Prepare sell FIAT params
-        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
-        swaps.push(step);
-        IBalancerVault.BatchSwapStep memory step2 = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
-        swaps.push(step2);
-
-        assets.push(IAsset(address(fiat)));
-        assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(dai)));
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
         
-        limits.push(int(lendFIAT)); 
-        limits.push(0); 
-        limits.push(-int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+        pathAssetsOut.push(address(usdc));
+        pathAssetsOut.push(address(dai));
       
+        uint256 minUnderliersOut = totalUnderlier-upfrontUnderlier-fee;
+        uint256 deadline = block.timestamp + 10 days;
 
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             me,
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(swaps, assets, limits), 
+            leverActions.getSellFIATSwapParams(pathPoolIds, pathAssetsOut, minUnderliersOut,deadline), 
             _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0) // swap all for pTokens
         );
 
