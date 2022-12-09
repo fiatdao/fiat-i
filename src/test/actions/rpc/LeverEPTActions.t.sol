@@ -89,6 +89,10 @@ contract LeverEPTActions_RPC_tests is Test {
     IAsset[] internal assets;
     int256[] internal limits;
 
+    bytes32[] pathPoolIds;
+    address[] pathAssetsIn;
+    address[] pathAssetsOut;
+
     function _mintUSDC(address to, uint256 amount) internal {
         // USDC minters
         vm.store(address(underlierUSDC), keccak256(abi.encode(address(this), uint256(12))), bytes32(uint256(1)));
@@ -618,31 +622,23 @@ contract LeverEPTActions_RPC_tests is Test {
         delete limits;
 
         // Prepare buy FIAT params
-        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0)); 
-        swaps.push(buy);
-        IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId, 1, 2, 0, new bytes(0));
-        swaps.push(buy2);
-        IBalancerVault.BatchSwapStep memory buy3 = IBalancerVault.BatchSwapStep(fiatPoolId, 2, 3, 0, new bytes(0));
-        swaps.push(buy3);
+        pathAssetsIn.push(address(underlierUSDC));
+        pathAssetsIn.push(address(dai));
+        pathAssetsIn.push(address(underlierUSDC));
 
-        IBalancerVault.BatchSwapStep[] memory ordered = leverActions.orderBuyFIATSwaps(swaps);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
 
-        assets.push(IAsset(address(underlierUSDC)));
-        assets.push(IAsset(address(dai)));
-        assets.push(IAsset(address(underlierUSDC)));
-        assets.push(IAsset(address(fiat)));
-
-        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
-        limits.push(0);
-        limits.push(0);
-        limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
+        uint maxUnderliersIn = totalUnderlier-upfrontUnderlier+fee; // max USDC In
+        uint deadline = block.timestamp + 10 days;
 
         _sellCollateralAndDecreaseLever(
             address(vault_yvUSDC_16SEP22),
             me,
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(ordered, assets, limits),
+            leverActions.getBuyFIATSwapParams(pathPoolIds,pathAssetsIn,maxUnderliersIn,deadline),
             _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
         );
 

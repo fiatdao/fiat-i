@@ -121,6 +121,10 @@ contract LeverSPTActions_RPC_tests is Test {
     IAsset[] internal assets;
     int[] internal limits;
 
+    bytes32[] internal pathPoolIds; 
+    address[] internal pathAssetsOut; 
+    address[] internal pathAssetsIn;
+
     function _mintDAI(address to, uint256 amount) internal {
         vm.store(address(dai), keccak256(abi.encode(address(address(this)), uint256(0))), bytes32(uint256(1)));
         string memory sig = "mint(address,uint256)";
@@ -636,36 +640,25 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 normalDebt = _normalDebt(address(maDAIVault), address(userProxy));
 
         // Prepare buy FIAT params
-        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0)); 
-        IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
-        IBalancerVault.BatchSwapStep memory buy3 = IBalancerVault.BatchSwapStep(fiatPoolId,2,3,0,new bytes(0));  
-        IBalancerVault.BatchSwapStep memory buy4 = IBalancerVault.BatchSwapStep(fiatPoolId,3,4,0,new bytes(0));      
-
-        swaps.push(buy);
-        swaps.push(buy2);
-        swaps.push(buy3);
-        swaps.push(buy4);
-
-        assets.push(IAsset(address(dai)));
-        assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(dai)));
-        assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(fiat)));
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
         
-        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
-        limits.push(0); 
-        limits.push(0); 
-        limits.push(0); 
-        limits.push(-int(lendFIAT)); // limit set as exact amount out
-
-        IBalancerVault.BatchSwapStep[] memory ordered = leverActions.orderBuyFIATSwaps(swaps);
+        pathAssetsIn.push(address(dai));
+        pathAssetsIn.push(address(usdc));
+        pathAssetsIn.push(address(dai));
+        pathAssetsIn.push(address(usdc));
+      
+        uint maxUnderliersIn = totalUnderlier-upfrontUnderlier+fee; // max DAI In
+        uint deadline = block.timestamp + 10 days;
         
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
             me,
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(ordered,assets,limits),
+            leverActions.getBuyFIATSwapParams(pathPoolIds,pathAssetsIn,maxUnderliersIn,deadline),
             _getCollateralSwapParams(address(sP_maDAI), address(dai), address(maDAIAdapter), type(uint256).max, 0)
         );
         assertEq(usdc.balanceOf(address(leverActions)),0);
@@ -1358,10 +1351,6 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 underlierAfterMaturity = leverActions.pTokenToUnderlier(address(maDAISpace), balancerVault, 100 ether);
         assertEq(underlierAtMaturity, underlierAfterMaturity);
     }
-
-    bytes32[] internal pathPoolIds; 
-    address[] internal pathAssetsOut; 
-    address[] internal pathAssetsIn;
 
     function test_fiatForUnderlier() public {
         uint256 fiatOut = 500 * WAD;

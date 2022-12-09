@@ -347,23 +347,38 @@ abstract contract LeverActions {
 
     /// ======== Helpers ======== ///
 
-    /// @notice Returns the correct swaps order for Balancer Batch Swap 
-    /// @dev This method reorders the swaps path as per Balancer inputs
-    /// @param _swaps Swaps structs in order from underlier to FIAT (e.g. USDT - DAI - FIAT)
-    function orderBuyFIATSwaps(IBalancerVault.BatchSwapStep[] memory _swaps) external pure returns(IBalancerVault.BatchSwapStep[] memory) {
-         uint swapsLength = _swaps.length;
-         if(swapsLength < 2) revert LeverActions__orderBuyFIATSwaps__invalidArrayLength();
-             
-            IBalancerVault.BatchSwapStep[] memory orderedSwaps = new IBalancerVault.BatchSwapStep[](swapsLength);
-            for (uint256 i=0; i < swapsLength; ++i) {
-              uint256 index = sub(swapsLength - 1 , i );
-              orderedSwaps[index]= _swaps[i];
+    /// @notice Returns BuyFIATSwapParams struct
+    /// @param pathPoolIds Balancer PoolIds for every step of the swap from underlier to FIAT
+    /// @param pathAssetsIn Assets to be swapped at every step from underlier to FIAT (excluding FIAT)
+    /// @param maxUnderliersIn Max amount of underlier to swap [wad]
+    /// @param deadline Timestamp after which the trade is no more valid [s]
+    /// @return buyFIATSwapParams BuyFIATSwapParams struct
+    function getBuyFIATSwapParams(bytes32[] calldata pathPoolIds, address[] calldata pathAssetsIn, uint256 maxUnderliersIn, uint256 deadline) external view returns(BuyFIATSwapParams memory) {
+        if (pathPoolIds.length != pathAssetsIn.length) revert LeverActions__fiatForUnderlier_pathLengthMismatch();
+        uint256 pathLength = pathPoolIds.length;
+
+        IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
+        IAsset[] memory assets = new IAsset[](pathLength + 1);
+        int256[] memory limits = new int[](pathLength + 1);
+
+        assets[pathLength] =  IAsset(address(fiat));
+        limits[0] = int256(maxUnderliersIn);
+
+        for (uint256 i = 0; i < pathLength;){
+            uint256 index = pathLength - i;
+            IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(
+                pathPoolIds[i], index-1, index, 0, new bytes(0)
+            );
+            swaps[i] = swap;
+            assets[i] = IAsset(address(pathAssetsIn[i]));
+            unchecked {
+                i += 1;
             }
-
-            return  orderedSwaps; 
         }
-           
 
+        return BuyFIATSwapParams(swaps,assets,limits,deadline);
+    }
+           
     /// @notice Returns the absolute value for a signed integer
     function abs(int256 a) private pure returns (uint256 result) {
         result = a > 0 ? uint256(a) : uint256(-a);

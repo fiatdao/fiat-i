@@ -77,6 +77,10 @@ contract LeverFYActions_RPC_tests is Test {
     IAsset[] internal assets;
     int[] internal limits;
 
+    bytes32[] poolIds;
+    address[] pathAssetsIn;
+    address[] pathAssetsOut;
+
     function _mintUSDC(address to, uint256 amount) internal {
         // USDC minters
         vm.store(address(usdc), keccak256(abi.encode(address(this), uint256(12))), bytes32(uint256(1)));
@@ -1160,21 +1164,15 @@ contract LeverFYActions_RPC_tests is Test {
         delete assets;
         delete limits;
 
-        // Prepare buy FIAT params
-        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0)); 
-        swaps.push(buy);
-        IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
-        swaps.push(buy2);
+        // Prepare buy FIAT params        
+        poolIds.push(fiatPoolId);
+        poolIds.push(fiatPoolId);
+
+        pathAssetsIn.push(address(dai));
+        pathAssetsIn.push(address(usdc));
         
-        IBalancerVault.BatchSwapStep[] memory ordered = leverActions.orderBuyFIATSwaps(swaps);
-        
-        assets.push(IAsset(address(dai)));
-        assets.push(IAsset(address(usdc)));
-        assets.push(IAsset(address(fiat)));
-        
-        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
-        limits.push(0); 
-        limits.push(-int(lendFIAT)); 
+        uint maxUnderliersIn =totalUnderlier-upfrontUnderlier+fee; // max USDC In
+        uint deadline = block.timestamp + 10 days;
 
         _redeemCollateralAndDecreaseLever(
             address(fyDAI2212Vault),
@@ -1182,7 +1180,7 @@ contract LeverFYActions_RPC_tests is Test {
             me,
             fyTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(ordered,assets,limits)
+            leverActions.getBuyFIATSwapParams(poolIds,pathAssetsIn,maxUnderliersIn,deadline)
         );
 
         assertGt(dai.balanceOf(me), meInitialBalance);
