@@ -30,6 +30,7 @@ abstract contract LeverActions {
     error LeverActions__buyFIATExactOut_wrongFIATAddress();
     error LeverActions__sellFIATExactIn_pathLengthMismatch();
     error LeverActions__sellFIATExactIn_wrongFIATAddress();
+    error LeverActions__orderBuyFIATSwaps__invalidArrayLength();
 
     /// ======== Storage ======== ///
 
@@ -62,6 +63,10 @@ abstract contract LeverActions {
     struct BuyFIATSwapParams {
         // Balancer BatchSwapStep array (see Balancer docs for more info)
         // Items have to be in swap order (e.g. USDT, DAI, FIAT)
+        // IMPORTANT: swaps order has to follow Balancer guides (see Balancer docs for more info)
+        // E.g. route USDT(index: 0) - DAI(index: 1) - FIAT(index: 2)  => swaps[0] (indexIn: 1, indexOut:2), swaps[1] (indexIn:0, indexOut:1)]
+        // There's also an helper function orderBuyFIATSwaps() which orders them, in this case the input swaps indices follow the swap route
+        // E.g. route USDT(index: 0) - DAI(index: 1) - FIAT(index: 2)  => swaps[0] (indexIn: 0, indexOut:1), swaps[1] (indexIn:1, indexOut:2)]
         IBalancerVault.BatchSwapStep[] swaps;
         // Balancer IAssets array (see Balancer docs for more info)
         // Items have to be in swap order (e.g. USDT, DAI, FIAT)
@@ -259,15 +264,6 @@ abstract contract LeverActions {
             address(this), false, payable(address(this)), false
         );
        
-        if(swapsLength > 1){
-            
-            IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](swapsLength);
-            for (uint256 i=0; i < swapsLength; ++i) {
-              uint256 index = sub(swapsLength - 1 , i );
-              swaps[index]= params.swaps[i];
-            }
-            params.swaps = swaps;
-        }
         // set the exact amount of FIAT to receive
         params.swaps[0].amount = exactAmountOut;
     
@@ -350,6 +346,23 @@ abstract contract LeverActions {
     }
 
     /// ======== Helpers ======== ///
+
+    /// @notice Returns the correct swaps order for Balancer Batch Swap 
+    /// @dev This method reorders the swaps path as per Balancer inputs
+    /// @param _swaps Swaps structs in order from underlier to FIAT (e.g. USDT - DAI - FIAT)
+    function orderBuyFIATSwaps(IBalancerVault.BatchSwapStep[] memory _swaps) external pure returns(IBalancerVault.BatchSwapStep[] memory) {
+         uint swapsLength = _swaps.length;
+         if(swapsLength < 2) revert LeverActions__orderBuyFIATSwaps__invalidArrayLength();
+             
+            IBalancerVault.BatchSwapStep[] memory orderedSwaps = new IBalancerVault.BatchSwapStep[](swapsLength);
+            for (uint256 i=0; i < swapsLength; ++i) {
+              uint256 index = sub(swapsLength - 1 , i );
+              orderedSwaps[index]= _swaps[i];
+            }
+
+            return  orderedSwaps; 
+        }
+           
 
     /// @notice Returns the absolute value for a signed integer
     function abs(int256 a) private pure returns (uint256 result) {

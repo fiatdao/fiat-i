@@ -625,6 +625,8 @@ contract LeverEPTActions_RPC_tests is Test {
         IBalancerVault.BatchSwapStep memory buy3 = IBalancerVault.BatchSwapStep(fiatPoolId, 2, 3, 0, new bytes(0));
         swaps.push(buy3);
 
+        IBalancerVault.BatchSwapStep[] memory ordered = leverActions.orderBuyFIATSwaps(swaps);
+
         assets.push(IAsset(address(underlierUSDC)));
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(underlierUSDC)));
@@ -640,7 +642,7 @@ contract LeverEPTActions_RPC_tests is Test {
             me,
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(swaps, assets, limits),
+            _getBuyFIATSwapParams(ordered, assets, limits),
             _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
         );
 

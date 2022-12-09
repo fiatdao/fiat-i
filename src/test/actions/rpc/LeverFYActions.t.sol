@@ -757,9 +757,9 @@ contract LeverFYActions_RPC_tests is Test {
         delete limits;
 
         // Prepare buy FIAT params
-        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0)); 
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0)); 
         swaps.push(buy);
-        IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
+        IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0));
         swaps.push(buy2);
 
         assets.push(IAsset(address(usdc)));
@@ -1165,7 +1165,9 @@ contract LeverFYActions_RPC_tests is Test {
         swaps.push(buy);
         IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
         swaps.push(buy2);
-
+        
+        IBalancerVault.BatchSwapStep[] memory ordered = leverActions.orderBuyFIATSwaps(swaps);
+        
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(fiat)));
@@ -1180,7 +1182,7 @@ contract LeverFYActions_RPC_tests is Test {
             me,
             fyTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(swaps,assets,limits)
+            _getBuyFIATSwapParams(ordered,assets,limits)
         );
 
         assertGt(dai.balanceOf(me), meInitialBalance);

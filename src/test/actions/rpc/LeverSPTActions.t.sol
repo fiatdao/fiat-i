@@ -645,7 +645,7 @@ contract LeverSPTActions_RPC_tests is Test {
         swaps.push(buy2);
         swaps.push(buy3);
         swaps.push(buy4);
-     
+
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(dai)));
@@ -658,12 +658,14 @@ contract LeverSPTActions_RPC_tests is Test {
         limits.push(0); 
         limits.push(-int(lendFIAT)); // limit set as exact amount out
 
+        IBalancerVault.BatchSwapStep[] memory ordered = leverActions.orderBuyFIATSwaps(swaps);
+        
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
             me,
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(swaps,assets,limits),
+            _getBuyFIATSwapParams(ordered,assets,limits),
             _getCollateralSwapParams(address(sP_maDAI), address(dai), address(maDAIAdapter), type(uint256).max, 0)
         );
         assertEq(usdc.balanceOf(address(leverActions)),0);
