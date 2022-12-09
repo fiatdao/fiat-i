@@ -11,7 +11,7 @@ import {IFIAT} from "../../interfaces/IFIAT.sol";
 import {IFlash, ICreditFlashBorrower, IERC3156FlashBorrower} from "../../interfaces/IFlash.sol";
 import {IPublican} from "../../interfaces/IPublican.sol";
 import {WAD, toInt256, add, sub, wmul, wdiv, sub} from "../../core/utils/Math.sol";
-import {console} from "forge-std/console.sol";
+
 import {IBalancerVault, IAsset} from "../helper/ConvergentCurvePoolHelper.sol";
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -43,9 +43,13 @@ abstract contract LeverActions {
     struct SellFIATSwapParams {
         // Balancer BatchSwapStep array (see Balancer docs for more info)
         // Items have to be in swap order (e.g. FIAT, DAI, USDT)
+        // IMPORTANT when constructing a BatchSwapStep:
+        // assetInIndex: The index of the token within assets which to use as an input of this step.
+        // assetOutIndex: The index of the token within assets which is the output of this step.
         IBalancerVault.BatchSwapStep[] swaps;
         // Balancer IAssets array (see Balancer docs for more info)
         // Items have to be in swap order (e.g. FIAT, DAI, USDT)
+        // This is referenced from within swaps
         IAsset[] assets;
         // Balancer Limits array (see Balancer docs for more info)
         // Items have to be in swap order (e.g. FIAT, DAI, USDT)
@@ -255,7 +259,6 @@ abstract contract LeverActions {
             address(this), false, payable(address(this)), false
         );
        
-        
         if(swapsLength > 1){
             
             IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](swapsLength);

@@ -646,7 +646,6 @@ contract LeverSPTActions_RPC_tests is Test {
         swaps.push(buy3);
         swaps.push(buy4);
      
-
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(dai)));
