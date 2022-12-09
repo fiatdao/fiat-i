@@ -59,8 +59,8 @@ abstract contract LeverActions {
 
     struct BuyFIATSwapParams {
         // Balancer BatchSwapStep array (see Balancer docs for more info)
-        // Items have to be in swap order (e.g. [USDT -> DAI, DAI -> FIAT])
-        // E.g. [(USDT -> DAI: assetIndexIn: 0, assetIndexOut: 1), (DAI -> FIAT: assetInIndex: 1, assetOutIndex: 2)]
+        // Items have to be in swap order following Balancer docs (e.g. [DAI -> FIAT, USDT -> DAI])
+        // E.g. [(DAI -> FIAT: assetInIndex: 1, assetOutIndex: 2),(USDT -> DAI: assetIndexIn: 0, assetIndexOut: 1)]
         IBalancerVault.BatchSwapStep[] swaps;
         // Balancer IAssets array (see Balancer docs for more info)
         // Items have to be in swap order (e.g. [USDT, DAI, FIAT])
