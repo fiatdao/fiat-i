@@ -638,7 +638,7 @@ contract LeverEPTActions_RPC_tests is Test {
             me,
             pTokenAmount,
             normalDebt,
-            leverActions.getBuyFIATSwapParams(pathPoolIds,pathAssetsIn,maxUnderliersIn,deadline),
+            leverActions.buildBuyFIATSwapParams(pathPoolIds,pathAssetsIn,maxUnderliersIn,deadline),
             _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
         );
 

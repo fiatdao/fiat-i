@@ -45,6 +45,7 @@ abstract contract LeverActions {
     struct SellFIATSwapParams {
         // Balancer BatchSwapStep array (see Balancer docs for more info)
         // Items have to be in swap order (e.g. [FIAT -> DAI, DAI -> USDT])
+        // E.g. [(FIAT -> DAI: assetInIndex: 0, assetOutIndex: 1), (DAI -> USDT: assetIndexIn: 1, assetIndexOut: 2)]
         IBalancerVault.BatchSwapStep[] swaps;
         // Balancer IAssets array (see Balancer docs for more info)
         // Items have to be in swap order (e.g. [FIAT, DAI, USDT])
@@ -60,7 +61,7 @@ abstract contract LeverActions {
     struct BuyFIATSwapParams {
         // Balancer BatchSwapStep array (see Balancer docs for more info)
         // Items have to be in swap order following Balancer docs (e.g. [DAI -> FIAT, USDT -> DAI])
-        // E.g. [(DAI -> FIAT: assetInIndex: 1, assetOutIndex: 2),(USDT -> DAI: assetIndexIn: 0, assetIndexOut: 1)]
+        // E.g. [(DAI -> FIAT: assetInIndex: 1, assetOutIndex: 2), (USDT -> DAI: assetIndexIn: 0, assetIndexOut: 1)]
         IBalancerVault.BatchSwapStep[] swaps;
         // Balancer IAssets array (see Balancer docs for more info)
         // Items have to be in swap order (e.g. [USDT, DAI, FIAT])
@@ -228,6 +229,7 @@ abstract contract LeverActions {
         exitVault(vault, token, tokenId, collateralizer, wmul(subCollateral, IVault(vault).tokenScale()));
     }
 
+    // @notice Use `buildSellFIATSwapParams` to populate `SellFIATSwapParams`
     function _sellFIATExactIn(SellFIATSwapParams memory params, uint256 exactAmountIn) internal returns (uint256) {
         if (params.swaps.length != sub(params.assets.length, uint256(1)))
             revert LeverActions__sellFIATExactIn_pathLengthMismatch();
@@ -249,6 +251,7 @@ abstract contract LeverActions {
         )[sub(params.assets.length, uint256(1))]);
     }
 
+    // @notice Use `buildBuyFIATSwapParams` to populate `BuyFIATSwapParams`
     function _buyFIATExactOut(BuyFIATSwapParams memory params, uint256 exactAmountOut) internal returns (uint256) {
         uint swapsLength = params.swaps.length;
         if (swapsLength != sub(params.assets.length, uint256(1)))
@@ -268,6 +271,8 @@ abstract contract LeverActions {
             IBalancerVault.SwapKind.GIVEN_OUT, params.swaps, params.assets, funds, params.limits, params.deadline
         )[0]);
     }
+
+    /// ======== FIAT / Underlier Swap Helpers ======== ///
 
     /// @notice Returns an amount of underliers for a given amount of FIAT
     /// @dev This method should be exclusively called off-chain for estimation.
@@ -341,15 +346,15 @@ abstract contract LeverActions {
         )[0]);
     }
 
-    /// ======== Helpers ======== ///
-
-    /// @notice Returns SellFIATSwapParams struct
+    /// @notice Populates the SellFIATSwapParams struct used in the `_sellFIATExactIn` method
     /// @param pathPoolIds Balancer PoolIds for every step of the swap from underlier to FIAT
     /// @param pathAssetsOut Assets to be swapped at every step from underlier to FIAT (excluding FIAT)
-    /// @param minUnderliersOut Min amount of underlier to receive [underlierScale]
+    /// @param minUnderliersOut Min. amount of underlier to receive [underlierScale]
     /// @param deadline Timestamp after which the trade is no more valid [s]
     /// @return sellFIATSwapParams SellFIATSwapParams struct
-    function getSellFIATSwapParams(bytes32[] calldata pathPoolIds, address[] calldata pathAssetsOut, uint256 minUnderliersOut, uint256 deadline) external view returns(SellFIATSwapParams memory) {
+    function buildSellFIATSwapParams(
+        bytes32[] calldata pathPoolIds, address[] calldata pathAssetsOut, uint256 minUnderliersOut, uint256 deadline
+    ) external view returns(SellFIATSwapParams memory) {
         if (pathPoolIds.length != pathAssetsOut.length) revert LeverActions__getSellFIATSwapParams_pathLengthMismatch();
         uint256 pathLength = pathPoolIds.length;
        
@@ -373,13 +378,15 @@ abstract contract LeverActions {
         return SellFIATSwapParams(swaps,assets,limits,deadline);
     }
 
-    /// @notice Returns BuyFIATSwapParams struct
+    /// @notice Populates the BuyFIATSwapParams struct used in the `_buyFIATExactOut` method
     /// @param pathPoolIds Balancer PoolIds for every step of the swap from underlier to FIAT
     /// @param pathAssetsIn Assets to be swapped at every step from underlier to FIAT (excluding FIAT)
-    /// @param maxUnderliersIn Max amount of underlier to swap [underlierScale]
+    /// @param maxUnderliersIn Max. amount of underlier to swap [underlierScale]
     /// @param deadline Timestamp after which the trade is no more valid [s]
     /// @return buyFIATSwapParams BuyFIATSwapParams struct
-    function getBuyFIATSwapParams(bytes32[] calldata pathPoolIds, address[] calldata pathAssetsIn, uint256 maxUnderliersIn, uint256 deadline) external view returns(BuyFIATSwapParams memory) {
+    function buildBuyFIATSwapParams(
+        bytes32[] calldata pathPoolIds, address[] calldata pathAssetsIn, uint256 maxUnderliersIn, uint256 deadline
+    ) external view returns(BuyFIATSwapParams memory) {
         if (pathPoolIds.length != pathAssetsIn.length) revert LeverActions__getBuyFIATSwapParams_pathLengthMismatch();
         uint256 pathLength = pathPoolIds.length;
 
@@ -387,7 +394,7 @@ abstract contract LeverActions {
         IAsset[] memory assets = new IAsset[](pathLength + 1);
         int256[] memory limits = new int[](pathLength + 1);
 
-        assets[pathLength] =  IAsset(address(fiat));
+        assets[pathLength] = IAsset(address(fiat));
         limits[0] = int256(maxUnderliersIn);
 
         for (uint256 i = 0; i < pathLength;){
@@ -404,6 +411,8 @@ abstract contract LeverActions {
 
         return BuyFIATSwapParams(swaps,assets,limits,deadline);
     }
+
+    /// ======== Utility ======== ///
            
     /// @notice Returns the absolute value for a signed integer
     function abs(int256 a) private pure returns (uint256 result) {

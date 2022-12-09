@@ -1180,7 +1180,7 @@ contract LeverFYActions_RPC_tests is Test {
             me,
             fyTokenAmount,
             normalDebt,
-            leverActions.getBuyFIATSwapParams(poolIds,pathAssetsIn,maxUnderliersIn,deadline)
+            leverActions.buildBuyFIATSwapParams(poolIds,pathAssetsIn,maxUnderliersIn,deadline)
         );
 
         assertGt(dai.balanceOf(me), meInitialBalance);

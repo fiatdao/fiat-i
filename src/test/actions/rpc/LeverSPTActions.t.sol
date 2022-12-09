@@ -406,7 +406,7 @@ contract LeverSPTActions_RPC_tests is Test {
             me,
             upfrontUnderlier,
             lendFIAT,
-            leverActions.getSellFIATSwapParams(pathPoolIds, pathAssetsOut, minUnderliersOut,deadline), 
+            leverActions.buildSellFIATSwapParams(pathPoolIds, pathAssetsOut, minUnderliersOut,deadline), 
             _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0) // swap all for pTokens
         );
 
@@ -657,7 +657,7 @@ contract LeverSPTActions_RPC_tests is Test {
             me,
             pTokenAmount,
             normalDebt,
-            leverActions.getBuyFIATSwapParams(pathPoolIds,pathAssetsIn,maxUnderliersIn,deadline),
+            leverActions.buildBuyFIATSwapParams(pathPoolIds,pathAssetsIn,maxUnderliersIn,deadline),
             _getCollateralSwapParams(address(sP_maDAI), address(dai), address(maDAIAdapter), type(uint256).max, 0)
         );
         assertEq(usdc.balanceOf(address(leverActions)),0);
