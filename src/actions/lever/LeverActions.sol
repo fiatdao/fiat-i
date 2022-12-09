@@ -242,8 +242,7 @@ abstract contract LeverActions {
        
         // set the exact amount of FIAT to swap
         params.swaps[0].amount = exactAmountIn;
-        params.limits[0] = int256(exactAmountIn);
-
+        params.limits[0] = toInt256(exactAmountIn);
 
         // return the absolute of the last swap delta for the underlier
         return abs(IBalancerVault(fiatBalancerVault).batchSwap(
@@ -253,8 +252,7 @@ abstract contract LeverActions {
 
     // @notice Use `buildBuyFIATSwapParams` to populate `BuyFIATSwapParams`
     function _buyFIATExactOut(BuyFIATSwapParams memory params, uint256 exactAmountOut) internal returns (uint256) {
-        uint swapsLength = params.swaps.length;
-        if (swapsLength != sub(params.assets.length, uint256(1)))
+        if (params.swaps.length != sub(params.assets.length, uint256(1)))
             revert LeverActions__buyFIATExactOut_pathLengthMismatch();
         if (address(params.assets[sub(params.assets.length, uint256(1))]) != address(fiat))
             revert LeverActions__buyFIATExactOut_wrongFIATAddress();
@@ -265,6 +263,7 @@ abstract contract LeverActions {
        
         // set the exact amount of FIAT to receive
         params.swaps[0].amount = exactAmountOut;
+        // params.limits[1] = -toInt256(exactAmountOut);
     
         // return the absolute of the first swap delta for the underlier
         return abs(IBalancerVault(fiatBalancerVault).batchSwap(
@@ -288,18 +287,18 @@ abstract contract LeverActions {
         uint256 pathLength = pathPoolIds.length;
         IBalancerVault.FundManagement memory funds;
         IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
-        IAsset[] memory assets = new IAsset[](pathLength + 1);
-        assets[0] =  IAsset(address(fiat));
+        IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1))); // + 1 for FIAT
+        assets[0] = IAsset(address(fiat));
 
-        for (uint256 i = 0; i < pathLength;){
+        for (uint256 i = 0; i < pathLength;) {
+            uint256 nextAssetIndex;
+            unchecked { nextAssetIndex = i + 1; }
             IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(
-                pathPoolIds[i], i, i + 1, 0, new bytes(0)
+                pathPoolIds[i], i, nextAssetIndex, 0, new bytes(0)
             );
             swaps[i] = swap;
-            unchecked {
-                assets[i + 1] = IAsset(address(pathAssetsOut[i]));
-                i += 1;
-            }
+            assets[nextAssetIndex] = IAsset(address(pathAssetsOut[i]));
+            i = nextAssetIndex;
         }
         
         swaps[0].amount = fiatAmount;
@@ -323,20 +322,20 @@ abstract contract LeverActions {
         uint256 pathLength = pathPoolIds.length;
 
         IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
-        IAsset[] memory assets = new IAsset[](pathLength + 1);
+        IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1)));
         assets[pathLength] =  IAsset(address(fiat));
         IBalancerVault.FundManagement memory funds;
 
-        for (uint256 i = 0; i < pathLength;){
-            uint256 index = pathLength - i;
-            IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(
-                pathPoolIds[i], index-1, index, 0, new bytes(0)
-            );
+        for (uint256 i = 0; i < pathLength;) {
+            IBalancerVault.BatchSwapStep memory swap;
+            unchecked {
+                swap = IBalancerVault.BatchSwapStep(
+                    pathPoolIds[i], pathLength - i - 1, pathLength - i, 0, new bytes(0)
+                );
+            }
             swaps[i] = swap;
             assets[i] = IAsset(address(pathAssetsIn[i]));
-            unchecked {
-                i += 1;
-            }
+            unchecked { i += 1; }
         }
         
         swaps[0].amount = fiatAmount;
@@ -359,23 +358,23 @@ abstract contract LeverActions {
         uint256 pathLength = pathPoolIds.length;
        
         IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
-        IAsset[] memory assets = new IAsset[](pathLength + 1);
-        int256[] memory limits = new int[](pathLength + 1);
+        IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1)));
+        int256[] memory limits = new int[](add(pathLength, uint256(1)));
         assets[0] =  IAsset(address(fiat));
-        limits[pathLength] = -int256(minUnderliersOut);
+        limits[pathLength] = -toInt256(minUnderliersOut);
 
-        for (uint256 i = 0; i < pathLength;){
+        for (uint256 i = 0; i < pathLength;) {
+            uint256 nextAssetIndex;
+            unchecked { nextAssetIndex = i + 1; }
             IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(
-                pathPoolIds[i], i, i + 1, 0, new bytes(0)
+                pathPoolIds[i], i, nextAssetIndex, 0, new bytes(0)
             );
             swaps[i] = swap;
-            unchecked {
-                assets[i + 1] = IAsset(address(pathAssetsOut[i]));
-                i += 1;
-            }
+            assets[nextAssetIndex] = IAsset(address(pathAssetsOut[i]));
+            i = nextAssetIndex;
         }
 
-        return SellFIATSwapParams(swaps,assets,limits,deadline);
+        return SellFIATSwapParams(swaps, assets, limits, deadline);
     }
 
     /// @notice Populates the BuyFIATSwapParams struct used in the `_buyFIATExactOut` method
@@ -391,25 +390,25 @@ abstract contract LeverActions {
         uint256 pathLength = pathPoolIds.length;
 
         IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
-        IAsset[] memory assets = new IAsset[](pathLength + 1);
-        int256[] memory limits = new int[](pathLength + 1);
+        IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1)));
+        int256[] memory limits = new int[](add(pathLength, uint256(1)));
 
         assets[pathLength] = IAsset(address(fiat));
-        limits[0] = int256(maxUnderliersIn);
+        limits[0] = toInt256(maxUnderliersIn);
 
         for (uint256 i = 0; i < pathLength;){
-            uint256 index = pathLength - i;
-            IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(
-                pathPoolIds[i], index-1, index, 0, new bytes(0)
-            );
+            IBalancerVault.BatchSwapStep memory swap;
+            unchecked {
+                swap = IBalancerVault.BatchSwapStep(
+                    pathPoolIds[i], pathLength - i - 1, pathLength - i, 0, new bytes(0)
+                );
+            }
             swaps[i] = swap;
             assets[i] = IAsset(address(pathAssetsIn[i]));
-            unchecked {
-                i += 1;
-            }
+            unchecked { i += 1; }
         }
 
-        return BuyFIATSwapParams(swaps,assets,limits,deadline);
+        return BuyFIATSwapParams(swaps, assets, limits, deadline);
     }
 
     /// ======== Utility ======== ///
