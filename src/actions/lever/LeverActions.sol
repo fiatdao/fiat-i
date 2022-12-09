@@ -11,7 +11,7 @@ import {IFIAT} from "../../interfaces/IFIAT.sol";
 import {IFlash, ICreditFlashBorrower, IERC3156FlashBorrower} from "../../interfaces/IFlash.sol";
 import {IPublican} from "../../interfaces/IPublican.sol";
 import {WAD, toInt256, add, sub, wmul, wdiv, sub} from "../../core/utils/Math.sol";
-
+import {console} from "forge-std/console.sol";
 import {IBalancerVault, IAsset} from "../helper/ConvergentCurvePoolHelper.sol";
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -245,7 +245,8 @@ abstract contract LeverActions {
     }
 
     function _buyFIATExactOut(BuyFIATSwapParams memory params, uint256 exactAmountOut) internal returns (uint256) {
-        if (params.swaps.length != sub(params.assets.length, uint256(1)))
+        uint swapsLength = params.swaps.length;
+        if (swapsLength != sub(params.assets.length, uint256(1)))
             revert LeverActions__buyFIATExactOut_pathLengthMismatch();
         if (address(params.assets[sub(params.assets.length, uint256(1))]) != address(fiat))
             revert LeverActions__buyFIATExactOut_wrongFIATAddress();
@@ -253,10 +254,20 @@ abstract contract LeverActions {
         IBalancerVault.FundManagement memory funds = IBalancerVault.FundManagement(
             address(this), false, payable(address(this)), false
         );
-
+       
+        
+        if(swapsLength > 1){
+            
+            IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](swapsLength);
+            for (uint256 i=0; i < swapsLength; ++i) {
+              uint256 index = sub(swapsLength - 1 , i );
+              swaps[index]= params.swaps[i];
+            }
+            params.swaps = swaps;
+        }
         // set the exact amount of FIAT to receive
         params.swaps[0].amount = exactAmountOut;
-        
+    
         // return the absolute of the first swap delta for the underlier
         return abs(IBalancerVault(fiatBalancerVault).batchSwap(
             IBalancerVault.SwapKind.GIVEN_OUT, params.swaps, params.assets, funds, params.limits, params.deadline

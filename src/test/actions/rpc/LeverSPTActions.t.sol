@@ -636,16 +636,26 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 normalDebt = _normalDebt(address(maDAIVault), address(userProxy));
 
         // Prepare buy FIAT params
-        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
-        swaps.push(buy);
-        IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0)); 
-        swaps.push(buy2);
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId,0,1,0,new bytes(0)); 
+        IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId,1,2,0,new bytes(0));
+        IBalancerVault.BatchSwapStep memory buy3 = IBalancerVault.BatchSwapStep(fiatPoolId,2,3,0,new bytes(0));  
+        IBalancerVault.BatchSwapStep memory buy4 = IBalancerVault.BatchSwapStep(fiatPoolId,3,4,0,new bytes(0));      
 
+        swaps.push(buy);
+        swaps.push(buy2);
+        swaps.push(buy3);
+        swaps.push(buy4);
+     
+
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(usdc)));
         assets.push(IAsset(address(fiat)));
         
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(0); 
+        limits.push(0); 
         limits.push(0); 
         limits.push(-int(lendFIAT)); // limit set as exact amount out
 

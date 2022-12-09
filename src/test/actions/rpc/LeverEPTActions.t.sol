@@ -618,16 +618,20 @@ contract LeverEPTActions_RPC_tests is Test {
         delete limits;
 
         // Prepare buy FIAT params
-        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 1, 2, 0, new bytes(0));
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0)); 
         swaps.push(buy);
-        IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        IBalancerVault.BatchSwapStep memory buy2 = IBalancerVault.BatchSwapStep(fiatPoolId, 1, 2, 0, new bytes(0));
         swaps.push(buy2);
+        IBalancerVault.BatchSwapStep memory buy3 = IBalancerVault.BatchSwapStep(fiatPoolId, 2, 3, 0, new bytes(0));
+        swaps.push(buy3);
 
         assets.push(IAsset(address(underlierUSDC)));
         assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(underlierUSDC)));
         assets.push(IAsset(address(fiat)));
 
         limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max USDC In
+        limits.push(0);
         limits.push(0);
         limits.push(-int(lendFIAT)); // limit set as exact amount out in the contract actions
 
@@ -640,7 +644,7 @@ contract LeverEPTActions_RPC_tests is Test {
             _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
         );
 
-        assertGt(underlierUSDC.balanceOf(me), meInitialBalance - ONE_USDC); // subtract fees / rounding errors
+        assertGt(underlierUSDC.balanceOf(me), meInitialBalance - 2 * ONE_USDC); // subtract fees / rounding errors
         assertEq(ERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22)), vaultInitialBalance);
         assertEq(_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)), initialCollateral);
     }
