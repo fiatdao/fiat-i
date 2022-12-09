@@ -44,8 +44,8 @@ abstract contract LeverActions {
         // Balancer BatchSwapStep array (see Balancer docs for more info)
         // Items have to be in swap order (e.g. FIAT, DAI, USDT)
         // IMPORTANT when constructing a BatchSwapStep:
-        // assetInIndex: The index of the token within assets which to use as an input of this step.
-        // assetOutIndex: The index of the token within assets which is the output of this step.
+        // assetInIndex: The index of the token within assets which is the Input of this step.
+        // assetOutIndex: The index of the token within assets which is the Output of this step.
         IBalancerVault.BatchSwapStep[] swaps;
         // Balancer IAssets array (see Balancer docs for more info)
         // Items have to be in swap order (e.g. FIAT, DAI, USDT)
