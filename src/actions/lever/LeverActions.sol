@@ -43,18 +43,14 @@ abstract contract LeverActions {
 
     struct SellFIATSwapParams {
         // Balancer BatchSwapStep array (see Balancer docs for more info)
-        // Items have to be in swap order (e.g. FIAT, DAI, USDT)
-        // IMPORTANT when constructing a BatchSwapStep:
-        // assetInIndex: The index of the token within assets which is the Input of this step.
-        // assetOutIndex: The index of the token within assets which is the Output of this step.
+        // Items have to be in swap order (e.g. [FIAT -> DAI, DAI -> USDT])
         IBalancerVault.BatchSwapStep[] swaps;
         // Balancer IAssets array (see Balancer docs for more info)
-        // Items have to be in swap order (e.g. FIAT, DAI, USDT)
-        // This is referenced from within swaps
+        // Items have to be in swap order (e.g. [FIAT, DAI, USDT])
         IAsset[] assets;
         // Balancer Limits array (see Balancer docs for more info)
-        // Items have to be in swap order (e.g. FIAT, DAI, USDT)
-        // Input amount limits have to be positive, output amount limits have to be negative (e.g. 1 FIAT, -1 DAI)
+        // Items have to be in swap order (e.g. [1 FIAT, 0 DAI, -1 USDT])
+        // Input amount limits have to be positive, output amount limits have to be negative
         int256[] limits;
         // Timestamp at which the swap order expires [seconds]
         uint256 deadline;
@@ -62,18 +58,15 @@ abstract contract LeverActions {
 
     struct BuyFIATSwapParams {
         // Balancer BatchSwapStep array (see Balancer docs for more info)
-        // Items have to be in swap order (e.g. USDT, DAI, FIAT)
-        // IMPORTANT: swaps order has to follow Balancer guides (see Balancer docs for more info)
-        // E.g. route USDT(index: 0) - DAI(index: 1) - FIAT(index: 2)  => swaps[0] (indexIn: 1, indexOut:2), swaps[1] (indexIn:0, indexOut:1)]
-        // There's also an helper function orderBuyFIATSwaps() which orders them, in this case the input swaps indices follow the swap route
-        // E.g. route USDT(index: 0) - DAI(index: 1) - FIAT(index: 2)  => swaps[0] (indexIn: 0, indexOut:1), swaps[1] (indexIn:1, indexOut:2)]
+        // Items have to be in swap order (e.g. [USDT -> DAI, DAI -> FIAT])
+        // E.g. [(USDT -> DAI: assetIndexIn: 0, assetIndexOut: 1), (DAI -> FIAT: assetInIndex: 1, assetOutIndex: 2)]
         IBalancerVault.BatchSwapStep[] swaps;
         // Balancer IAssets array (see Balancer docs for more info)
-        // Items have to be in swap order (e.g. USDT, DAI, FIAT)
+        // Items have to be in swap order (e.g. [USDT, DAI, FIAT])
         IAsset[] assets;
         // Balancer Limits array (see Balancer docs for more info)
-        // Items have to be in swap order (e.g. USDT, DAI, FIAT)
-        // Input amount limits have to be positive, output amount limits have to be negative (e.g. 1 DAI, -1 FIAT)
+        // Items have to be in swap order (e.g. [1 USDT, 0 DAI, -1 FIAT])
+        // Input amount limits have to be positive, output amount limits have to be negative
         int256[] limits;
         // Timestamp at which the swap order expires [seconds]
         uint256 deadline;
@@ -92,7 +85,7 @@ abstract contract LeverActions {
 
     address internal immutable self = address(this);
 
-    // FIAT - DAI - USDC Balancer Pool
+    // FIAT Balancer Pool
     bytes32 public immutable fiatPoolId;
     address public immutable fiatBalancerVault;
 
