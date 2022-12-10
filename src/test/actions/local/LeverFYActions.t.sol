@@ -102,7 +102,7 @@ contract LeverFYActions_UnitTest is Test {
         vm.mockCall(ccp, abi.encodeWithSelector(IFYPool.sellBasePreview.selector), abi.encode(expectedPrice));
 
         assertEq(
-            LeverActions.underlierToFYToken(1e6,address(ccp)),
+            LeverActions.underlierToFYToken(1e6, address(ccp)),
             expectedPrice
         );
     }
@@ -117,7 +117,7 @@ contract LeverFYActions_UnitTest is Test {
         vm.mockCall(ccp, abi.encodeWithSelector(IFYPool.sellFYTokenPreview.selector), abi.encode(expectedPrice));
         
         assertEq(
-            LeverActions.fyTokenToUnderlier(1e6,address(ccp)),
+            LeverActions.fyTokenToUnderlier(1e6, address(ccp)),
             expectedPrice
         );
     }

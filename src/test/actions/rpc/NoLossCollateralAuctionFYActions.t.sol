@@ -118,7 +118,7 @@ contract NoLossCollateralAuctionFYActions_UnitTest is Test {
 
         // transfer some pT to us
         vm.prank(address(0x5066c297F970b63D28f86Ef6FfEfeAF7A208014C));// user with pT
-        fyUSDC04.transfer(me,1000 * ONE_USDC);
+        fyUSDC04.transfer(me, 1000 * ONE_USDC);
 
         vaultFY_USDC06.enter(0, me, fyUSDC04.balanceOf(me));
 
@@ -195,7 +195,7 @@ contract NoLossCollateralAuctionFYActions_UnitTest is Test {
         fiat.transfer(address(userProxy), 100e18);
 
         uint256 fiatBalance = fiat.balanceOf(address(userProxy));
-        uint256 collateralBalance = _balance(address(vaultFY_USDC06),address(userProxy));
+        uint256 collateralBalance = _balance(address(vaultFY_USDC06), address(userProxy));
 
         vm.warp(block.timestamp + 100);
 
@@ -218,13 +218,13 @@ contract NoLossCollateralAuctionFYActions_UnitTest is Test {
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(address(userProxy)));
         // the collateral is still in FIAT system
-        assertGt(_balance(address(vaultFY_USDC06),address(userProxy)),collateralBalance);
+        assertGt(_balance(address(vaultFY_USDC06), address(userProxy)), collateralBalance);
     }
 
     function test_takeCollateral_from_user_BEFORE_maturity() public {
         collateralAuction.redoAuction(1, me);
         uint256 fiatBalance = fiat.balanceOf(me);
-        uint256 collateralBalance = _balance(address(fyUSDC04),me);
+        uint256 collateralBalance = _balance(address(fyUSDC04), me);
 
         vm.warp(block.timestamp + 100);
 
@@ -247,14 +247,14 @@ contract NoLossCollateralAuctionFYActions_UnitTest is Test {
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(me));
         // the collateral is still in FIAT system
-        assertGt(_balance(address(vaultFY_USDC06),me),collateralBalance);
+        assertGt(_balance(address(vaultFY_USDC06), me), collateralBalance);
     }
 
     function test_takeCollateral_from_user_AFTER_maturity() public {
         vm.warp(maturity + 3600 * 24 * 20);
         collateralAuction.redoAuction(1, me);
         uint256 fiatBalance = fiat.balanceOf(me);
-        uint256 collateralBalance = _balance(address(fyUSDC04),me);
+        uint256 collateralBalance = _balance(address(fyUSDC04), me);
         assertEq(collateralBalance, 0);
 
         userProxy.execute(
@@ -276,7 +276,7 @@ contract NoLossCollateralAuctionFYActions_UnitTest is Test {
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(me));
         // the collateral is still in FIAT system
-        assertGt(_balance(address(vaultFY_USDC06),me),collateralBalance);
+        assertGt(_balance(address(vaultFY_USDC06), me), collateralBalance);
     }
 
     function test_takeCollateralAndSwapForUnderlier_BEFORE_maturity() public {
@@ -315,7 +315,7 @@ contract NoLossCollateralAuctionFYActions_UnitTest is Test {
 
     function test_takeCollateralAndSwapForUnderlier_from_user_BEFORE_maturity() public {
         uint256 fiatBalance = fiat.balanceOf(me);
-        uint256 collateralBalance = _balance(address(fyUSDC04),me);
+        uint256 collateralBalance = _balance(address(fyUSDC04), me);
         assertEq(fiatBalance, 100e18);
         assertEq(collateralBalance, 0);
 
@@ -385,7 +385,7 @@ contract NoLossCollateralAuctionFYActions_UnitTest is Test {
     function test_takeCollateralAndRedeemForUnderlier_from_user_AFTER_maturity() public {
         fiat.transfer(me, 100e18);
         uint256 fiatBalance = fiat.balanceOf(me);
-        uint256 collateralBalance = _balance(address(fyUSDC04),me);
+        uint256 collateralBalance = _balance(address(fyUSDC04), me);
 
         // Move post maturity
         vm.warp(maturity + 1);

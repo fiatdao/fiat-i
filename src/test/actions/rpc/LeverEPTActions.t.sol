@@ -366,15 +366,18 @@ contract LeverEPTActions_RPC_tests is Test {
         uint256 fee = 5 * ONE_USDC;
 
         // Prepare sell FIAT params
+        // steps: [FIAT -> DAI, DAI -> USDC]
         IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
         swaps.push(step);
         IBalancerVault.BatchSwapStep memory step2 = IBalancerVault.BatchSwapStep(fiatPoolId, 1, 2, 0, new bytes(0));
         swaps.push(step2);
 
+        // assets: [FIAT, DAI, USDC]
         assets.push(IAsset(address(fiat)));
         assets.push(IAsset(address(dai)));
         assets.push(IAsset(address(underlierUSDC)));
 
+        // limits: [lendFIAT, 0, -totalUnderlier + upfrontUnderlier + fee]
         limits.push(int256(lendFIAT));
         limits.push(0);
         limits.push(-int256(totalUnderlier - upfrontUnderlier - fee));
@@ -630,7 +633,7 @@ contract LeverEPTActions_RPC_tests is Test {
         pathPoolIds.push(fiatPoolId);
         pathPoolIds.push(fiatPoolId);
 
-        uint maxUnderliersIn = totalUnderlier-upfrontUnderlier+fee; // max USDC In
+        uint maxUnderliersIn = totalUnderlier - upfrontUnderlier+fee; // max USDC In
         uint deadline = block.timestamp + 10 days;
 
         _sellCollateralAndDecreaseLever(
@@ -638,7 +641,7 @@ contract LeverEPTActions_RPC_tests is Test {
             me,
             pTokenAmount,
             normalDebt,
-            leverActions.buildBuyFIATSwapParams(pathPoolIds,pathAssetsIn,maxUnderliersIn,deadline),
+            leverActions.buildBuyFIATSwapParams(pathPoolIds, pathAssetsIn, maxUnderliersIn, deadline),
             _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
         );
 
@@ -703,7 +706,8 @@ contract LeverEPTActions_RPC_tests is Test {
             _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
         );
 
-        assertGt(underlierUSDC.balanceOf(address(user)), userInitialBalance - ONE_USDC); // subtract fees / rounding errors
+        // subtract fees / rounding errors
+        assertGt(underlierUSDC.balanceOf(address(user)), userInitialBalance - ONE_USDC);
         assertEq(ERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22)), vaultInitialBalance);
         assertEq(_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)), initialCollateral);
     }
@@ -729,7 +733,7 @@ contract LeverEPTActions_RPC_tests is Test {
         limits.push(int256(lendFIAT)); // max FIAT in
         limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
 
-        publican.setParam(address(vault_yvUSDC_16SEP22),'interestPerSecond',1.000000000700000 ether);
+        publican.setParam(address(vault_yvUSDC_16SEP22), "interestPerSecond", 1.000000000700000 ether);
         publican.collect(address(vault_yvUSDC_16SEP22));
 
         _buyCollateralAndIncreaseLever(
@@ -762,7 +766,7 @@ contract LeverEPTActions_RPC_tests is Test {
         vm.warp(block.timestamp + 50 days);
 
         publican.collect(address(vault_yvUSDC_16SEP22));
-        codex.createUnbackedDebt(address(moneta), address(moneta),2 *WAD);
+        codex.createUnbackedDebt(address(moneta), address(moneta), 2 *WAD);
 
         _sellCollateralAndDecreaseLever(
             address(vault_yvUSDC_16SEP22),
@@ -773,7 +777,8 @@ contract LeverEPTActions_RPC_tests is Test {
             _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
         );
 
-        assertGt(underlierUSDC.balanceOf(address(user)), userInitialBalance - ONE_USDC); // subtract fees / rounding errors
+        // subtract fees / rounding errors
+        assertGt(underlierUSDC.balanceOf(address(user)), userInitialBalance - ONE_USDC);
         assertEq(ERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22)), vaultInitialBalance);
         assertEq(_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)), initialCollateral);
     }
@@ -834,7 +839,8 @@ contract LeverEPTActions_RPC_tests is Test {
             _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
         );
 
-        assertGt(underlierUSDC.balanceOf(address(userProxy)), userProxyInitialBalance - ONE_USDC); // subtract fees / rounding errors
+        // subtract fees / rounding errors
+        assertGt(underlierUSDC.balanceOf(address(userProxy)), userProxyInitialBalance - ONE_USDC);
         assertEq(ERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22)), vaultInitialBalance);
         assertEq(_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)), initialCollateral);
     }
@@ -895,7 +901,8 @@ contract LeverEPTActions_RPC_tests is Test {
             _getCollateralSwapParams(trancheUSDC_V4_yvUSDC_16SEP22, address(underlierUSDC), 0)
         );
 
-        assertGt(underlierUSDC.balanceOf(address(userProxy)), userProxyInitialBalance - ONE_USDC); // subtract fees / rounding errors
+        // subtract fees / rounding errors
+        assertGt(underlierUSDC.balanceOf(address(userProxy)), userProxyInitialBalance - ONE_USDC);
         assertEq(ERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22)), vaultInitialBalance);
         assertEq(_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)), initialCollateral);
     }
@@ -992,7 +999,7 @@ contract LeverEPTActions_RPC_tests is Test {
             address(user),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(swaps,assets,limits),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0)
         );
 
@@ -1059,7 +1066,7 @@ contract LeverEPTActions_RPC_tests is Test {
             address(0),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(swaps,assets,limits),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0)
         );
 
@@ -1092,7 +1099,7 @@ contract LeverEPTActions_RPC_tests is Test {
             address(0),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(swaps,assets,limits)
+            _getBuyFIATSwapParams(swaps, assets, limits)
         );
 
         assertGt(underlierUSDC.balanceOf(address(userProxy)), userProxyInitialBalance);
@@ -1126,7 +1133,7 @@ contract LeverEPTActions_RPC_tests is Test {
             address(userProxy),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(swaps,assets,limits),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0)
         );
 
@@ -1159,7 +1166,7 @@ contract LeverEPTActions_RPC_tests is Test {
             address(userProxy),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(swaps,assets,limits)
+            _getBuyFIATSwapParams(swaps, assets, limits)
         );
 
         assertGt(underlierUSDC.balanceOf(address(userProxy)), userProxyInitialBalance);
@@ -1187,7 +1194,7 @@ contract LeverEPTActions_RPC_tests is Test {
         limits.push(int256(lendFIAT)); // max FIAT in
         limits.push(-int256(totalUnderlier - upfrontUnderlier - fee)); // min USDC out after fees
         
-        publican.setParam(address(vault_yvUSDC_16SEP22),'interestPerSecond',1.000000000700000 ether);
+        publican.setParam(address(vault_yvUSDC_16SEP22), "interestPerSecond", 1.000000000700000 ether);
         publican.collect(address(vault_yvUSDC_16SEP22));
         
         _buyCollateralAndIncreaseLever(
@@ -1209,7 +1216,7 @@ contract LeverEPTActions_RPC_tests is Test {
         vm.warp(vault_yvUSDC_16SEP22.maturity(0));
 
         publican.collect(address(vault_yvUSDC_16SEP22));
-        codex.createUnbackedDebt(address(moneta), address(moneta),3 *WAD);
+        codex.createUnbackedDebt(address(moneta), address(moneta), 3 *WAD);
         
         delete swaps;
         delete assets;

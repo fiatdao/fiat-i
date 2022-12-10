@@ -12,7 +12,7 @@ import {IFlash, ICreditFlashBorrower, IERC3156FlashBorrower} from "../../interfa
 import {IPublican} from "../../interfaces/IPublican.sol";
 import {WAD, toInt256, add, wmul, wdiv, sub} from "../../core/utils/Math.sol";
 import {Lever20Actions} from "./Lever20Actions.sol";
-import {IFYPool,IFYToken} from "../vault/VaultFYActions.sol";
+import {IFYPool, IFYToken} from "../vault/VaultFYActions.sol";
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // WARNING: These functions meant to be used as a a library for a PRBProxy. Some are unsafe if you call them directly.
@@ -386,7 +386,7 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
         );
 
         // redeem fyToken for underlier
-        uint256 underlierAmount = IFYToken(params.token).redeem(address(this),params.subFYTokenAmount);
+        uint256 underlierAmount = IFYToken(params.token).redeem(address(this), params.subFYTokenAmount);
 
         // sell part of underlier for FIAT
         uint256 underlierSwapped = _buyFIATExactOut(params.fiatSwapParams, borrowed);

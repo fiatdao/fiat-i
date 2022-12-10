@@ -16,7 +16,7 @@ import {WAD, toInt256, wmul, wdiv, sub, add} from "../../../core/utils/Math.sol"
 import {SenseToken} from "../../../test/utils/SenseToken.sol";
 import {TestERC20} from "../../../test/utils/TestERC20.sol";
 import {VaultFYActions, IFYPool} from "../../../actions/vault/VaultFYActions.sol";
-import {LeverSPTActions, ISenseSpace,IERC4626 } from "../../../actions/lever/LeverSPTActions.sol";
+import {LeverSPTActions, ISenseSpace, IERC4626 } from "../../../actions/lever/LeverSPTActions.sol";
 import {IBalancerVault, IConvergentCurvePool} from "../../../actions/helper/ConvergentCurvePoolHelper.sol";
 
 contract BalancerVaultMock {
@@ -105,7 +105,7 @@ contract LeverSPTActions_UnitTest is Test {
 
         vm.mockCall(underlierUSDC, abi.encodeWithSelector(IERC20.approve.selector), abi.encode(true));
 
-        vm.mockCall(senseSpace,abi.encodeWithSelector(ISenseSpace.getPoolId.selector), abi.encode(bytes32("somePoolId")));
+        vm.mockCall(senseSpace, abi.encodeWithSelector(ISenseSpace.getPoolId.selector), abi.encode(bytes32("somePoolId")));
 
         vm.mockCall(senseSpace, abi.encodeWithSelector(ISenseSpace.pti.selector), abi.encode(1));
         
@@ -137,16 +137,16 @@ contract LeverSPTActions_UnitTest is Test {
         uint256 quote = uint256(1100000000000000000);
 
     
-        vm.mockCall(target,abi.encodeWithSelector(IERC4626.previewDeposit.selector),abi.encode(1e6));
+        vm.mockCall(target, abi.encodeWithSelector(IERC4626.previewDeposit.selector), abi.encode(1e6));
         
         uint256 impliedYieldFee = wmul(1e16, sub(quote, WAD));
         quote = sub(quote, impliedYieldFee);
         uint256 expectedPrice = wmul(quote, uint256(1e6));
 
-        vm.mockCall(senseSpace, abi.encodeWithSelector(ISenseSpace.onSwap.selector),abi.encode(expectedPrice));
+        vm.mockCall(senseSpace, abi.encodeWithSelector(ISenseSpace.onSwap.selector), abi.encode(expectedPrice));
 
         assertEq(
-            LeverActions.underlierToPToken(senseSpace,address(balancerVault),quote),
+            LeverActions.underlierToPToken(senseSpace, address(balancerVault), quote),
             expectedPrice
         );
     }
@@ -168,9 +168,9 @@ contract LeverSPTActions_UnitTest is Test {
         quote = sub(quote, impliedYieldFee);
         uint256 expectedPrice = wmul(quote, uint256(1e6));
         
-        vm.mockCall(senseSpace, abi.encodeWithSelector(ISenseSpace.onSwap.selector),abi.encode(expectedPrice));
+        vm.mockCall(senseSpace, abi.encodeWithSelector(ISenseSpace.onSwap.selector), abi.encode(expectedPrice));
 
-        vm.mockCall(target,abi.encodeWithSelector(IERC4626.previewRedeem.selector),abi.encode(expectedPrice));
+        vm.mockCall(target, abi.encodeWithSelector(IERC4626.previewRedeem.selector), abi.encode(expectedPrice));
 
         assertEq(
             LeverActions.pTokenToUnderlier(senseSpace, address(balancerVault), 1e6),
