@@ -12,7 +12,7 @@ import {IFlash, ICreditFlashBorrower, IERC3156FlashBorrower} from "../../interfa
 import {IPublican} from "../../interfaces/IPublican.sol";
 import {WAD, toInt256, add, wmul, wdiv, sub} from "../../core/utils/Math.sol";
 import {Lever20Actions} from "./Lever20Actions.sol";
-import {IFYPool,IFYToken} from "../vault/VaultFYActions.sol";
+import {IFYPool, IFYToken} from "../vault/VaultFYActions.sol";
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // WARNING: These functions meant to be used as a a library for a PRBProxy. Some are unsafe if you call them directly.
@@ -74,6 +74,8 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
         address collateralizer;
         // Amount of fyTokens to withdraw and swap for underliers [tokenScale]
         uint256 subFYTokenAmount;
+        // Amount of normalized debt to pay back [wad]
+        uint256 subNormalDebt;
         // Swap config for the underlier to FIAT swap
         BuyFIATSwapParams fiatSwapParams;
         // Swap config for the fyToken to underlier swap
@@ -91,6 +93,8 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
         address collateralizer;
         // Amount of fyTokens to withdraw and swap for underliers [tokenScale]
         uint256 subFYTokenAmount;
+        // Amount of normalized debt to pay back [wad]
+        uint256 subNormalDebt;
         // Swap config for the underlier to FIAT swap
         BuyFIATSwapParams fiatSwapParams;
     }
@@ -239,6 +243,7 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
                         position,
                         collateralizer,
                         subFYTokenAmount,
+                        subNormalDebt,
                         fiatSwapParams,
                         collateralSwapParams
                     )
@@ -285,6 +290,7 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
                         position,
                         collateralizer,
                         subFYTokenAmount,
+                        subNormalDebt,
                         fiatSwapParams
                     )
                 )
@@ -342,7 +348,7 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
             params.position,
             address(this),
             wdiv(params.subFYTokenAmount, IVault(params.vault).tokenScale()),
-            borrowed
+            params.subNormalDebt
         );
 
         // sell collateral for underlier
@@ -352,7 +358,7 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
         uint256 underlierSwapped = _buyFIATExactOut(params.fiatSwapParams, borrowed);
 
         // send underlier to collateralizer
-        IERC20(params.collateralSwapParams.assetOut).safeTransfer(
+        IERC20(address(params.fiatSwapParams.assets[0])).safeTransfer(
             (params.collateralizer == address(0)) ? initiator : params.collateralizer,
             sub(underlierAmount, underlierSwapped)
         );
@@ -376,17 +382,17 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
             params.position,
             address(this),
             wdiv(params.subFYTokenAmount, IVault(params.vault).tokenScale()),
-            borrowed
+            params.subNormalDebt
         );
 
         // redeem fyToken for underlier
-        uint256 underlierAmount = IFYToken(params.token).redeem(address(this),params.subFYTokenAmount);
+        uint256 underlierAmount = IFYToken(params.token).redeem(address(this), params.subFYTokenAmount);
 
         // sell part of underlier for FIAT
         uint256 underlierSwapped = _buyFIATExactOut(params.fiatSwapParams, borrowed);
 
         // send underlier to collateralizer
-        IERC20(params.fiatSwapParams.assetIn).safeTransfer(
+        IERC20(address(params.fiatSwapParams.assets[0])).safeTransfer(
             (params.collateralizer == address(0)) ? initiator : params.collateralizer,
             sub(underlierAmount, underlierSwapped)
         );

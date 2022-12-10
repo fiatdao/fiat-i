@@ -157,8 +157,8 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
         codex.allowCaller(codex.ANY_SIG(), address(collateralAuction));
 
         vm.prank(0xcAc59F91E4536Bc0E79aB816a5cD54e89f10433C); // user with spT
-        sP_maDAI.transfer(me,1000 ether);
-        sP_maDAI.approve(address(maDAIVault),1000 ether);
+        sP_maDAI.transfer(me, 1000 ether);
+        sP_maDAI.approve(address(maDAIVault), 1000 ether);
 
         maDAIVault.enter(0, me, 1000 ether);
         codex.modifyCollateralAndDebt(address(maDAIVault), 0, me, me, me, 1000e18, 500e18);
@@ -202,7 +202,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
         fiat.transfer(address(userProxy), 100e18);
 
         uint256 fiatBalance = fiat.balanceOf(address(userProxy));
-        uint256 collateralBalance = _balance(address(maDAIVault),address(userProxy));
+        uint256 collateralBalance = _balance(address(maDAIVault), address(userProxy));
 
         vm.warp(block.timestamp + 100);
 
@@ -225,13 +225,13 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(address(userProxy)));
         // the collateral is still in FIAT system
-        assertGt(_balance(address(maDAIVault),address(userProxy)),collateralBalance);
+        assertGt(_balance(address(maDAIVault), address(userProxy)), collateralBalance);
     }
 
     function test_takeCollateral_from_user_BEFORE_maturity() public {
         collateralAuction.redoAuction(1, me);
         uint256 fiatBalance = fiat.balanceOf(me);
-        uint256 collateralBalance = _balance(address(maDAIVault),me);
+        uint256 collateralBalance = _balance(address(maDAIVault), me);
 
         vm.warp(block.timestamp + 100);
 
@@ -245,12 +245,12 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(me));
         // the collateral is still in FIAT system
-        assertGt(_balance(address(maDAIVault),me),collateralBalance);
+        assertGt(_balance(address(maDAIVault), me), collateralBalance);
     }
 
     function test_takeCollateral_from_user_AFTER_maturity() public {
         
-        vm.warp(maturity+3600*24*20);
+        vm.warp(maturity + 3600 * 24 * 20);
         collateralAuction.redoAuction(1, me);
         uint256 fiatBalance = fiat.balanceOf(me);
         uint256 collateralBalance = sP_maDAI.balanceOf(me);
@@ -284,7 +284,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
         swapParams.assetOut = address(dai);
         swapParams.approve= type(uint).max;
 
-        assertEq(dai.balanceOf(address(userProxy)),0);
+        assertEq(dai.balanceOf(address(userProxy)), 0);
 
         userProxy.execute(
             address(auctionActions),
@@ -301,7 +301,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
             )
         );
         // DAI received
-        assertGt(dai.balanceOf(address(userProxy)),0);
+        assertGt(dai.balanceOf(address(userProxy)), 0);
         // used all FIAT
         assertEq(fiat.balanceOf(address(userProxy)), 0);
         // should have less FIAT than before
@@ -326,7 +326,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
         swapParams.assetOut = address(dai);
         swapParams.approve= type(uint).max;
 
-        assertEq(dai.balanceOf(me),0);
+        assertEq(dai.balanceOf(me), 0);
 
         userProxy.execute(
             address(auctionActions),
@@ -343,7 +343,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
             )
         );
 
-        assertGt(dai.balanceOf(me),0);
+        assertGt(dai.balanceOf(me), 0);
         // used all FIAT
         assertEq(fiat.balanceOf(me), 0);
         // should have less FIAT than before
@@ -358,9 +358,9 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
         uint256 fiatBalance = fiat.balanceOf(address(userProxy));
         uint256 collateralBalance = sP_maDAI.balanceOf(address(userProxy));
         
-        assertEq(collateralBalance,0);
+        assertEq(collateralBalance, 0);
 
-        vm.warp(maturity+3600*24*20);
+        vm.warp(maturity + 3600 * 24 * 20);
         collateralAuction.redoAuction(1, me);
 
         NoLossCollateralAuctionSPTActions.SwapParams memory swapParams;
@@ -371,7 +371,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
         swapParams.assetOut = address(dai);
         swapParams.approve= type(uint).max;
 
-        assertEq(dai.balanceOf(address(userProxy)),0);
+        assertEq(dai.balanceOf(address(userProxy)), 0);
 
         userProxy.execute(
             address(auctionActions),
@@ -388,7 +388,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
             )
         );
         // DAI received
-        assertGt(dai.balanceOf(address(userProxy)),0);
+        assertGt(dai.balanceOf(address(userProxy)), 0);
         // used all FIAT
         assertEq(fiat.balanceOf(address(userProxy)), 0);
         // should have less FIAT than before
@@ -401,7 +401,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
         uint256 fiatBalance = fiat.balanceOf(me);
         uint256 collateralBalance = sP_maDAI.balanceOf(me);
 
-        vm.warp(maturity+3600*24*20);
+        vm.warp(maturity + 3600 * 24 * 20);
         collateralAuction.redoAuction(1, me);
 
         NoLossCollateralAuctionSPTActions.SwapParams memory swapParams;
@@ -412,7 +412,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
         swapParams.assetOut = address(dai);
         swapParams.approve= type(uint).max;
 
-        assertEq(dai.balanceOf(me),0);
+        assertEq(dai.balanceOf(me), 0);
 
         userProxy.execute(
             address(auctionActions),
@@ -429,7 +429,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
             )
         );
 
-        assertGt(dai.balanceOf(me),0);
+        assertGt(dai.balanceOf(me), 0);
         // used all FIAT
         assertEq(fiat.balanceOf(me), 0);
         // should have less FIAT than before
@@ -463,7 +463,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
         redeemParams.underlierToken = address(dai);
         redeemParams.approveTarget= type(uint).max;
 
-        assertEq(dai.balanceOf(address(userProxy)),0);
+        assertEq(dai.balanceOf(address(userProxy)), 0);
 
         userProxy.execute(
             address(auctionActions),
@@ -480,7 +480,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
             )
         );
 
-        assertGt(dai.balanceOf(address(userProxy)),0);
+        assertGt(dai.balanceOf(address(userProxy)), 0);
         // used all FIAT
         assertEq(fiat.balanceOf(me), 0);
         // should have less FIAT than before
@@ -514,7 +514,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
         redeemParams.underlierToken = address(dai);
         redeemParams.approveTarget= type(uint).max;
 
-        assertEq(dai.balanceOf(me),0);
+        assertEq(dai.balanceOf(me), 0);
 
         userProxy.execute(
             address(auctionActions),
@@ -531,7 +531,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
             )
         );
 
-        assertGt(dai.balanceOf(me),0);
+        assertGt(dai.balanceOf(me), 0);
         // used all FIAT
         assertEq(fiat.balanceOf(me), 0);
         // should have less FIAT than before
@@ -554,7 +554,7 @@ contract NoLossCollateralAuctionSPTActions_UnitTest is Test {
         redeemParams.underlierToken = address(dai);
         redeemParams.approveTarget= type(uint).max;
 
-        assertEq(dai.balanceOf(address(userProxy)),0);
+        assertEq(dai.balanceOf(address(userProxy)), 0);
 
         userProxy.execute(
             address(auctionActions),

@@ -54,9 +54,9 @@ contract Guy {
     }
 }
 
-contract OZToken is ERC20("OZ ERC20","0Z20") {
+contract OZToken is ERC20("OZ ERC20", "0Z20") {
     function mint(address to, uint value) external {
-        _mint(to,value);
+        _mint(to, value);
     }
 }
 contract SurplusAuctionTest is Test {
@@ -94,7 +94,7 @@ contract SurplusAuctionTest is Test {
         token.push(ali, 200 ether);
         token.push(bob, 200 ether);
         
-        ozToken.mint(address(this),1000 ether);
+        ozToken.mint(address(this), 1000 ether);
     }
 
     function test_startAuction() public {
@@ -172,23 +172,23 @@ contract SurplusAuctionTest is Test {
     }
     
     function testFail_OZ_transferFrom() public {
-        ozToken.transferFrom(address(this),address(2),1000 ether); 
+        ozToken.transferFrom(address(this), address(2), 1000 ether); 
     }
 
     function test_transferFrom() public {
-        token.transferFrom(address(this),address(2),600 ether);    
-        assertEq(token.balanceOf(address(2)),600 ether);  
-        assertEq(token.balanceOf(address(this)),0);  
+        token.transferFrom(address(this), address(2), 600 ether);    
+        assertEq(token.balanceOf(address(2)), 600 ether);  
+        assertEq(token.balanceOf(address(this)), 0);  
     }
 
     function testFail_OZ_transfer_to_ZERO_address() public {
-        ozToken.transfer(address(0),600 ether);    
+        ozToken.transfer(address(0), 600 ether);    
     }
 
     function test_transfer_to_ZERO_address() public {
-        token.transfer(address(0),600 ether); 
-        assertEq(token.balanceOf(address(0)),600 ether);
-        assertEq(token.balanceOf(address(this)),0);     
+        token.transfer(address(0), 600 ether); 
+        assertEq(token.balanceOf(address(0)), 600 ether);
+        assertEq(token.balanceOf(address(this)), 0);     
     }
     
     

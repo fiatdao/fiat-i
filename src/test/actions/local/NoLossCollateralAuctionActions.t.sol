@@ -125,8 +125,8 @@ contract Vault20Actions_UnitTest is Test {
         fiat.transfer(address(userProxy), 100e18);
 
         uint256 fiatBalance = fiat.balanceOf(address(userProxy));
-        uint256 collateralBalance = codex.balances(address(vault), 0,address(userProxy));
-        assertEq(collateralBalance,0);
+        uint256 collateralBalance = codex.balances(address(vault), 0, address(userProxy));
+        assertEq(collateralBalance, 0);
 
         vm.warp(block.timestamp + 100);
 
@@ -149,13 +149,13 @@ contract Vault20Actions_UnitTest is Test {
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(address(userProxy)));
         // we have the collateral in FIAT system
-        assertGt(codex.balances(address(vault), 0,address(userProxy)),collateralBalance);
+        assertGt(codex.balances(address(vault), 0, address(userProxy)), collateralBalance);
     }
 
     function test_takeCollateral_from_user() public {
         uint256 fiatBalance = fiat.balanceOf(me);
         uint256 collateralBalance = codex.balances(address(vault), 0, me);
-        assertEq(collateralBalance,0);
+        assertEq(collateralBalance, 0);
 
         vm.warp(block.timestamp + 100);
 
@@ -169,6 +169,6 @@ contract Vault20Actions_UnitTest is Test {
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(me));
         // we have the collateral in FIAT system
-        assertGt(codex.balances(address(vault), 0, me),collateralBalance);
+        assertGt(codex.balances(address(vault), 0, me), collateralBalance);
     }
 }

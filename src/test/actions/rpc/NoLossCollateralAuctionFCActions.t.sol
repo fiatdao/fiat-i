@@ -147,9 +147,9 @@ contract NoLossCollateralAuctionFCActions_UnitTest is Test, ERC1155Holder{
         minterfDAI_1.mintFromUnderlying(1000 * ONE_FCASH, me);
  
         IERC1155(notional).setApprovalForAll(address(vaultFC_DAI), true);
-        vaultFC_DAI.enter(DAI_fCashId_1,me, IERC1155(notional).balanceOf(me,DAI_fCashId_1));
+        vaultFC_DAI.enter(DAI_fCashId_1, me, IERC1155(notional).balanceOf(me, DAI_fCashId_1));
 
-        codex.modifyCollateralAndDebt(address(vaultFC_DAI), DAI_fCashId_1, me, me, me, 1000e18,500e18);
+        codex.modifyCollateralAndDebt(address(vaultFC_DAI), DAI_fCashId_1, me, me, me, 1000e18, 500e18);
         
         // update price so we can liquidate
         collybus.updateSpot(address(DAI), 0.4 ether);
@@ -225,7 +225,7 @@ contract NoLossCollateralAuctionFCActions_UnitTest is Test, ERC1155Holder{
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(address(userProxy)));
          // we have the collateral in FIAT system
-        assertLt(collateralBalance,codex.balances(address(vaultFC_DAI), DAI_fCashId_1, address(userProxy)));
+        assertLt(collateralBalance, codex.balances(address(vaultFC_DAI), DAI_fCashId_1, address(userProxy)));
     }
 
     function test_takeCollateral_from_user_BEFORE_maturity() public {
@@ -254,12 +254,12 @@ contract NoLossCollateralAuctionFCActions_UnitTest is Test, ERC1155Holder{
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(me));
          // we have the collateral in FIAT system
-        assertLt(collateralBalance,codex.balances(address(vaultFC_DAI), DAI_fCashId_1, me));
+        assertLt(collateralBalance, codex.balances(address(vaultFC_DAI), DAI_fCashId_1, me));
     }
 
     function test_takeCollateral_from_user_AFTER_maturity() public {
       
-        vm.warp(maturity+1);
+        vm.warp(maturity + 1);
         collateralAuction.redoAuction(1, me);
         uint256 fiatBalance = fiat.balanceOf(me);
         uint256 collateralBalance = codex.balances(address(vaultFC_DAI), DAI_fCashId_1, me);
@@ -284,12 +284,12 @@ contract NoLossCollateralAuctionFCActions_UnitTest is Test, ERC1155Holder{
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(me));
         // we have the collateral in FIAT system
-        assertLt(collateralBalance,codex.balances(address(vaultFC_DAI), DAI_fCashId_1, me));
+        assertLt(collateralBalance, codex.balances(address(vaultFC_DAI), DAI_fCashId_1, me));
     }
 
     function test_takeCollateralAndSwapForUnderlier_BEFORE_maturity() public {
         fiat.transfer(address(userProxy), 100e18);
-        uint256 collateralBalance = notional1155.balanceOf(address(userProxy),DAI_fCashId_1 );
+        uint256 collateralBalance = notional1155.balanceOf(address(userProxy), DAI_fCashId_1 );
 
         assertEq(collateralBalance, 0);
 
@@ -318,14 +318,14 @@ contract NoLossCollateralAuctionFCActions_UnitTest is Test, ERC1155Holder{
         // used all FIAT
         assertEq(fiat.balanceOf(address(userProxy)), 0);
         // No collateral left in FIAT
-        assertEq(codex.balances(address(vaultFC_DAI), DAI_fCashId_1, address(userProxy)),0);
+        assertEq(codex.balances(address(vaultFC_DAI), DAI_fCashId_1, address(userProxy)), 0);
         // No collateral transferred
-        assertEq(collateralBalance, notional1155.balanceOf(address(userProxy),DAI_fCashId_1 ));
+        assertEq(collateralBalance, notional1155.balanceOf(address(userProxy), DAI_fCashId_1 ));
     }
 
     function test_takeCollateralAndSwapForUnderlier_from_user_BEFORE_maturity() public {
         uint256 fiatBalance = fiat.balanceOf(me);
-        uint256 collateralBalance = notional1155.balanceOf(me,DAI_fCashId_1 );
+        uint256 collateralBalance = notional1155.balanceOf(me, DAI_fCashId_1 );
         assertEq(fiatBalance, 100e18);
         assertEq(collateralBalance, 0);
 
@@ -354,16 +354,16 @@ contract NoLossCollateralAuctionFCActions_UnitTest is Test, ERC1155Holder{
         // used all FIAT
         assertEq(fiat.balanceOf(address(me)), 0);
         // No collateral left in FIAT
-        assertEq(codex.balances(address(vaultFC_DAI), DAI_fCashId_1, me),0);
-        assertEq(codex.balances(address(vaultFC_DAI), DAI_fCashId_1, address(auctionActions)),0);
+        assertEq(codex.balances(address(vaultFC_DAI), DAI_fCashId_1, me), 0);
+        assertEq(codex.balances(address(vaultFC_DAI), DAI_fCashId_1, address(auctionActions)), 0);
         // No collateral transferred
-        assertEq(collateralBalance, notional1155.balanceOf(me,DAI_fCashId_1 ));
+        assertEq(collateralBalance, notional1155.balanceOf(me, DAI_fCashId_1 ));
     }
 
     function test_takeCollateralAndRedeemForUnderlier_AFTER_maturity() public {
         fiat.transfer(address(userProxy), 100e18);
         uint256 fiatBalance = fiat.balanceOf(address(userProxy));
-        uint256 collateralBalance = notional1155.balanceOf(address(userProxy),DAI_fCashId_1);
+        uint256 collateralBalance = notional1155.balanceOf(address(userProxy), DAI_fCashId_1);
 
         // Move post maturity
         vm.warp(maturity + 1);
@@ -391,16 +391,16 @@ contract NoLossCollateralAuctionFCActions_UnitTest is Test, ERC1155Holder{
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(address(userProxy)));
         // No collateral left in FIAT
-        assertEq(codex.balances(address(vaultFC_DAI), DAI_fCashId_1, address(userProxy)),0);
-        assertEq(codex.balances(address(vaultFC_DAI), DAI_fCashId_1, address(auctionActions)),0);
+        assertEq(codex.balances(address(vaultFC_DAI), DAI_fCashId_1, address(userProxy)), 0);
+        assertEq(codex.balances(address(vaultFC_DAI), DAI_fCashId_1, address(auctionActions)), 0);
         // No collateral transferred
-        assertEq(collateralBalance, notional1155.balanceOf(address(userProxy),DAI_fCashId_1));
+        assertEq(collateralBalance, notional1155.balanceOf(address(userProxy), DAI_fCashId_1));
     }
 
     function test_takeCollateralAndRedeemForUnderlier_from_user_AFTER_maturity() public {
         fiat.transfer(me, 100e18);
         uint256 fiatBalance = fiat.balanceOf(me);
-        uint256 collateralBalance = notional1155.balanceOf(me,DAI_fCashId_1);
+        uint256 collateralBalance = notional1155.balanceOf(me, DAI_fCashId_1);
 
         // Move post maturity
         vm.warp(maturity + 1);
@@ -428,8 +428,8 @@ contract NoLossCollateralAuctionFCActions_UnitTest is Test, ERC1155Holder{
         // should have less FIAT than before
         assertGt(fiatBalance, fiat.balanceOf(me));
         // No collateral left in FIAT
-        assertEq(codex.balances(address(vaultFC_DAI), DAI_fCashId_1, me),0);
+        assertEq(codex.balances(address(vaultFC_DAI), DAI_fCashId_1, me), 0);
         // No collateral transferred
-        assertEq(collateralBalance, notional1155.balanceOf(me,DAI_fCashId_1 ));
+        assertEq(collateralBalance, notional1155.balanceOf(me, DAI_fCashId_1 ));
     }
 }

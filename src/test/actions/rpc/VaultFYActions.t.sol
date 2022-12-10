@@ -229,7 +229,7 @@ contract VaultFYActions_RPC_tests is Test {
         );
 
         // Mock responses
-        vm.mockCall(collybus,abi.encodeWithSelector(Collybus.read.selector),abi.encode(uint256(WAD)));
+        vm.mockCall(collybus, abi.encodeWithSelector(Collybus.read.selector), abi.encode(uint256(WAD)));
     }
 
     function test_increaseCollateral_from_underlier() public {

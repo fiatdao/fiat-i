@@ -26,7 +26,7 @@ import {VaultFactory} from "../../../vaults/VaultFactory.sol";
 import {VaultSPT} from "../../../vaults/VaultSPT.sol";
 import {VaultSPTActions} from "../../../actions/vault/VaultSPTActions.sol";
 import {LeverSPTActions} from "../../../actions/lever/LeverSPTActions.sol";
-import {IBalancerVault} from "../../../actions/helper/ConvergentCurvePoolHelper.sol";
+import {IBalancerVault, IAsset} from "../../../actions/helper/ConvergentCurvePoolHelper.sol";
 
 import {IVault} from "../../../interfaces/IVault.sol";
 
@@ -99,6 +99,7 @@ contract LeverSPTActions_RPC_tests is Test {
 
     address internal balancerVault;
 
+    IERC20 internal usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     IERC20 internal dai;
     IERC20 internal maDAI;
     IERC20 internal sP_maDAI;
@@ -114,6 +115,15 @@ contract LeverSPTActions_RPC_tests is Test {
 
     bytes32 internal fiatPoolId = 0x178e029173417b1f9c8bc16dcec6f697bc32374600000000000000000000025d;
     address internal fiatBalancerVault = address(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
+    
+    // Batch swaps
+    IBalancerVault.BatchSwapStep[] internal swaps;
+    IAsset[] internal assets;
+    int[] internal limits;
+
+    bytes32[] internal pathPoolIds; 
+    address[] internal pathAssetsOut; 
+    address[] internal pathAssetsIn;
 
     function _mintDAI(address to, uint256 amount) internal {
         vm.store(address(dai), keccak256(abi.encode(address(address(this)), uint256(0))), bytes32(uint256(1)));
@@ -242,24 +252,30 @@ contract LeverSPTActions_RPC_tests is Test {
         collateralSwapParams.approve = approve;
     }
 
-    function _getSellFIATSwapParams(address assetOut, uint256 minAmountOut)
+    function _getSellFIATSwapParams(
+        IBalancerVault.BatchSwapStep[] memory _swaps, IAsset[] memory _assets, int[] memory _limits
+    )
         internal
         view
         returns (LeverSPTActions.SellFIATSwapParams memory fiatSwapParams)
-    {
-        fiatSwapParams.assetOut = assetOut;
-        fiatSwapParams.minAmountOut = minAmountOut;
+    {   
+        fiatSwapParams.swaps = _swaps;
+        fiatSwapParams.assets = _assets;
+        fiatSwapParams.limits = _limits;
         fiatSwapParams.deadline = block.timestamp + 12 weeks;
     }
 
-    function _getBuyFIATSwapParams(address assetIn, uint256 maxAmountIn)
+    function _getBuyFIATSwapParams(
+        IBalancerVault.BatchSwapStep[] memory _swaps, IAsset[] memory _assets, int[] memory _limits
+    )
         internal
         view
         returns (LeverSPTActions.BuyFIATSwapParams memory fiatSwapParams)
     {
-        fiatSwapParams.assetIn = assetIn;
-        fiatSwapParams.maxAmountIn = maxAmountIn;
-        fiatSwapParams.deadline = block.timestamp + 12 weeks;
+       fiatSwapParams.swaps = _swaps;
+       fiatSwapParams.assets = _assets;
+       fiatSwapParams.limits = _limits;
+       fiatSwapParams.deadline = block.timestamp + 12 weeks;
     }
 
     function _getRedeemParams(address adapter)
@@ -295,6 +311,7 @@ contract LeverSPTActions_RPC_tests is Test {
         periphery = IPeriphery(address(0xFff11417a58781D3C72083CB45EF54d79Cd02437)); //  Sense Finance Periphery
         assertEq(periphery.divider(), address(0x86bA3E96Be68563E41c2f5769F1AF9fAf758e6E0)); // sanity check
         divider = IDivider(periphery.divider()); // Sense Finance Divider
+
 
         dai = IERC20(address(0x6B175474E89094C44Da98b954EedeAC495271d0F)); // dai
         maDAI = IERC20(address(0x36F8d0D0573ae92326827C4a82Fe4CE4C244cAb6)); // Morpho maDAI (target)
@@ -372,14 +389,30 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 1000 * WAD;
         uint256 upfrontUnderlier = 1000 * WAD;
         uint256 totalUnderlier = 2000 * WAD;
+        uint256 fee = 50 * WAD;
+
+        // Prepare sell FIAT params
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        
+        pathAssetsOut.push(address(usdc));
+        pathAssetsOut.push(address(dai));
+        pathAssetsOut.push(address(usdc));
+        pathAssetsOut.push(address(dai));
+      
+        uint256 minUnderliersOut = totalUnderlier-upfrontUnderlier-fee;
+        uint256 deadline = block.timestamp + 10 days;
 
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             me,
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 10 ether), // borrowed underliers - fees
-            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0) // swap all for pTokens
+            leverActions.buildSellFIATSwapParams(pathPoolIds, pathAssetsOut, minUnderliersOut, deadline), 
+            // swap all for pTokens
+            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
 
         assertGe(_collateral(address(maDAIVault), address(userProxy)), 2000 * WAD);
@@ -390,7 +423,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
-
+        uint256 fee = 5 * WAD;
         uint256 meInitialBalance = dai.balanceOf(me);
         uint256 vaultInitialBalance = IERC20(address(sP_maDAI)).balanceOf(address(maDAIVault));
         uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
@@ -401,13 +434,24 @@ contract LeverSPTActions_RPC_tests is Test {
             totalUnderlier
         );
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT));  // max FIAT amount in 
+        limits.push(-int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             me,
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether), // borrowed underliers - fees
-            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0) // swap all for pTokens
+            _getSellFIATSwapParams(swaps, assets, limits), 
+             // swap all for pTokens
+            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
 
         assertEq(dai.balanceOf(me), meInitialBalance - upfrontUnderlier);
@@ -425,6 +469,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(user), upfrontUnderlier);
 
         uint256 userInitialBalance = dai.balanceOf(address(user));
@@ -437,13 +482,24 @@ contract LeverSPTActions_RPC_tests is Test {
             totalUnderlier
         );
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             address(user),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether), // borrowed underliers - fees
-            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0) // swap all for pTokens
+            _getSellFIATSwapParams(swaps, assets, limits),
+             // swap all for pTokens
+            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
 
         assertEq(dai.balanceOf(address(user)), userInitialBalance - upfrontUnderlier);
@@ -461,6 +517,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = dai.balanceOf(address(userProxy));
@@ -472,14 +529,25 @@ contract LeverSPTActions_RPC_tests is Test {
             balancerVault,
             totalUnderlier
         );
-   
+
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             address(0),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether), // borrowed underliers - fees
-            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0) // swap all for pTokens
+            _getSellFIATSwapParams(swaps, assets, limits),
+            // swap all for pTokens
+            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
 
         assertEq(dai.balanceOf(address(userProxy)), userProxyInitialBalance - upfrontUnderlier);
@@ -497,6 +565,7 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = dai.balanceOf(address(userProxy));
@@ -509,13 +578,24 @@ contract LeverSPTActions_RPC_tests is Test {
             totalUnderlier
         );
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             address(userProxy),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether), // borrowed underliers - fees
-            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0) // swap all for pTokens
+            _getSellFIATSwapParams(swaps, assets, limits),
+            // swap all for pTokens
+            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
 
         assertEq(dai.balanceOf(address(userProxy)), userProxyInitialBalance - upfrontUnderlier);
@@ -533,33 +613,64 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
 
         uint256 meInitialBalance = dai.balanceOf(me);
         uint256 vaultInitialBalance = IERC20(sP_maDAI).balanceOf(address(maDAIVault));
         uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
+
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+        
+        assertEq(usdc.balanceOf(address(leverActions)), 0);
 
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             me,
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
+
+        delete swaps;
+        delete assets;
+        delete limits;
 
         uint256 pTokenAmount = _collateral(address(maDAIVault), address(userProxy));
         uint256 normalDebt = _normalDebt(address(maDAIVault), address(userProxy));
 
+        // Prepare buy FIAT params
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        
+        pathAssetsIn.push(address(dai));
+        pathAssetsIn.push(address(usdc));
+        pathAssetsIn.push(address(dai));
+        pathAssetsIn.push(address(usdc));
+      
+        uint maxUnderliersIn = totalUnderlier - upfrontUnderlier+fee; // max DAI In
+        uint deadline = block.timestamp + 10 days;
+        
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
             me,
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(dai), normalDebt),
+            leverActions.buildBuyFIATSwapParams(pathPoolIds, pathAssetsIn, maxUnderliersIn, deadline),
             _getCollateralSwapParams(address(sP_maDAI), address(dai), address(maDAIAdapter), type(uint256).max, 0)
         );
-
-        assertGt(dai.balanceOf(me), meInitialBalance - 5 ether); // subtract fees / rounding errors
+        assertEq(usdc.balanceOf(address(leverActions)), 0);
+        assertGt(dai.balanceOf(me), meInitialBalance - 15 ether); // subtract fees / rounding errors
         assertEq(IERC20(address(sP_maDAI)).balanceOf(address(maDAIVault)), vaultInitialBalance);
         assertEq(_collateral(address(maDAIVault), address(userProxy)), initialCollateral);
     }
@@ -568,30 +679,123 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(user), upfrontUnderlier);
 
         uint256 userInitialBalance = dai.balanceOf(address(user));
         uint256 vaultInitialBalance = IERC20(sP_maDAI).balanceOf(address(maDAIVault));
         uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
+        
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
 
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             address(user),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
 
+        delete swaps;
+        delete assets;
+        delete limits;
+
         uint256 pTokenAmount = _collateral(address(maDAIVault), address(userProxy));
         uint256 normalDebt = _normalDebt(address(maDAIVault), address(userProxy));
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(fiat)));
+        
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
 
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
             address(user),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(dai), normalDebt),
+            _getBuyFIATSwapParams(swaps, assets, limits),
+            _getCollateralSwapParams(address(sP_maDAI), address(dai), address(maDAIAdapter), type(uint256).max, 0)
+        );
+
+        assertGt(dai.balanceOf(address(user)), userInitialBalance - 5 ether); // subtract fees / rounding errors
+        assertEq(IERC20(sP_maDAI).balanceOf(address(maDAIVault)), vaultInitialBalance);
+        assertEq(_collateral(address(maDAIVault), address(userProxy)), initialCollateral);
+    }
+
+    function test_update_rate_and_sellCollateralAndDecreaseLever_for_user() public {
+        uint256 lendFIAT = 500 * WAD;
+        uint256 upfrontUnderlier = 100 * WAD;
+        uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
+        dai.transfer(address(user), upfrontUnderlier);
+
+        uint256 userInitialBalance = dai.balanceOf(address(user));
+        uint256 vaultInitialBalance = IERC20(sP_maDAI).balanceOf(address(maDAIVault));
+        uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
+        
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+
+        publican.setParam(address(maDAIVault), "interestPerSecond", 1.000000000790000 ether);
+        publican.collect(address(maDAIVault));
+
+        _buyCollateralAndIncreaseLever(
+            address(maDAIVault),
+            address(user),
+            upfrontUnderlier,
+            lendFIAT,
+            _getSellFIATSwapParams(swaps, assets, limits),
+            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
+        );
+
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        uint256 pTokenAmount = _collateral(address(maDAIVault), address(userProxy));
+        uint256 normalDebt = _normalDebt(address(maDAIVault), address(userProxy));
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(fiat)));
+        
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
+
+        vm.warp(block.timestamp+ 40 days);
+        publican.collect(address(maDAIVault));
+        codex.createUnbackedDebt(address(moneta), address(moneta), 2 *WAD);
+
+        _sellCollateralAndDecreaseLever(
+            address(maDAIVault),
+            address(user),
+            pTokenAmount,
+            normalDebt,
+            _getBuyFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(sP_maDAI), address(dai), address(maDAIAdapter), type(uint256).max, 0)
         );
 
@@ -604,34 +808,60 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = dai.balanceOf(address(userProxy));
         uint256 vaultInitialBalance = IERC20(sP_maDAI).balanceOf(address(maDAIVault));
         uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
 
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+        
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             address(0),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
 
+        delete swaps;
+        delete assets;
+        delete limits;
+
         uint256 pTokenAmount = _collateral(address(maDAIVault), address(userProxy));
         uint256 normalDebt = _normalDebt(address(maDAIVault), address(userProxy));
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(fiat)));
+        
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
 
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
             address(0),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(dai), normalDebt),
+            _getBuyFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(sP_maDAI), address(dai), address(maDAIAdapter), type(uint256).max, 0)
         );
 
-        assertGt(dai.balanceOf(address(userProxy)), userProxyInitialBalance - 5 ether); // subtract fees / rounding errors
+        // subtract fees / rounding errors
+        assertGt(dai.balanceOf(address(userProxy)), userProxyInitialBalance - 5 ether);
         assertEq(IERC20(address(sP_maDAI)).balanceOf(address(maDAIVault)), vaultInitialBalance);
         assertEq(_collateral(address(maDAIVault), address(userProxy)), initialCollateral);
     }
@@ -640,34 +870,60 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = dai.balanceOf(address(userProxy));
         uint256 vaultInitialBalance = IERC20(sP_maDAI).balanceOf(address(maDAIVault));
         uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
+        
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
 
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+        
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             address(userProxy),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
 
         uint256 pTokenAmount = _collateral(address(maDAIVault), address(userProxy));
         uint256 normalDebt = _normalDebt(address(maDAIVault), address(userProxy));
+        
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(fiat)));
+        
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
 
         _sellCollateralAndDecreaseLever(
             address(maDAIVault),
             address(userProxy),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(dai), normalDebt),
+            _getBuyFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(sP_maDAI), address(dai), address(maDAIAdapter), type(uint256).max, 0)
         );
 
-        assertGt(dai.balanceOf(address(userProxy)), userProxyInitialBalance - 5 ether); // subtract fees / rounding errors
+        // subtract fees / rounding errors
+        assertGt(dai.balanceOf(address(userProxy)), userProxyInitialBalance - 5 ether);
         assertEq(IERC20(address(sP_maDAI)).balanceOf(address(maDAIVault)), vaultInitialBalance);
         assertEq(_collateral(address(maDAIVault), address(userProxy)), initialCollateral);
     }
@@ -676,17 +932,27 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
-
+        uint256 fee = 5 * WAD;
         uint256 meInitialBalance = dai.balanceOf(me);
         uint256 vaultInitialBalance = IERC20(sP_maDAI).balanceOf(address(maDAIVault));
         uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
+        
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
 
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+        
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             me,
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
 
@@ -709,13 +975,27 @@ contract LeverSPTActions_RPC_tests is Test {
         vm.prank(sponsor);
         divider.settleSeries(maDAIAdapter, maturity);
 
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(fiat)));
+        
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
+
         _redeemCollateralAndDecreaseLever(
             address(maDAIVault),
             address(sP_maDAI),
             me,
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(dai), normalDebt),
+            _getBuyFIATSwapParams(swaps, assets, limits),
             _getRedeemParams(address(maDAIAdapter))
         );
 
@@ -728,18 +1008,29 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(user), upfrontUnderlier);
 
         uint256 userInitialBalance = dai.balanceOf(address(user));
         uint256 vaultInitialBalance = IERC20(sP_maDAI).balanceOf(address(maDAIVault));
         uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
+        
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
 
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+        
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             address(user),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
 
@@ -761,6 +1052,20 @@ contract LeverSPTActions_RPC_tests is Test {
         // Settle serie from sponsor
         vm.prank(sponsor);
         divider.settleSeries(maDAIAdapter, maturity);
+        
+        delete swaps;
+        delete assets;
+        delete limits;
+
+                // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(fiat)));
+        
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
 
         _redeemCollateralAndDecreaseLever(
             address(maDAIVault),
@@ -768,7 +1073,7 @@ contract LeverSPTActions_RPC_tests is Test {
             address(user),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(dai), normalDebt),
+            _getBuyFIATSwapParams(swaps, assets, limits),
             _getRedeemParams(maDAIAdapter)
         );
 
@@ -781,18 +1086,29 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = dai.balanceOf(address(userProxy));
         uint256 vaultInitialBalance = IERC20(sP_maDAI).balanceOf(address(maDAIVault));
         uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
+        
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
 
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+        
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             address(0),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
 
@@ -813,13 +1129,27 @@ contract LeverSPTActions_RPC_tests is Test {
         vm.prank(sponsor);
         divider.settleSeries(maDAIAdapter, maturity);
 
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(fiat)));
+        
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
+
         _redeemCollateralAndDecreaseLever(
             address(maDAIVault),
             address(sP_maDAI),
             address(0),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(dai), normalDebt),
+            _getBuyFIATSwapParams(swaps, assets, limits),
             _getRedeemParams(maDAIAdapter)
         );
 
@@ -832,18 +1162,29 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
+        uint256 fee = 5 * WAD;
         dai.transfer(address(userProxy), upfrontUnderlier);
 
         uint256 userProxyInitialBalance = dai.balanceOf(address(userProxy));
         uint256 vaultInitialBalance = IERC20(sP_maDAI).balanceOf(address(maDAIVault));
         uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
+        
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
 
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+        
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             address(userProxy),
             upfrontUnderlier,
             lendFIAT,
-            _getSellFIATSwapParams(address(dai), totalUnderlier - upfrontUnderlier - 5 ether),
+            _getSellFIATSwapParams(swaps, assets, limits),
             _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
 
@@ -864,13 +1205,27 @@ contract LeverSPTActions_RPC_tests is Test {
         vm.prank(sponsor);
         divider.settleSeries(maDAIAdapter, maturity);
 
+        delete swaps;
+        delete assets;
+        delete limits;
+        
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(fiat)));
+        
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
+
         _redeemCollateralAndDecreaseLever(
             address(maDAIVault),
             maDAIVault.token(),
             address(userProxy),
             pTokenAmount,
             normalDebt,
-            _getBuyFIATSwapParams(address(dai), normalDebt),
+            _getBuyFIATSwapParams(swaps, assets, limits),
             _getRedeemParams(maDAIAdapter)
         );
 
@@ -878,23 +1233,112 @@ contract LeverSPTActions_RPC_tests is Test {
         assertEq(IERC20(address(sP_maDAI)).balanceOf(address(maDAIVault)), vaultInitialBalance);
         assertEq(_collateral(address(maDAIVault), address(userProxy)), initialCollateral);
     }
-        function test_underlierToPToken() external {
+
+    function test_update_rate_and_redeemCollateralAndDecreaseLever() public {
+        
+        uint256 lendFIAT = 100 * WAD;
+        uint256 upfrontUnderlier = 600 * WAD;
+        uint256 totalUnderlier = 700 * WAD;
+        uint256 fee = 5 * WAD;
+        uint256 meInitialBalance = dai.balanceOf(me);
+        uint256 vaultInitialBalance = IERC20(sP_maDAI).balanceOf(address(maDAIVault));
+        uint256 initialCollateral = _collateral(address(maDAIVault), address(userProxy));
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+
+        limits.push(int(lendFIAT)); // Limit In set in the contracts as exactAmountIn
+        limits.push(int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+
+        publican.setParam(address(maDAIVault), "interestPerSecond", 1.000000000790000 ether);
+        publican.collect(address(maDAIVault));
+        
+        _buyCollateralAndIncreaseLever(
+            address(maDAIVault),
+            me,
+            upfrontUnderlier,
+            lendFIAT,
+            _getSellFIATSwapParams(swaps, assets, limits),
+            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
+        );
+
+        assertLt(dai.balanceOf(me), meInitialBalance);
+        assertGt(IERC20(sP_maDAI).balanceOf(address(maDAIVault)), vaultInitialBalance);
+        assertGt(_collateral(address(maDAIVault), address(userProxy)), initialCollateral);
+
+        uint256 pTokenAmount = _collateral(address(maDAIVault), address(userProxy));
+        uint256 normalDebt = _normalDebt(address(maDAIVault), address(userProxy));
+ 
+        // we now move AFTER maturity, settle serie and redeem
+        // get Sponsor address
+        IDivider.Series memory serie = divider.series(maDAIAdapter, maturity);
+        address sponsor = serie.sponsor;
+        
+        // Move post maturity
+        vm.warp(maturity + 1);
+
+        publican.collect(address(maDAIVault));
+        codex.createUnbackedDebt(address(moneta), address(moneta), 2 *WAD);
+
+        // Settle serie from sponsor
+        vm.prank(sponsor);
+        divider.settleSeries(maDAIAdapter, maturity);
+
+        delete swaps;
+        delete assets;
+        delete limits;
+
+        // Prepare buy FIAT params
+        IBalancerVault.BatchSwapStep memory buy = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(buy);
+
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(fiat)));
+        
+        limits.push(int(totalUnderlier-upfrontUnderlier+fee)); // max DAI In
+        limits.push(-int(lendFIAT)); // limit set as exact amount out
+
+        _redeemCollateralAndDecreaseLever(
+            address(maDAIVault),
+            address(sP_maDAI),
+            me,
+            pTokenAmount,
+            normalDebt,
+            _getBuyFIATSwapParams(swaps, assets, limits),
+            _getRedeemParams(address(maDAIAdapter))
+        );
+
+        assertGt(dai.balanceOf(me), meInitialBalance);
+        assertEq(IERC20(address(sP_maDAI)).balanceOf(address(maDAIVault)), vaultInitialBalance);
+        assertEq(_collateral(address(maDAIVault), address(userProxy)), initialCollateral);
+    }
+
+    function test_underlierToPToken() external {
         uint256 pTokenAmountNow = leverActions.underlierToPToken(address(maDAISpace), balancerVault, 100 ether);
         assertGt(pTokenAmountNow, 0);
         // advance some months
         vm.warp(block.timestamp + 180 days);
-        uint256 pTokenAmountBeforeMaturity = leverActions.underlierToPToken(address(maDAISpace), balancerVault, 100 ether);
+        uint256 pTokenAmountBeforeMaturity = leverActions.underlierToPToken(
+            address(maDAISpace), balancerVault, 100 ether
+        );
         // closest to the maturity we get less sPT for same underlier amount
         assertGt(pTokenAmountNow, pTokenAmountBeforeMaturity);
 
         // go to maturity
         vm.warp(maturity);
-        uint256 pTokenAmountAtMaturity = leverActions.underlierToPToken(address(maDAISpace), balancerVault, 100 ether);
+        uint256 pTokenAmountAtMaturity = leverActions.underlierToPToken(
+            address(maDAISpace), balancerVault, 100 ether
+        );
         // at maturity we get even less pT
         assertGt(pTokenAmountBeforeMaturity, pTokenAmountAtMaturity);
 
         vm.warp(maturity + 24 days);
-        uint256 pTokenAmountAfterMaturity = leverActions.underlierToPToken(address(maDAISpace), balancerVault, 100 ether);
+        uint256 pTokenAmountAfterMaturity = leverActions.underlierToPToken(
+            address(maDAISpace), balancerVault, 100 ether
+        );
         // same after maturity
         assertEq(pTokenAmountAtMaturity, pTokenAmountAfterMaturity);
         assertGt(pTokenAmountBeforeMaturity, pTokenAmountAfterMaturity);
@@ -922,5 +1366,45 @@ contract LeverSPTActions_RPC_tests is Test {
         vm.warp(maturity + 10 days);
         uint256 underlierAfterMaturity = leverActions.pTokenToUnderlier(address(maDAISpace), balancerVault, 100 ether);
         assertEq(underlierAtMaturity, underlierAfterMaturity);
+    }
+
+    function test_fiatForUnderlier() public {
+        uint256 fiatOut = 500 * WAD;
+
+        // Prepare arguments for preview method
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+
+        pathAssetsIn.push(address(dai));
+        pathAssetsIn.push(address(usdc));
+        
+        uint underlierIn = leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut);
+
+        uint fiatIn = fiatOut;
+        
+        pathAssetsOut.push(address(usdc));
+        pathAssetsOut.push(address(dai));
+       
+        assertApproxEqAbs(underlierIn, leverActions.fiatToUnderlier(pathPoolIds, pathAssetsOut, fiatIn), 4 ether);
+    }
+
+    function test_fiatToUnderlier() public {
+        uint256 fiatIn = 500 * WAD;
+        
+        // Prepare arguments for preview method
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+
+        pathAssetsOut.push(address(usdc));
+        pathAssetsOut.push(address(dai));
+
+        uint underlierOut = leverActions.fiatToUnderlier(pathPoolIds, pathAssetsOut, fiatIn);
+
+        uint256 fiatOut = fiatIn;
+        
+        pathAssetsIn.push(address(dai));
+        pathAssetsIn.push(address(usdc));
+
+        assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut), 4 ether);
     }
 }
