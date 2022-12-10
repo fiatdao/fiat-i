@@ -300,7 +300,7 @@ abstract contract LeverActions {
     function fiatForUnderlier(
         bytes32[] calldata pathPoolIds, address[] calldata pathAssetsIn, uint256 fiatAmount
     ) external returns (uint256) {
-        BuyFIATSwapParams memory params = buildBuyFIATSwapParams(pathPoolIds,pathAssetsIn,type(uint256).max,type(uint256).max);
+        BuyFIATSwapParams memory params = buildBuyFIATSwapParams(pathPoolIds,pathAssetsIn,type(uint128).max,type(uint256).max);
         params.swaps[0].amount = fiatAmount;
         
         IBalancerVault.FundManagement memory funds;
