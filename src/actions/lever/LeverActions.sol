@@ -24,8 +24,6 @@ abstract contract LeverActions {
     /// ======== Custom Errors ======== ///
 
     error LeverActions__exitMoneta_zeroUserAddress();
-    error LeverActions__fiatToUnderlier_pathLengthMismatch();
-    error LeverActions__fiatForUnderlier_pathLengthMismatch();
     error LeverActions__buyFIATExactOut_pathLengthMismatch();
     error LeverActions__buyFIATExactOut_wrongFIATAddress();
     error LeverActions__sellFIATExactIn_pathLengthMismatch();
@@ -263,7 +261,6 @@ abstract contract LeverActions {
        
         // set the exact amount of FIAT to receive
         params.swaps[0].amount = exactAmountOut;
-        // params.limits[1] = -toInt256(exactAmountOut);
     
         // return the absolute of the first swap delta for the underlier
         return abs(IBalancerVault(fiatBalancerVault).batchSwap(
@@ -283,28 +280,13 @@ abstract contract LeverActions {
     function fiatToUnderlier(
         bytes32[] calldata pathPoolIds, address[] calldata pathAssetsOut, uint256 fiatAmount
     ) external returns (uint256) {
-        if (pathPoolIds.length != pathAssetsOut.length) revert LeverActions__fiatToUnderlier_pathLengthMismatch();
-        uint256 pathLength = pathPoolIds.length;
+        SellFIATSwapParams memory params = buildSellFIATSwapParams(pathPoolIds,pathAssetsOut,0,block.timestamp+1 days);
+        params.swaps[0].amount = fiatAmount;
+        
         IBalancerVault.FundManagement memory funds;
-        IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
-        IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1))); // + 1 for FIAT
-        assets[0] = IAsset(address(fiat));
 
-        for (uint256 i = 0; i < pathLength;) {
-            uint256 nextAssetIndex;
-            unchecked { nextAssetIndex = i + 1; }
-            IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(
-                pathPoolIds[i], i, nextAssetIndex, 0, new bytes(0)
-            );
-            swaps[i] = swap;
-            assets[nextAssetIndex] = IAsset(address(pathAssetsOut[i]));
-            i = nextAssetIndex;
-        }
-        
-        swaps[0].amount = fiatAmount;
-        
         return abs(IBalancerVault(fiatBalancerVault).queryBatchSwap(
-            IBalancerVault.SwapKind.GIVEN_IN, swaps, assets, funds
+            IBalancerVault.SwapKind.GIVEN_IN, params.swaps, params.assets, funds
         )[0]);
     }
     
@@ -318,30 +300,13 @@ abstract contract LeverActions {
     function fiatForUnderlier(
         bytes32[] calldata pathPoolIds, address[] calldata pathAssetsIn, uint256 fiatAmount
     ) external returns (uint256) {
-        if (pathPoolIds.length != pathAssetsIn.length) revert LeverActions__fiatForUnderlier_pathLengthMismatch();
-        uint256 pathLength = pathPoolIds.length;
-
-        IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
-        IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1)));
-        assets[pathLength] =  IAsset(address(fiat));
+        BuyFIATSwapParams memory params = buildBuyFIATSwapParams(pathPoolIds,pathAssetsIn,0,block.timestamp+1 days);
+        params.swaps[0].amount = fiatAmount;
+        
         IBalancerVault.FundManagement memory funds;
 
-        for (uint256 i = 0; i < pathLength;) {
-            IBalancerVault.BatchSwapStep memory swap;
-            unchecked {
-                swap = IBalancerVault.BatchSwapStep(
-                    pathPoolIds[i], pathLength - i - 1, pathLength - i, 0, new bytes(0)
-                );
-            }
-            swaps[i] = swap;
-            assets[i] = IAsset(address(pathAssetsIn[i]));
-            unchecked { i += 1; }
-        }
-        
-        swaps[0].amount = fiatAmount;
-        
         return abs(IBalancerVault(fiatBalancerVault).queryBatchSwap(
-            IBalancerVault.SwapKind.GIVEN_OUT, swaps, assets, funds
+            IBalancerVault.SwapKind.GIVEN_OUT, params.swaps, params.assets, funds
         )[0]);
     }
 
@@ -353,7 +318,7 @@ abstract contract LeverActions {
     /// @return sellFIATSwapParams SellFIATSwapParams struct
     function buildSellFIATSwapParams(
         bytes32[] calldata pathPoolIds, address[] calldata pathAssetsOut, uint256 minUnderliersOut, uint256 deadline
-    ) external view returns(SellFIATSwapParams memory) {
+    ) public view returns(SellFIATSwapParams memory) {
         if (pathPoolIds.length != pathAssetsOut.length) revert LeverActions__getSellFIATSwapParams_pathLengthMismatch();
         uint256 pathLength = pathPoolIds.length;
        
@@ -385,7 +350,7 @@ abstract contract LeverActions {
     /// @return buyFIATSwapParams BuyFIATSwapParams struct
     function buildBuyFIATSwapParams(
         bytes32[] calldata pathPoolIds, address[] calldata pathAssetsIn, uint256 maxUnderliersIn, uint256 deadline
-    ) external view returns(BuyFIATSwapParams memory) {
+    ) public view returns(BuyFIATSwapParams memory) {
         if (pathPoolIds.length != pathAssetsIn.length) revert LeverActions__getBuyFIATSwapParams_pathLengthMismatch();
         uint256 pathLength = pathPoolIds.length;
 
