@@ -284,9 +284,7 @@ abstract contract LeverActions {
             pathPoolIds, pathAssetsOut, 0, type(uint256).max
         );
         params.swaps[0].amount = fiatAmount;
-        
         IBalancerVault.FundManagement memory funds;
-
         return abs(IBalancerVault(fiatBalancerVault).queryBatchSwap(
             IBalancerVault.SwapKind.GIVEN_IN, params.swaps, params.assets, funds
         )[0]);
@@ -306,9 +304,7 @@ abstract contract LeverActions {
             pathPoolIds, pathAssetsIn, uint256(type(int256).max), type(uint256).max
         );
         params.swaps[0].amount = fiatAmount;
-        
         IBalancerVault.FundManagement memory funds;
-
         return abs(IBalancerVault(fiatBalancerVault).queryBatchSwap(
             IBalancerVault.SwapKind.GIVEN_OUT, params.swaps, params.assets, funds
         )[0]);
