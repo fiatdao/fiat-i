@@ -268,7 +268,7 @@ abstract contract LeverActions {
         )[0]);
     }
 
-    /// ======== FIAT / Underlier Swap Helpers ======== ///
+    /// ======== FIAT / Underlier Swap Off-Chain Helpers ======== ///
 
     /// @notice Returns an amount of underliers for a given amount of FIAT
     /// @dev This method should be exclusively called off-chain for estimation.
@@ -311,6 +311,8 @@ abstract contract LeverActions {
     }
 
     /// @notice Populates the SellFIATSwapParams struct used in the `_sellFIATExactIn` method
+    /// @dev This method should be exclusively called off-chain for estimation.
+    ///      `pathPoolIds` and `pathAssetsOut` must have the same length and be ordered from underlier to FIAT.
     /// @param pathPoolIds Balancer PoolIds for every step of the swap from underlier to FIAT
     /// @param pathAssetsOut Assets to be swapped at every step from underlier to FIAT (excluding FIAT)
     /// @param minUnderliersOut Min. amount of underlier to receive [underlierScale]
@@ -323,8 +325,8 @@ abstract contract LeverActions {
         uint256 pathLength = pathPoolIds.length;
        
         IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
-        IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1)));
-        int256[] memory limits = new int[](add(pathLength, uint256(1)));
+        IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1))); // number of assets = number of swaps + 1
+        int256[] memory limits = new int[](add(pathLength, uint256(1))); // for each asset has an associated limit
         assets[0] =  IAsset(address(fiat));
         limits[pathLength] = -toInt256(minUnderliersOut);
 
@@ -343,6 +345,8 @@ abstract contract LeverActions {
     }
 
     /// @notice Populates the BuyFIATSwapParams struct used in the `_buyFIATExactOut` method
+    /// @dev This method should be exclusively called off-chain for estimation.
+    ///      `pathPoolIds` and `pathAssetsIn` must have the same length and be ordered from underlier to FIAT.
     /// @param pathPoolIds Balancer PoolIds for every step of the swap from underlier to FIAT
     /// @param pathAssetsIn Assets to be swapped at every step from underlier to FIAT (excluding FIAT)
     /// @param maxUnderliersIn Max. amount of underlier to swap [underlierScale]
@@ -365,6 +369,8 @@ abstract contract LeverActions {
             IBalancerVault.BatchSwapStep memory swap;
             unchecked {
                 swap = IBalancerVault.BatchSwapStep(
+                    // reverse the order such that last asset becomes assetIndexOut for the first swap
+                    // and the first asset becomes the assetIndexIn for the last swap
                     pathPoolIds[i], pathLength - i - 1, pathLength - i, 0, new bytes(0)
                 );
             }
