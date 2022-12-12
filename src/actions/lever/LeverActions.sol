@@ -288,7 +288,7 @@ abstract contract LeverActions {
         IBalancerVault.FundManagement memory funds;
         return abs(IBalancerVault(fiatBalancerVault).queryBatchSwap(
             IBalancerVault.SwapKind.GIVEN_IN, params.swaps, params.assets, funds
-        )[sub(params.assets.length,uint256(1))]);
+        )[sub(params.assets.length, uint256(1))]);
     }
     
     /// @notice Returns the required input amount of underliers for a given amount of FIAT to receive in exchange
@@ -326,7 +326,7 @@ abstract contract LeverActions {
         
         IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
         IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1))); // number of assets = number of swaps + 1
-        assets[sub(assets.length,uint256(1))] =  IAsset(address(fiat));
+        assets[sub(assets.length, uint256(1))] = IAsset(address(fiat));
 
         for (uint256 i = 0; i < pathLength;) {
             uint256 nextAssetIndex;
@@ -343,7 +343,7 @@ abstract contract LeverActions {
         IBalancerVault.FundManagement memory funds;
         return abs(IBalancerVault(fiatBalancerVault).queryBatchSwap(
             IBalancerVault.SwapKind.GIVEN_IN, swaps, assets, funds
-        )[sub(assets.length,uint256(1))]);
+        )[sub(assets.length, uint256(1))]);
     }
 
     /// @notice Populates the SellFIATSwapParams struct used in the `_sellFIATExactIn` method
@@ -363,7 +363,7 @@ abstract contract LeverActions {
         IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
         IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1))); // number of assets = number of swaps + 1
         int256[] memory limits = new int[](add(pathLength, uint256(1))); // for each asset has an associated limit
-        assets[0] =  IAsset(address(fiat));
+        assets[0] = IAsset(address(fiat));
         limits[pathLength] = -toInt256(minUnderliersOut);
 
         for (uint256 i = 0; i < pathLength;) {
