@@ -1407,4 +1407,37 @@ contract LeverSPTActions_RPC_tests is Test {
 
         assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut), 4 ether);
     }
+
+        function testFail_buyCollateralAndIncreaseLever_simple() public {
+        uint256 lendFIAT = 1000 * WAD;
+        uint256 upfrontUnderlier = 0 * WAD;
+        uint256 totalUnderlier = 2000 * WAD;
+        uint256 fee = 50 * WAD;
+
+        // Prepare sell FIAT params
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        
+        pathAssetsOut.push(address(usdc));
+        pathAssetsOut.push(address(dai));
+        pathAssetsOut.push(address(usdc));
+        pathAssetsOut.push(address(dai));
+      
+        uint256 minUnderliersOut = totalUnderlier-upfrontUnderlier-fee;
+        uint256 deadline = block.timestamp + 10 days;
+       
+        _buyCollateralAndIncreaseLever(
+            address(maDAIVault),
+            me,
+            upfrontUnderlier,
+            lendFIAT,
+            leverActions.buildSellFIATSwapParams(pathPoolIds, pathAssetsOut, minUnderliersOut, deadline), 
+            // swap all for pTokens
+            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
+        );
+        
+      
+    }
 }

@@ -76,6 +76,7 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
 
     /// ======== Custom Errors ======== ///
 
+    error LeverSPTActions__buyCollateralAndIncreaseLever_zeroUpfrontUnderliers();
     error LeverSPTActions__onFlashLoan_unknownSender();
     error LeverSPTActions__onFlashLoan_unknownToken();
     error LeverSPTActions__onFlashLoan_nonZeroFee();
@@ -202,6 +203,7 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
         SellFIATSwapParams calldata fiatSwapParams,
         CollateralSwapParams calldata collateralSwapParams
     ) public {
+        if (upfrontUnderliers == 0) revert LeverSPTActions__buyCollateralAndIncreaseLever_zeroUpfrontUnderliers();
         // if `collateralizer` is set to an external address then transfer the amount directly to Action contract
         // requires `collateralizer` to have set an allowance for the proxy
         if (collateralizer == address(this) || collateralizer == address(0)) {
