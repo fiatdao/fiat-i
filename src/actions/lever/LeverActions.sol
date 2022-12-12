@@ -359,8 +359,8 @@ abstract contract LeverActions {
         uint256 pathLength = pathPoolIds.length;
 
         IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
-        IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1)));
-        int256[] memory limits = new int[](add(pathLength, uint256(1)));
+        IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1))); // number of assets = number of swaps + 1
+        int256[] memory limits = new int[](add(pathLength, uint256(1))); // for each asset has an associated limit
 
         assets[pathLength] = IAsset(address(fiat));
         limits[0] = toInt256(maxUnderliersIn);
