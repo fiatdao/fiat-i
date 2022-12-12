@@ -1735,4 +1735,46 @@ contract LeverFYActions_RPC_tests is Test {
         // closest to the maturity we get more underlier for same sPT
         assertGt(underlierBeforeMaturity, underlierNow);
     }
+
+    function test_fiatForUnderlier() public {
+        uint256 fiatOut = 500 * WAD;
+
+        // Prepare arguments for preview method
+        poolIds.push(fiatPoolId);
+        poolIds.push(fiatPoolId);
+
+        pathAssetsIn.push(address(usdc));
+        pathAssetsIn.push(address(dai));
+        
+        uint underlierIn = leverActions.fiatForUnderlier(poolIds, pathAssetsIn, fiatOut);
+
+        uint fiatIn = fiatOut;
+        
+        pathAssetsOut.push(address(dai));
+        pathAssetsOut.push(address(usdc));
+        
+        assertApproxEqAbs(underlierIn, wmul(fiatOut,fyUSDC2212Vault.tokenScale()), 2 * ONE_USDC);
+        assertApproxEqAbs(underlierIn, leverActions.fiatToUnderlier(poolIds, pathAssetsOut, fiatIn), 2 * ONE_USDC);
+    }
+
+    function test_fiatToUnderlier() public {
+        uint256 fiatIn = 500 * WAD;
+        
+        // Prepare arguments for preview method
+        poolIds.push(fiatPoolId);
+        poolIds.push(fiatPoolId);
+
+        pathAssetsOut.push(address(dai));
+        pathAssetsOut.push(address(usdc));
+
+        uint underlierOut = leverActions.fiatToUnderlier(poolIds, pathAssetsOut, fiatIn);
+
+        uint256 fiatOut = fiatIn;
+        
+        pathAssetsIn.push(address(usdc));
+        pathAssetsIn.push(address(dai));
+        
+        assertApproxEqAbs(underlierOut, wmul(fiatIn,fyUSDC2212Vault.tokenScale()), 2 * ONE_USDC);
+        assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(poolIds, pathAssetsIn, fiatOut), 2 * ONE_USDC);
+    }
 }
