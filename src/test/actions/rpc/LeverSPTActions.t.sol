@@ -1408,11 +1408,11 @@ contract LeverSPTActions_RPC_tests is Test {
         assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut), 0.22 ether);
     }
 
-    function testFail_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier() public {
+    function test_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier() public {
         uint256 lendFIAT = 1000 * WAD;
         uint256 upfrontUnderlier = 0 * WAD;
-        uint256 totalUnderlier = 2000 * WAD;
-        uint256 fee = 50 * WAD;
+        uint256 totalUnderlier = 1000 * WAD;
+        uint256 fee = 10 * WAD;
 
         // Prepare sell FIAT params
         pathPoolIds.push(fiatPoolId);
@@ -1427,7 +1427,10 @@ contract LeverSPTActions_RPC_tests is Test {
       
         uint256 minUnderliersOut = totalUnderlier-upfrontUnderlier-fee;
         uint256 deadline = block.timestamp + 10 days;
-       
+
+        assertEq(_collateral(address(maDAIVault), address(userProxy)), 0);
+        assertEq(_normalDebt(address(maDAIVault), address(userProxy)), 0);
+
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             me,
@@ -1437,5 +1440,8 @@ contract LeverSPTActions_RPC_tests is Test {
             // swap all for pTokens
             _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
         );
+
+        assertGe(_collateral(address(maDAIVault), address(userProxy)), 1000 * WAD);
+        assertGe(_normalDebt(address(maDAIVault), address(userProxy)), 1000 * WAD);
     }
 }

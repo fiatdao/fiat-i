@@ -25,7 +25,6 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
 
     /// ======== Custom Errors ======== ///
 
-    error LeverFYActions__buyCollateralAndIncreaseLever_zeroUpfrontUnderliers();
     error LeverFYActions__onFlashLoan_unknownSender();
     error LeverFYActions__onFlashLoan_unknownToken();
     error LeverFYActions__onFlashLoan_nonZeroFee();
@@ -130,14 +129,16 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
         SellFIATSwapParams calldata fiatSwapParams,
         CollateralSwapParams calldata collateralSwapParams
     ) public {
-        if (upfrontUnderliers == 0) revert LeverFYActions__buyCollateralAndIncreaseLever_zeroUpfrontUnderliers();
-        // if `collateralizer` is set to an external address then transfer the amount directly to Action contract
-        // requires `collateralizer` to have set an allowance for the proxy
-        if (collateralizer == address(this) || collateralizer == address(0)) {
+        if (upfrontUnderliers != 0) {
+            // if `collateralizer` is set to an external address then transfer the amount directly to Action contract
+            // requires `collateralizer` to have set an allowance for the proxy
+            if (collateralizer == address(this) || collateralizer == address(0)) {
             IERC20(collateralSwapParams.assetIn).safeTransfer(address(self), upfrontUnderliers);
-        } else {
+            } else {
             IERC20(collateralSwapParams.assetIn).safeTransferFrom(collateralizer, address(self), upfrontUnderliers);
+            }
         }
+
 
         codex.grantDelegate(self);
 
