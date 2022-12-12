@@ -28,6 +28,7 @@ abstract contract LeverActions {
     error LeverActions__buyFIATExactOut_wrongFIATAddress();
     error LeverActions__sellFIATExactIn_pathLengthMismatch();
     error LeverActions__sellFIATExactIn_wrongFIATAddress();
+    error LeverActions__underlierToFIAT_pathLengthMismatch();
     error LeverActions__getBuyFIATSwapParams_pathLengthMismatch();
     error LeverActions__getSellFIATSwapParams_pathLengthMismatch();
 
@@ -287,7 +288,7 @@ abstract contract LeverActions {
         IBalancerVault.FundManagement memory funds;
         return abs(IBalancerVault(fiatBalancerVault).queryBatchSwap(
             IBalancerVault.SwapKind.GIVEN_IN, params.swaps, params.assets, funds
-        )[pathAssetsOut.length]);
+        )[sub(params.assets.length,uint256(1))]);
     }
     
     /// @notice Returns the required input amount of underliers for a given amount of FIAT to receive in exchange
@@ -310,6 +311,41 @@ abstract contract LeverActions {
         )[0]);
     }
 
+    /// @notice Returns an amount of FIAT for a given amount of underlier
+    /// @dev This method should be exclusively called off-chain for estimation.
+    ///      `pathPoolIds` and `pathAssetsIn` must have the same length and be ordered from underlier to FIAT.
+    /// @param pathPoolIds Balancer PoolIds for every step of the swap from the underlier to FIAT
+    /// @param pathAssetsIn Assets to be swapped at every step from the underlier to FIAT (excluding FIAT)
+    /// @param underlierAmount Amount of underlier [underlierScale]
+    /// @return fiatAmount Amount of FIAT [wad]
+    function underlierToFIAT(
+        bytes32[] calldata pathPoolIds, address[] calldata pathAssetsIn, uint256 underlierAmount
+    ) external returns (uint256) {
+        if (pathPoolIds.length != pathAssetsIn.length) revert LeverActions__underlierToFIAT_pathLengthMismatch();
+        uint256 pathLength = pathPoolIds.length;
+        
+        IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
+        IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1))); // number of assets = number of swaps + 1
+        assets[sub(assets.length,uint256(1))] =  IAsset(address(fiat));
+
+        for (uint256 i = 0; i < pathLength;) {
+            uint256 nextAssetIndex;
+            unchecked { nextAssetIndex = i + 1; }
+            IBalancerVault.BatchSwapStep memory swap = IBalancerVault.BatchSwapStep(
+                pathPoolIds[i], i, nextAssetIndex, 0, new bytes(0)
+            );
+            swaps[i] = swap;
+            assets[i] = IAsset(address(pathAssetsIn[i]));
+            i = nextAssetIndex;
+        }
+
+        swaps[0].amount = underlierAmount;
+        IBalancerVault.FundManagement memory funds;
+        return abs(IBalancerVault(fiatBalancerVault).queryBatchSwap(
+            IBalancerVault.SwapKind.GIVEN_IN, swaps, assets, funds
+        )[sub(assets.length,uint256(1))]);
+    }
+
     /// @notice Populates the SellFIATSwapParams struct used in the `_sellFIATExactIn` method
     /// @dev This method should be exclusively called off-chain for estimation.
     ///      `pathPoolIds` and `pathAssetsOut` must have the same length and be ordered from underlier to FIAT.
@@ -323,7 +359,7 @@ abstract contract LeverActions {
     ) public view returns(SellFIATSwapParams memory) {
         if (pathPoolIds.length != pathAssetsOut.length) revert LeverActions__getSellFIATSwapParams_pathLengthMismatch();
         uint256 pathLength = pathPoolIds.length;
-       
+        
         IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
         IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1))); // number of assets = number of swaps + 1
         int256[] memory limits = new int[](add(pathLength, uint256(1))); // for each asset has an associated limit

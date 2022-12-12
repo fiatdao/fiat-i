@@ -13,7 +13,7 @@ import {Publican} from "../../../core/Publican.sol";
 import {FIAT} from "../../../core/FIAT.sol";
 import {Flash} from "../../../core/Flash.sol";
 import {Moneta} from "../../../core/Moneta.sol";
-import {toInt256, WAD, wdiv} from "../../../core/utils/Math.sol";
+import {toInt256, WAD, wdiv, wmul} from "../../../core/utils/Math.sol";
 
 import {PRBProxyFactory} from "proxy/contracts/PRBProxyFactory.sol";
 import {PRBProxy} from "proxy/contracts/PRBProxy.sol";
@@ -1244,5 +1244,36 @@ contract LeverEPTActions_RPC_tests is Test {
         assertGt(underlierUSDC.balanceOf(me), meInitialBalance);
         assertEq(ERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22)), vaultInitialBalance);
         assertEq(_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)), initialCollateral);
+    }
+
+    function test_underlierToFIAT_18decimals_underlier() public {
+        uint256 underlierIn = 500 * WAD;
+
+        // Prepare arguments for preview method
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+
+        pathAssetsIn.push(address(dai));
+        pathAssetsIn.push(address(underlierUSDC));
+        
+        uint fiatOut = leverActions.underlierToFIAT(pathPoolIds, pathAssetsIn, underlierIn);
+    
+        assertApproxEqAbs(underlierIn, fiatOut, 1 ether); 
+    }
+
+    function test_underlierToFIAT_6_decimals_underlier() public {
+        uint256 underlierIn = 500 * ONE_USDC;
+
+        // Prepare arguments for preview method
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+
+        pathAssetsIn.push(address(underlierUSDC));
+        pathAssetsIn.push(address(dai));
+        
+        uint fiatOut = leverActions.underlierToFIAT(pathPoolIds, pathAssetsIn, underlierIn);
+
+        assertApproxEqAbs(underlierIn, wmul(fiatOut,vault_yvUSDC_16SEP22.underlierScale()), 1 * ONE_USDC); 
+        assertApproxEqAbs(fiatOut, wdiv(underlierIn,vault_yvUSDC_16SEP22.underlierScale()), 1 ether); 
     }
 }
