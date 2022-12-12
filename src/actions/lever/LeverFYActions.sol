@@ -139,7 +139,6 @@ contract LeverFYActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBo
             }
         }
 
-
         codex.grantDelegate(self);
 
         bytes memory data = abi.encode(

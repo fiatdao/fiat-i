@@ -144,7 +144,6 @@ contract LeverEPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
             }
         }
 
-
         codex.grantDelegate(self);
 
         bytes memory data = abi.encode(
