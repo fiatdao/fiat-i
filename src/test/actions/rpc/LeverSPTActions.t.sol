@@ -1408,7 +1408,7 @@ contract LeverSPTActions_RPC_tests is Test {
         assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut), 4 ether);
     }
 
-    function testFail_buyCollateralAndIncreaseLever_simple() public {
+    function testFail_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier() public {
         uint256 lendFIAT = 1000 * WAD;
         uint256 upfrontUnderlier = 0 * WAD;
         uint256 totalUnderlier = 2000 * WAD;
