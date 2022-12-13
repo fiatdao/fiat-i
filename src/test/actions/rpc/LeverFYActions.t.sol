@@ -1861,7 +1861,7 @@ contract LeverFYActions_RPC_tests is Test {
             _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP))
         );
 
-        assertGe(_collateral(address(fyUSDC2212Vault), address(userProxy)), wdiv(totalUnderlier+amount-fee, 10**IERC20Metadata(fyUSDC2212).decimals()));
+        assertGe(_collateral(address(fyUSDC2212Vault), address(userProxy)), wdiv(totalUnderlier + amount - fee, 10**IERC20Metadata(fyUSDC2212).decimals()));
         assertEq(_normalDebt(address(fyUSDC2212Vault), address(userProxy)), lendFIAT);
     }
 
@@ -1914,7 +1914,7 @@ contract LeverFYActions_RPC_tests is Test {
             _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP))
         );
 
-        assertGe(_collateral(address(fyDAI2212Vault), address(userProxy)), totalUnderlier+amount - fee);
+        assertGe(_collateral(address(fyDAI2212Vault), address(userProxy)), totalUnderlier + amount - fee);
         assertGe(_normalDebt(address(fyDAI2212Vault), address(userProxy)), lendFIAT);
     }
 }
