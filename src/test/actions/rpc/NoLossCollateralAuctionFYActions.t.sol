@@ -2,7 +2,6 @@
 pragma solidity ^0.8.4;
 
 import {Test} from "forge-std/Test.sol";
-import {console} from "forge-std/console.sol";
 import {IERC20} from "openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {PRBProxyFactory} from "proxy/contracts/PRBProxyFactory.sol";
 import {PRBProxy} from "proxy/contracts/PRBProxy.sol";
@@ -22,7 +21,6 @@ import {Vault20} from "../../../vaults/Vault.sol";
 import {VaultFactory} from "../../../vaults/VaultFactory.sol";
 import {VaultFY} from "../../../vaults/VaultFY.sol";
 import {NoLossCollateralAuctionFYActions} from "../../../actions/auction/NoLossCollateralAuctionFYActions.sol";
-
 
 contract NoLossCollateralAuctionFYActions_UnitTest is Test {
     Codex internal codex;
