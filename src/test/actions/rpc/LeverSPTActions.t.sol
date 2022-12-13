@@ -1384,7 +1384,8 @@ contract LeverSPTActions_RPC_tests is Test {
         
         pathAssetsOut.push(address(usdc));
         pathAssetsOut.push(address(dai));
-       
+
+        assertApproxEqAbs(underlierIn, fiatOut, 4 * WAD);
         assertApproxEqAbs(underlierIn, leverActions.fiatToUnderlier(pathPoolIds, pathAssetsOut, fiatIn), 4 ether);
     }
 
@@ -1405,6 +1406,7 @@ contract LeverSPTActions_RPC_tests is Test {
         pathAssetsIn.push(address(dai));
         pathAssetsIn.push(address(usdc));
 
+        assertApproxEqAbs(underlierOut, fiatIn, 5 * WAD);
         assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut), 0.22 ether);
     }
 

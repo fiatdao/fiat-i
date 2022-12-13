@@ -1276,4 +1276,82 @@ contract LeverEPTActions_RPC_tests is Test {
         assertApproxEqAbs(underlierIn, wmul(fiatOut,vault_yvUSDC_16SEP22.underlierScale()), 1 * ONE_USDC); 
         assertApproxEqAbs(fiatOut, wdiv(underlierIn,vault_yvUSDC_16SEP22.underlierScale()), 1 ether); 
     }
+
+    function test_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier() public {
+        uint256 lendFIAT = 500 * WAD;
+        uint256 upfrontUnderlier = 0 * ONE_USDC;
+        uint256 totalUnderlier = 500 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
+
+        // Prepare sell FIAT params
+        // steps: [FIAT -> DAI, DAI -> USDC]
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+        IBalancerVault.BatchSwapStep memory step2 = IBalancerVault.BatchSwapStep(fiatPoolId, 1, 2, 0, new bytes(0));
+        swaps.push(step2);
+
+        // assets: [FIAT, DAI, USDC]
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        // limits: [lendFIAT, 0, -totalUnderlier + upfrontUnderlier + fee]
+        limits.push(int256(lendFIAT));
+        limits.push(0);
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee));
+
+        _buyCollateralAndIncreaseLever(
+            address(vault_yvUSDC_16SEP22),
+            me,
+            upfrontUnderlier,
+            lendFIAT,
+            _getSellFIATSwapParams(swaps, assets, limits),
+            _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0) // swap all for pTokens
+        );
+
+        assertGe(_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)), 500 * WAD);
+        assertGe(_normalDebt(address(vault_yvUSDC_16SEP22), address(userProxy)), 500 * WAD);
+    }
+
+    function test_fiatForUnderlier() public {
+        uint256 fiatOut = 500 * WAD;
+
+        // Prepare arguments for preview method
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+
+        pathAssetsIn.push(address(underlierUSDC));
+        pathAssetsIn.push(address(dai));
+        
+        uint underlierIn = leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut);
+
+        uint fiatIn = fiatOut;
+        
+        pathAssetsOut.push(address(dai));
+        pathAssetsOut.push(address(underlierUSDC));
+        
+        assertApproxEqAbs(underlierIn, wmul(fiatOut,vault_yvUSDC_16SEP22.tokenScale()), 2 * ONE_USDC);
+        assertApproxEqAbs(underlierIn, leverActions.fiatToUnderlier(pathPoolIds, pathAssetsOut, fiatIn), 2 * ONE_USDC);
+    }
+
+    function test_fiatToUnderlier() public {
+        uint256 fiatIn = 500 * WAD;
+        
+        // Prepare arguments for preview method
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+
+        pathAssetsOut.push(address(dai));
+        pathAssetsOut.push(address(underlierUSDC));
+
+        uint underlierOut = leverActions.fiatToUnderlier(pathPoolIds, pathAssetsOut, fiatIn);
+
+        uint256 fiatOut = fiatIn;
+        
+        pathAssetsIn.push(address(underlierUSDC));
+        pathAssetsIn.push(address(dai));
+        
+        assertApproxEqAbs(underlierOut, wmul(fiatIn,vault_yvUSDC_16SEP22.tokenScale()), 2 * ONE_USDC);
+        assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut), 2 * ONE_USDC);
+    }
 }

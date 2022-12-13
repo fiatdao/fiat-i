@@ -29,7 +29,7 @@ import {LeverFYActions} from "../../../actions/lever/LeverFYActions.sol";
 import {IBalancerVault, IAsset} from "../../../actions/helper/ConvergentCurvePoolHelper.sol";
 
 import {IVault} from "../../../interfaces/IVault.sol";
-import {console} from "forge-std/console.sol";
+
 
 contract LeverFYActions_RPC_tests is Test {
     Codex internal codex;
@@ -1776,5 +1776,60 @@ contract LeverFYActions_RPC_tests is Test {
         
         assertApproxEqAbs(underlierOut, wmul(fiatIn,fyUSDC2212Vault.tokenScale()), 2 * ONE_USDC);
         assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(poolIds, pathAssetsIn, fiatOut), 2 * ONE_USDC);
+    }
+    
+    function testFail_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier_USDC() public {
+        uint256 lendFIAT = 500 * WAD;
+        uint256 upfrontUnderlier = 0 * ONE_USDC;
+        uint256 totalUnderlier = 500 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
+
+        // Prepare sell FIAT params
+        poolIds.push(fiatPoolId);
+        
+        pathAssetsOut.push(address(usdc));
+
+        uint256 minUnderliersOut = totalUnderlier-upfrontUnderlier-fee;
+        uint256 deadline = block.timestamp + 10 days;
+
+        assertEq(_collateral(address(fyUSDC2212Vault), address(userProxy)), 0);
+        assertEq(_normalDebt(address(fyUSDC2212Vault), address(userProxy)), 0);
+
+        _buyCollateralAndIncreaseLever(
+            address(fyUSDC2212Vault),
+            me,
+            upfrontUnderlier,
+            lendFIAT,
+            leverActions.buildSellFIATSwapParams(poolIds, pathAssetsOut, minUnderliersOut, deadline),
+             // swap all for fyTokens
+            _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP))
+        );
+    }
+
+    function  testFail_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier_DAI() public {
+        uint256 lendFIAT = 1000 * WAD;
+        uint256 upfrontUnderlier = 0 * WAD;
+        uint256 totalUnderlier = 1000 * WAD;
+        uint256 fee = 10 *WAD;
+        
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory sell = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(sell);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+        
+        limits.push(int(lendFIAT)); 
+        limits.push(-int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+
+        _buyCollateralAndIncreaseLever(
+            address(fyDAI2212Vault),
+            me,
+            upfrontUnderlier,
+            lendFIAT,
+            _getSellFIATSwapParams(swaps, assets, limits),
+             // swap all for fyTokens
+            _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP))
+        );
     }
 }
