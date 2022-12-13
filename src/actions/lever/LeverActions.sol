@@ -19,7 +19,9 @@ import {IBalancerVault, IAsset} from "../helper/ConvergentCurvePoolHelper.sol";
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 /// @title LeverActions
-/// @notice
+/// @notice Base lever actions contract which meant to be inherited from from protocol specific implementations.
+/// This contract is only compatible with FIAT pairings on Balancer and supports swapping between FIAT and any other
+/// asset that's available through the Balancer Router.
 abstract contract LeverActions {
     /// ======== Custom Errors ======== ///
 
