@@ -205,6 +205,41 @@ contract LeverFYActions_RPC_tests is Test {
         );
     }
 
+    function _buyCollateralAndModifyDebt(
+        address vault,
+        address collateralizer,
+        address creditor,
+        uint256 underlierAmount,
+        int256 deltaNormalDebt,
+        VaultFYActions.SwapParams memory swapParams
+    ) internal {
+        userProxy.execute(
+            address(vaultActions),
+            abi.encodeWithSelector(
+                vaultActions.buyCollateralAndModifyDebt.selector,
+                vault,
+                address(userProxy),
+                collateralizer,
+                creditor,
+                underlierAmount,
+                deltaNormalDebt,
+                swapParams
+            )
+        );
+    }
+
+    function _getSwapParams(
+        address yieldSpacePool,
+        address assetIn,
+        address assetOut,
+        uint256 minOutput
+    ) internal pure returns (VaultFYActions.SwapParams memory swapParams) {
+        swapParams.yieldSpacePool = yieldSpacePool;
+        swapParams.assetIn = assetIn;
+        swapParams.assetOut = assetOut;
+        swapParams.minAssetOut = minOutput;
+    }
+
     function _getCollateralSwapParams(
         address assetIn,
         address assetOut,
@@ -1778,7 +1813,30 @@ contract LeverFYActions_RPC_tests is Test {
         assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(poolIds, pathAssetsIn, fiatOut), 2 * ONE_USDC);
     }
     
-    function testFail_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier_USDC() public {
+    function test_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier_USDC() public {
+        // First we need to open a position
+        uint256 amount = 100 * ONE_USDC;
+        uint256 meInitialBalance = usdc.balanceOf(me);
+        uint256 vaultInitialBalance = IERC20(fyUSDC2212).balanceOf(address(fyUSDC2212Vault));
+        uint256 initialCollateral = _collateral(address(fyUSDC2212Vault), address(userProxy));
+        uint256 previewOut = vaultActions.underlierToFYToken(amount, fyUSDC2212LP);
+
+        _buyCollateralAndModifyDebt(
+            address(fyUSDC2212Vault),
+            me,
+            address(0),
+            amount,
+            0,
+            _getSwapParams(address(fyUSDC2212LP),address(usdc), fyUSDC2212, previewOut)
+        );
+
+        assertEq(usdc.balanceOf(me), meInitialBalance - amount);
+        assertTrue(ERC20(fyUSDC2212).balanceOf(address(fyUSDC2212Vault)) >= previewOut + vaultInitialBalance);
+        assertTrue(
+            _collateral(address(fyUSDC2212Vault), address(userProxy)) >=
+                initialCollateral + wdiv(previewOut, 10**IERC20Metadata(fyUSDC2212).decimals())
+        );
+
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 0 * ONE_USDC;
         uint256 totalUnderlier = 500 * ONE_USDC;
@@ -1792,9 +1850,7 @@ contract LeverFYActions_RPC_tests is Test {
         uint256 minUnderliersOut = totalUnderlier-upfrontUnderlier-fee;
         uint256 deadline = block.timestamp + 10 days;
 
-        assertEq(_collateral(address(fyUSDC2212Vault), address(userProxy)), 0);
-        assertEq(_normalDebt(address(fyUSDC2212Vault), address(userProxy)), 0);
-
+        // Now we can increase our leverage
         _buyCollateralAndIncreaseLever(
             address(fyUSDC2212Vault),
             me,
@@ -1804,9 +1860,35 @@ contract LeverFYActions_RPC_tests is Test {
              // swap all for fyTokens
             _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP))
         );
+
+        assertGe(_collateral(address(fyUSDC2212Vault), address(userProxy)), wdiv(totalUnderlier+amount-fee, 10**IERC20Metadata(fyUSDC2212).decimals()));
+        assertEq(_normalDebt(address(fyUSDC2212Vault), address(userProxy)), lendFIAT);
     }
 
-    function  testFail_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier_DAI() public {
+    function  test_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier_DAI() public {
+         // First we need to open a position
+        uint256 amount = 100 * WAD;
+        uint256 meInitialBalance = dai.balanceOf(me);
+        uint256 vaultInitialBalance = IERC20(fyDAI2212).balanceOf(address(fyDAI2212Vault));
+        uint256 initialCollateral = _collateral(address(fyDAI2212Vault), address(userProxy));
+        uint256 previewOut = vaultActions.underlierToFYToken(amount, fyDAI2212LP);
+
+        _buyCollateralAndModifyDebt(
+            address(fyDAI2212Vault),
+            me,
+            address(0),
+            amount,
+            0,
+            _getSwapParams(address(fyDAI2212LP),address(dai), fyDAI2212, previewOut)
+        );
+
+        assertEq(dai.balanceOf(me), meInitialBalance - amount);
+        assertTrue(ERC20(fyDAI2212).balanceOf(address(fyDAI2212Vault)) >= previewOut + vaultInitialBalance);
+        assertTrue(
+            _collateral(address(fyDAI2212Vault), address(userProxy)) >=
+                initialCollateral + wdiv(previewOut, 10**IERC20Metadata(fyDAI2212).decimals())
+        );
+
         uint256 lendFIAT = 1000 * WAD;
         uint256 upfrontUnderlier = 0 * WAD;
         uint256 totalUnderlier = 1000 * WAD;
@@ -1831,5 +1913,8 @@ contract LeverFYActions_RPC_tests is Test {
              // swap all for fyTokens
             _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP))
         );
+
+        assertGe(_collateral(address(fyDAI2212Vault), address(userProxy)), totalUnderlier+amount - fee);
+        assertGe(_normalDebt(address(fyDAI2212Vault), address(userProxy)), lendFIAT);
     }
 }
