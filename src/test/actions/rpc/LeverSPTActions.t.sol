@@ -1384,7 +1384,8 @@ contract LeverSPTActions_RPC_tests is Test {
         
         pathAssetsOut.push(address(usdc));
         pathAssetsOut.push(address(dai));
-       
+
+        assertApproxEqAbs(underlierIn, fiatOut, 4 * WAD);
         assertApproxEqAbs(underlierIn, leverActions.fiatToUnderlier(pathPoolIds, pathAssetsOut, fiatIn), 4 ether);
     }
 
@@ -1405,6 +1406,44 @@ contract LeverSPTActions_RPC_tests is Test {
         pathAssetsIn.push(address(dai));
         pathAssetsIn.push(address(usdc));
 
-        assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut), 4 ether);
+        assertApproxEqAbs(underlierOut, fiatIn, 5 * WAD);
+        assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut), 0.22 ether);
+    }
+
+    function test_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier() public {
+        uint256 lendFIAT = 1000 * WAD;
+        uint256 upfrontUnderlier = 0 * WAD;
+        uint256 totalUnderlier = 1000 * WAD;
+        uint256 fee = 10 * WAD;
+
+        // Prepare sell FIAT params
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        
+        pathAssetsOut.push(address(usdc));
+        pathAssetsOut.push(address(dai));
+        pathAssetsOut.push(address(usdc));
+        pathAssetsOut.push(address(dai));
+      
+        uint256 minUnderliersOut = totalUnderlier-upfrontUnderlier-fee;
+        uint256 deadline = block.timestamp + 10 days;
+
+        assertEq(_collateral(address(maDAIVault), address(userProxy)), 0);
+        assertEq(_normalDebt(address(maDAIVault), address(userProxy)), 0);
+
+        _buyCollateralAndIncreaseLever(
+            address(maDAIVault),
+            me,
+            upfrontUnderlier,
+            lendFIAT,
+            leverActions.buildSellFIATSwapParams(pathPoolIds, pathAssetsOut, minUnderliersOut, deadline), 
+            // swap all for pTokens
+            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
+        );
+
+        assertGe(_collateral(address(maDAIVault), address(userProxy)), 1000 * WAD);
+        assertGe(_normalDebt(address(maDAIVault), address(userProxy)), 1000 * WAD);
     }
 }

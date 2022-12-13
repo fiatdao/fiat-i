@@ -29,7 +29,7 @@ import {LeverFYActions} from "../../../actions/lever/LeverFYActions.sol";
 import {IBalancerVault, IAsset} from "../../../actions/helper/ConvergentCurvePoolHelper.sol";
 
 import {IVault} from "../../../interfaces/IVault.sol";
-import {console} from "forge-std/console.sol";
+
 
 contract LeverFYActions_RPC_tests is Test {
     Codex internal codex;
@@ -203,6 +203,41 @@ contract LeverFYActions_RPC_tests is Test {
                 fiatSwapParams
             )
         );
+    }
+
+    function _buyCollateralAndModifyDebt(
+        address vault,
+        address collateralizer,
+        address creditor,
+        uint256 underlierAmount,
+        int256 deltaNormalDebt,
+        VaultFYActions.SwapParams memory swapParams
+    ) internal {
+        userProxy.execute(
+            address(vaultActions),
+            abi.encodeWithSelector(
+                vaultActions.buyCollateralAndModifyDebt.selector,
+                vault,
+                address(userProxy),
+                collateralizer,
+                creditor,
+                underlierAmount,
+                deltaNormalDebt,
+                swapParams
+            )
+        );
+    }
+
+    function _getSwapParams(
+        address yieldSpacePool,
+        address assetIn,
+        address assetOut,
+        uint256 minOutput
+    ) internal pure returns (VaultFYActions.SwapParams memory swapParams) {
+        swapParams.yieldSpacePool = yieldSpacePool;
+        swapParams.assetIn = assetIn;
+        swapParams.assetOut = assetOut;
+        swapParams.minAssetOut = minOutput;
     }
 
     function _getCollateralSwapParams(
@@ -1734,5 +1769,152 @@ contract LeverFYActions_RPC_tests is Test {
         uint256 underlierBeforeMaturity = leverActions.fyTokenToUnderlier(100 * ONE_USDC, address(fyUSDC2212LP));
         // closest to the maturity we get more underlier for same sPT
         assertGt(underlierBeforeMaturity, underlierNow);
+    }
+
+    function test_fiatForUnderlier() public {
+        uint256 fiatOut = 500 * WAD;
+
+        // Prepare arguments for preview method
+        poolIds.push(fiatPoolId);
+        poolIds.push(fiatPoolId);
+
+        pathAssetsIn.push(address(usdc));
+        pathAssetsIn.push(address(dai));
+        
+        uint underlierIn = leverActions.fiatForUnderlier(poolIds, pathAssetsIn, fiatOut);
+
+        uint fiatIn = fiatOut;
+        
+        pathAssetsOut.push(address(dai));
+        pathAssetsOut.push(address(usdc));
+        
+        assertApproxEqAbs(underlierIn, wmul(fiatOut,fyUSDC2212Vault.tokenScale()), 2 * ONE_USDC);
+        assertApproxEqAbs(underlierIn, leverActions.fiatToUnderlier(poolIds, pathAssetsOut, fiatIn), 2 * ONE_USDC);
+    }
+
+    function test_fiatToUnderlier() public {
+        uint256 fiatIn = 500 * WAD;
+        
+        // Prepare arguments for preview method
+        poolIds.push(fiatPoolId);
+        poolIds.push(fiatPoolId);
+
+        pathAssetsOut.push(address(dai));
+        pathAssetsOut.push(address(usdc));
+
+        uint underlierOut = leverActions.fiatToUnderlier(poolIds, pathAssetsOut, fiatIn);
+
+        uint256 fiatOut = fiatIn;
+        
+        pathAssetsIn.push(address(usdc));
+        pathAssetsIn.push(address(dai));
+        
+        assertApproxEqAbs(underlierOut, wmul(fiatIn,fyUSDC2212Vault.tokenScale()), 2 * ONE_USDC);
+        assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(poolIds, pathAssetsIn, fiatOut), 2 * ONE_USDC);
+    }
+    
+    function test_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier_USDC() public {
+        // First we need to open a position
+        uint256 amount = 100 * ONE_USDC;
+        uint256 meInitialBalance = usdc.balanceOf(me);
+        uint256 vaultInitialBalance = IERC20(fyUSDC2212).balanceOf(address(fyUSDC2212Vault));
+        uint256 initialCollateral = _collateral(address(fyUSDC2212Vault), address(userProxy));
+        uint256 previewOut = vaultActions.underlierToFYToken(amount, fyUSDC2212LP);
+
+        _buyCollateralAndModifyDebt(
+            address(fyUSDC2212Vault),
+            me,
+            address(0),
+            amount,
+            0,
+            _getSwapParams(address(fyUSDC2212LP),address(usdc), fyUSDC2212, previewOut)
+        );
+
+        assertEq(usdc.balanceOf(me), meInitialBalance - amount);
+        assertTrue(ERC20(fyUSDC2212).balanceOf(address(fyUSDC2212Vault)) >= previewOut + vaultInitialBalance);
+        assertTrue(
+            _collateral(address(fyUSDC2212Vault), address(userProxy)) >=
+                initialCollateral + wdiv(previewOut, 10**IERC20Metadata(fyUSDC2212).decimals())
+        );
+
+        uint256 lendFIAT = 500 * WAD;
+        uint256 upfrontUnderlier = 0 * ONE_USDC;
+        uint256 totalUnderlier = 500 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
+
+        // Prepare sell FIAT params
+        poolIds.push(fiatPoolId);
+        
+        pathAssetsOut.push(address(usdc));
+
+        uint256 minUnderliersOut = totalUnderlier-upfrontUnderlier-fee;
+        uint256 deadline = block.timestamp + 10 days;
+
+        // Now we can increase our leverage
+        _buyCollateralAndIncreaseLever(
+            address(fyUSDC2212Vault),
+            me,
+            upfrontUnderlier,
+            lendFIAT,
+            leverActions.buildSellFIATSwapParams(poolIds, pathAssetsOut, minUnderliersOut, deadline),
+             // swap all for fyTokens
+            _getCollateralSwapParams(address(usdc), address(fyUSDC2212), 0, address(fyUSDC2212LP))
+        );
+
+        assertGe(_collateral(address(fyUSDC2212Vault), address(userProxy)), wdiv(totalUnderlier + amount - fee, 10**IERC20Metadata(fyUSDC2212).decimals()));
+        assertEq(_normalDebt(address(fyUSDC2212Vault), address(userProxy)), lendFIAT);
+    }
+
+    function  test_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier_DAI() public {
+         // First we need to open a position
+        uint256 amount = 100 * WAD;
+        uint256 meInitialBalance = dai.balanceOf(me);
+        uint256 vaultInitialBalance = IERC20(fyDAI2212).balanceOf(address(fyDAI2212Vault));
+        uint256 initialCollateral = _collateral(address(fyDAI2212Vault), address(userProxy));
+        uint256 previewOut = vaultActions.underlierToFYToken(amount, fyDAI2212LP);
+
+        _buyCollateralAndModifyDebt(
+            address(fyDAI2212Vault),
+            me,
+            address(0),
+            amount,
+            0,
+            _getSwapParams(address(fyDAI2212LP),address(dai), fyDAI2212, previewOut)
+        );
+
+        assertEq(dai.balanceOf(me), meInitialBalance - amount);
+        assertTrue(ERC20(fyDAI2212).balanceOf(address(fyDAI2212Vault)) >= previewOut + vaultInitialBalance);
+        assertTrue(
+            _collateral(address(fyDAI2212Vault), address(userProxy)) >=
+                initialCollateral + wdiv(previewOut, 10**IERC20Metadata(fyDAI2212).decimals())
+        );
+
+        uint256 lendFIAT = 1000 * WAD;
+        uint256 upfrontUnderlier = 0 * WAD;
+        uint256 totalUnderlier = 1000 * WAD;
+        uint256 fee = 10 *WAD;
+        
+        // Prepare sell FIAT params
+        IBalancerVault.BatchSwapStep memory sell = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(sell);
+
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+        
+        limits.push(int(lendFIAT)); 
+        limits.push(-int(totalUnderlier-upfrontUnderlier-fee)); // min DAI out after fees
+
+        _buyCollateralAndIncreaseLever(
+            address(fyDAI2212Vault),
+            me,
+            upfrontUnderlier,
+            lendFIAT,
+            _getSellFIATSwapParams(swaps, assets, limits),
+             // swap all for fyTokens
+            _getCollateralSwapParams(address(dai), address(fyDAI2212), 0, address(fyDAI2212LP))
+        );
+
+        assertGe(_collateral(address(fyDAI2212Vault), address(userProxy)), totalUnderlier + amount - fee);
+        assertGe(_normalDebt(address(fyDAI2212Vault), address(userProxy)), lendFIAT);
     }
 }
