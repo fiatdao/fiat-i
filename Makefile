@@ -7,11 +7,11 @@ install         :; forge install
 update          :; forge update
 
 # Build & test
-build           :; forge build
+build           :; forge build # --sizes
 clean           :; forge clean
 lint            :; yarn install && yarn run lint
 test            :; forge test
-test-core    	:; forge test --match-path "**/test/core/**/*.t.sol"
+test-core    	  :; forge test --match-path "**/test/core/**/*.t.sol"
 test-actions    :; forge test --match-path "**/test/actions/**/*.t.sol"
 test-vaults    	:; forge test --match-path "**/test/vaults/**/*.t.sol"
 test-guards    	:; forge test --match-path "**/test/guards/**/*.t.sol"

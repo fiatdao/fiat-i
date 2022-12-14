@@ -524,7 +524,9 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
     /// @param balancerVault Address of the Balancer V2 vault
     /// @param underlierAmount Amount of underliers to swap for pTokens [underlierScale]
     /// @return Amount of pToken [tokenScale]
-    function underlierToPToken(address senseSpace, address balancerVault, uint256 underlierAmount) external view returns (uint256) {
+    function underlierToPToken(
+        address senseSpace, address balancerVault, uint256 underlierAmount
+    ) external view returns (uint256) {
         ISenseSpace space = ISenseSpace(senseSpace);
         bytes32 poolId = space.getPoolId();
         (ERC20[] memory tokens, uint256[] memory balances, ) = IBalancerVault(balancerVault).getPoolTokens(poolId);
@@ -555,7 +557,9 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
     /// @param balancerVault Address of the Balancer V2 vault
     /// @param pTokenAmount Amount of pToken to swap for underliers [tokenScale]
     /// @return Amount of underlier [underlierScale]
-    function pTokenToUnderlier(address senseSpace, address balancerVault, uint256 pTokenAmount) external view returns (uint256) {
+    function pTokenToUnderlier(
+        address senseSpace, address balancerVault, uint256 pTokenAmount
+    ) external view returns (uint256) {
         ISenseSpace space = ISenseSpace(senseSpace);
         bytes32 poolId = space.getPoolId();
         (ERC20[] memory tokens, uint256[] memory balances, ) = IBalancerVault(balancerVault).getPoolTokens(poolId);
