@@ -237,7 +237,7 @@ contract LeverSPTActions_RPC_tests is Test {
         );
     }
 
-        function _buyCollateralAndModifyDebt(
+    function _buyCollateralAndModifyDebt(
         address vault,
         address collateralizer,
         address creditor,
@@ -1444,7 +1444,7 @@ contract LeverSPTActions_RPC_tests is Test {
         assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut), 0.22 ether);
     }
 
-    function testFail_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier() public {
+    function testFail_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier_without_a_position() public {
         collybus.setParam(address(maDAIVault), "liquidationRatio",1.03 ether);
         uint256 lendFIAT = 1000 * WAD;
         uint256 upfrontUnderlier = 0 * WAD;

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {Test} from "forge-std/Test.sol";
+import {stdStorage,StdStorage} from "forge-std/StdStorage.sol";
 
 import {ERC20} from "openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -53,9 +54,11 @@ interface ICCP {
 }
 
 contract LeverEPTActions_RPC_tests is Test {
+    using stdStorage for StdStorage;
+
     Codex internal codex;
     Publican internal publican;
-    address internal collybus = address(0xc0111b115);
+    Collybus internal collybus;
     Moneta internal moneta;
     FIAT internal fiat;
     Flash internal flash;
@@ -210,6 +213,44 @@ contract LeverEPTActions_RPC_tests is Test {
         );
     }
 
+    function _buyCollateralAndModifyDebt(
+        address vault,
+        address collateralizer,
+        address creditor,
+        uint256 underlierAmount,
+        int256 deltaNormalDebt,
+        VaultEPTActions.SwapParams memory swapParams
+    ) internal {
+        userProxy.execute(
+            address(vaultActions),
+            abi.encodeWithSelector(
+                vaultActions.buyCollateralAndModifyDebt.selector,
+                vault,
+                address(userProxy),
+                collateralizer,
+                creditor,
+                underlierAmount,
+                deltaNormalDebt,
+                swapParams
+            )
+        );
+    }
+
+    function _getSwapParams(
+        address assetIn,
+        address assetOut,
+        uint256 minOutput,
+        uint256 assetInAmount
+    ) internal view returns (VaultEPTActions.SwapParams memory swapParams) {
+        swapParams.balancerVault = ICCP(ccp_yvUSDC_16SEP22).getVault();
+        swapParams.poolId = ICCP(ccp_yvUSDC_16SEP22).getPoolId();
+        swapParams.assetIn = assetIn;
+        swapParams.assetOut = assetOut;
+        swapParams.minOutput = minOutput;
+        swapParams.deadline = block.timestamp + 12 weeks;
+        swapParams.approve = assetInAmount;
+    }
+
     function _getCollateralSwapParams(
         address assetIn,
         address assetOut,
@@ -251,6 +292,7 @@ contract LeverEPTActions_RPC_tests is Test {
         user = new Caller();
         vaultFactory = new VaultFactory();
         codex = new Codex();
+        collybus = new Collybus();
         publican = new Publican(address(codex));
         fiat = FIAT(0x586Aa273F262909EEF8fA02d90Ab65F5015e0516);
         vm.startPrank(0xa55E0d3d697C4692e9C37bC3a7062b1bECeEF45B);
@@ -323,8 +365,6 @@ contract LeverEPTActions_RPC_tests is Test {
             abi.encodeWithSelector(underlierUSDC.approve.selector, address(userProxy), type(uint256).max)
         );
 
-        vm.mockCall(collybus, abi.encodeWithSelector(Collybus.read.selector), abi.encode(uint256(WAD)));
-
         userProxy.execute(
             address(leverActions),
             abi.encodeWithSelector(leverActions.approveFIAT.selector, address(moneta), type(uint256).max)
@@ -353,6 +393,9 @@ contract LeverEPTActions_RPC_tests is Test {
         publican.init(instance_yvUSDC_16SEP22);
         publican.setParam(instance_yvUSDC_16SEP22, "interestPerSecond", WAD);
         flash.setParam("max", 1000000 * WAD);
+
+        collybus.setParam(instance_yvUSDC_16SEP22, "liquidationRatio",1 ether);
+        collybus.updateSpot(address(underlierUSDC), WAD);
 
         // approve token and underlier for proxy
         underlierUSDC.approve(address(userProxy), type(uint256).max);
@@ -1277,7 +1320,89 @@ contract LeverEPTActions_RPC_tests is Test {
         assertApproxEqAbs(fiatOut, wdiv(underlierIn,vault_yvUSDC_16SEP22.underlierScale()), 1 ether); 
     }
 
-    function test_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier() public {
+    function testFail_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier_without_a_position() public {
+        stdstore
+            .target(address(collybus))
+            .sig("vaults(address)")
+            .with_key(address(vault_yvUSDC_16SEP22))
+            .depth(0)
+            .checked_write(1.01 ether);
+
+        uint256 lendFIAT = 500 * WAD;
+        uint256 upfrontUnderlier = 0 * ONE_USDC;
+        uint256 totalUnderlier = 500 * ONE_USDC;
+        uint256 fee = 5 * ONE_USDC;
+
+        // Prepare sell FIAT params
+        // steps: [FIAT -> DAI, DAI -> USDC]
+        IBalancerVault.BatchSwapStep memory step = IBalancerVault.BatchSwapStep(fiatPoolId, 0, 1, 0, new bytes(0));
+        swaps.push(step);
+        IBalancerVault.BatchSwapStep memory step2 = IBalancerVault.BatchSwapStep(fiatPoolId, 1, 2, 0, new bytes(0));
+        swaps.push(step2);
+
+        // assets: [FIAT, DAI, USDC]
+        assets.push(IAsset(address(fiat)));
+        assets.push(IAsset(address(dai)));
+        assets.push(IAsset(address(underlierUSDC)));
+
+        // limits: [lendFIAT, 0, -totalUnderlier + upfrontUnderlier + fee]
+        limits.push(int256(lendFIAT));
+        limits.push(0);
+        limits.push(-int256(totalUnderlier - upfrontUnderlier - fee));
+
+        _buyCollateralAndIncreaseLever(
+            address(vault_yvUSDC_16SEP22),
+            me,
+            upfrontUnderlier,
+            lendFIAT,
+            _getSellFIATSwapParams(swaps, assets, limits),
+            _getCollateralSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0) // swap all for pTokens
+        );
+
+        assertGe(_collateral(address(vault_yvUSDC_16SEP22), address(userProxy)), 500 * WAD);
+        assertGe(_normalDebt(address(vault_yvUSDC_16SEP22), address(userProxy)), 500 * WAD);
+    }
+
+    function test_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier_with_a_position() public {
+        uint256 amount = 100 * ONE_USDC;
+        uint256 meInitialBalance = underlierUSDC.balanceOf(me);
+        uint256 vaultInitialBalance = IERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22));
+        uint256 initialCollateral = _collateral(address(vault_yvUSDC_16SEP22), address(userProxy));
+
+        uint256 price = vaultActions.underlierToPToken(
+            address(vault_yvUSDC_16SEP22),
+            ICCP(ccp_yvUSDC_16SEP22).getVault(),
+            ICCP(ccp_yvUSDC_16SEP22).getPoolId(),
+            vault_yvUSDC_16SEP22.underlierScale()
+        );
+
+        _buyCollateralAndModifyDebt(
+            address(vault_yvUSDC_16SEP22),
+            me,
+            address(0),
+            amount,
+            0,
+            _getSwapParams(address(underlierUSDC), trancheUSDC_V4_yvUSDC_16SEP22, 0, amount)
+        );
+
+        assertEq(underlierUSDC.balanceOf(me), meInitialBalance - amount);
+        assertTrue(
+            ERC20(trancheUSDC_V4_yvUSDC_16SEP22).balanceOf(address(vault_yvUSDC_16SEP22)) >=
+                vaultInitialBalance + ((amount * price) / ONE_USDC)
+        );
+        assertTrue(
+            _collateral(address(vault_yvUSDC_16SEP22), address(userProxy)) >=
+                initialCollateral + wdiv(amount, 10**IERC20Metadata(trancheUSDC_V4_yvUSDC_16SEP22).decimals())
+        );
+
+        // Update liquidationRatio from 1 ether (WAD) to 1.01 ether
+        stdstore
+            .target(address(collybus))
+            .sig("vaults(address)")
+            .with_key(address(vault_yvUSDC_16SEP22))
+            .depth(0)
+            .checked_write(1.01 ether);
+
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 0 * ONE_USDC;
         uint256 totalUnderlier = 500 * ONE_USDC;
