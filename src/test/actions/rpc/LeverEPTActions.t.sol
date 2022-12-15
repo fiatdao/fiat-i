@@ -1376,6 +1376,7 @@ contract LeverEPTActions_RPC_tests is Test {
             vault_yvUSDC_16SEP22.underlierScale()
         );
 
+        // Open position
         _buyCollateralAndModifyDebt(
             address(vault_yvUSDC_16SEP22),
             me,

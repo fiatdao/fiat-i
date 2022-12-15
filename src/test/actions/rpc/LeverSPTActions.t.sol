@@ -377,7 +377,7 @@ contract LeverSPTActions_RPC_tests is Test {
         codex.allowCaller(codex.transferCredit.selector, address(moneta));
         codex.setParam("globalDebtCeiling", 10000000 ether);
         codex.setParam(address(maDAIVault), "debtCeiling", 1000000 ether);
-        collybus.setParam(address(maDAIVault), "liquidationRatio",1 ether);
+        collybus.setParam(address(maDAIVault), "liquidationRatio", 1 ether);
         collybus.updateSpot(address(dai), 1 ether);
         publican.init(address(maDAIVault));
         codex.allowCaller(codex.modifyBalance.selector, address(maDAIVault));
@@ -1445,7 +1445,7 @@ contract LeverSPTActions_RPC_tests is Test {
     }
 
     function testFail_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier_without_a_position() public {
-        collybus.setParam(address(maDAIVault), "liquidationRatio",1.03 ether);
+        collybus.setParam(address(maDAIVault), "liquidationRatio", 1.03 ether);
         uint256 lendFIAT = 1000 * WAD;
         uint256 upfrontUnderlier = 0 * WAD;
         uint256 totalUnderlier = 1000 * WAD;
