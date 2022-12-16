@@ -237,6 +237,40 @@ contract LeverSPTActions_RPC_tests is Test {
         );
     }
 
+    function _buyCollateralAndModifyDebt(
+        address vault,
+        address collateralizer,
+        address creditor,
+        uint256 underlierAmount,
+        int256 deltaNormalDebt,
+        VaultSPTActions.SwapParams memory swapParams
+    ) internal {
+        userProxy.execute(
+            address(vaultActions),
+            abi.encodeWithSelector(
+                vaultActions.buyCollateralAndModifyDebt.selector,
+                vault,
+                address(userProxy),
+                collateralizer,
+                creditor,
+                underlierAmount,
+                deltaNormalDebt,
+                swapParams
+            )
+        );
+    }
+
+    function _getSwapParams(
+        address adapter,
+        address assetIn,
+        address assetOut,
+        uint256 minAccepted,
+        uint256 _maturity,
+        uint256 approve
+    ) internal pure returns (VaultSPTActions.SwapParams memory) {
+        return VaultSPTActions.SwapParams(adapter, minAccepted, _maturity, assetIn, assetOut, approve);
+    }
+
     function _getCollateralSwapParams(
         address assetIn,
         address assetOut,
@@ -1410,7 +1444,8 @@ contract LeverSPTActions_RPC_tests is Test {
         assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut), 0.22 ether);
     }
 
-    function test_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier() public {
+    function testFail_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier_without_a_position() public {
+        collybus.setParam(address(maDAIVault), "liquidationRatio", 1.03 ether);
         uint256 lendFIAT = 1000 * WAD;
         uint256 upfrontUnderlier = 0 * WAD;
         uint256 totalUnderlier = 1000 * WAD;
@@ -1433,6 +1468,76 @@ contract LeverSPTActions_RPC_tests is Test {
         assertEq(_collateral(address(maDAIVault), address(userProxy)), 0);
         assertEq(_normalDebt(address(maDAIVault), address(userProxy)), 0);
 
+        _buyCollateralAndIncreaseLever(
+            address(maDAIVault),
+            me,
+            upfrontUnderlier,
+            lendFIAT,
+            leverActions.buildSellFIATSwapParams(pathPoolIds, pathAssetsOut, minUnderliersOut, deadline), 
+            // swap all for pTokens
+            _getCollateralSwapParams(address(dai), address(sP_maDAI), address(maDAIAdapter), type(uint256).max, 0)
+        );
+
+        assertGe(_collateral(address(maDAIVault), address(userProxy)), 1000 * WAD);
+        assertGe(_normalDebt(address(maDAIVault), address(userProxy)), 1000 * WAD);
+    }
+
+    function test_buyCollateralAndIncreaseLever_with_ZERO_upfrontUnderlier() public {
+        collybus.setParam(address(maDAIVault), "liquidationRatio",1.03 ether);
+        
+        // First we need to open a position
+        uint256 amount = 100 * WAD;
+        uint256 meInitialBalance = dai.balanceOf(me);
+        uint256 vaultInitialBalance = sP_maDAI.balanceOf(address(maDAIVault));
+        assertEq(_collateral(address(maDAIVault), address(userProxy)),0);
+        uint256 previewOut = vaultActions.underlierToPToken(maDAISpace, balancerVault, amount);
+
+        _buyCollateralAndModifyDebt(
+            address(maDAIVault),
+            me,
+            address(0),
+            amount,
+            0,
+           _getSwapParams(
+            maDAIAdapter,
+            address(dai),
+            address(sP_maDAI),
+            0,
+            maturity,
+            amount
+        )
+        );
+
+        assertEq(dai.balanceOf(me), meInitialBalance - amount);
+        assertTrue(sP_maDAI.balanceOf(address(maDAIVault)) >= previewOut + vaultInitialBalance);
+        assertTrue(
+            _collateral(address(maDAIVault), address(userProxy)) >=
+                 wdiv(previewOut, 10**IERC20Metadata(address(sP_maDAI)).decimals())
+        );
+
+        uint256 lendFIAT = 1000 * WAD;
+        uint256 upfrontUnderlier = 0 * WAD;
+        uint256 totalUnderlier = 1000 * WAD;
+        uint256 fee = 10 * WAD;
+
+        // Prepare sell FIAT params
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(fiatPoolId);
+        
+        pathAssetsOut.push(address(usdc));
+        pathAssetsOut.push(address(dai));
+        pathAssetsOut.push(address(usdc));
+        pathAssetsOut.push(address(dai));
+      
+        uint256 minUnderliersOut = totalUnderlier-upfrontUnderlier-fee;
+        uint256 deadline = block.timestamp + 10 days;
+
+        assertGt(_collateral(address(maDAIVault), address(userProxy)), 0);
+        assertEq(_normalDebt(address(maDAIVault), address(userProxy)), 0);
+
+        // Now we can leverage it
         _buyCollateralAndIncreaseLever(
             address(maDAIVault),
             me,
