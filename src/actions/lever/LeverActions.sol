@@ -226,7 +226,7 @@ abstract contract LeverActions {
             -toInt256(subNormalDebt)
         );
 
-        // withdraw tokens not be used as collateral anymore from Vault
+        // withdraw tokens not used as collateral anymore from Vault
         exitVault(vault, token, tokenId, collateralizer, wmul(subCollateral, IVault(vault).tokenScale()));
     }
 
@@ -409,7 +409,7 @@ abstract contract LeverActions {
                 swap = IBalancerVault.BatchSwapStep(
                     // reverse the order such that last asset becomes assetIndexOut for the first swap
                     // and the first asset becomes the assetIndexIn for the last swap
-                    pathPoolIds[i], pathLength - i - 1, pathLength - i, 0, new bytes(0)
+                    pathPoolIds[pathLength - i - 1], pathLength - i - 1, pathLength - i, 0, new bytes(0)
                 );
             }
             swaps[i] = swap;
