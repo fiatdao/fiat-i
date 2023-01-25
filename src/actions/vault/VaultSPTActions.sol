@@ -271,11 +271,6 @@ contract VaultSPTActions is Vault20Actions {
 
         // approve the Sense Finance Adapter to transfer `target` tokens on behalf of the proxy
         if (redeemParams.approveTarget != 0) {
-            // reset approval if it's already set
-            if (IERC20(redeemParams.target).allowance(address(this), redeemParams.adapter) != 0) {
-                IERC20(redeemParams.target).safeApprove(redeemParams.adapter, 0);
-            }
-
             IERC20(redeemParams.target).safeApprove(redeemParams.adapter, targetAmount);
         }
         // unwrap `target` token for underlier
@@ -298,11 +293,6 @@ contract VaultSPTActions is Vault20Actions {
 
         // approve Sense Finance Periphery to transfer underliers on behalf of proxy
         if (swapParams.approve != 0) {
-            // reset approval if it's already set
-            if (IERC20(swapParams.assetIn).allowance(address(this),address(periphery)) != 0) {
-                IERC20(swapParams.assetIn).safeApprove(address(periphery), 0);
-            }
-
             IERC20(swapParams.assetIn).safeApprove(address(periphery), swapParams.approve);
         }
 
@@ -318,12 +308,6 @@ contract VaultSPTActions is Vault20Actions {
     function _sellPToken(uint256 pTokenAmount, SwapParams calldata swapParams) internal returns (uint256) {
         // approve Sense Finance Periphery to transfer pTokens on behalf of the proxy
         if (swapParams.approve != 0) {
-
-            // reset approval if it's already set
-            if (IERC20(swapParams.assetIn).allowance(address(this), address(periphery)) != 0) {
-                IERC20(swapParams.assetIn).safeApprove(address(periphery), 0);
-            }
-
             IERC20(swapParams.assetIn).safeApprove(address(periphery), swapParams.approve);
         }
 
