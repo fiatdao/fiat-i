@@ -104,7 +104,11 @@ contract NoLossCollateralAuctionSPTActions is NoLossCollateralAuctionActionsBase
 
         // approve the Sense Finance Adapter to transfer `target` tokens on behalf of the proxy
         if (redeemParams.approveTarget != 0) {
-            IERC20(redeemParams.target).approve(redeemParams.adapter, targetAmount);
+            // reset approval if it's already set
+            if (IERC20(redeemParams.target).balanceOf(redeemParams.adapter) != 0) {
+                IERC20(redeemParams.target).safeApprove(redeemParams.adapter, 0);
+            }
+            IERC20(redeemParams.target).safeApprove(redeemParams.adapter, targetAmount);
         }
         // unwrap `target` token for underlier
         uint256 underlierAmount = IAdapter(redeemParams.adapter).unwrapTarget(targetAmount);
@@ -150,7 +154,11 @@ contract NoLossCollateralAuctionSPTActions is NoLossCollateralAuctionActionsBase
         // sell pToken according to `swapParams`
         // approve Sense Finance Periphery to transfer pTokens on behalf of the proxy
         if (swapParams.approve != 0) {
-            IERC20(swapParams.assetIn).approve(address(periphery), swapParams.approve);
+            // reset approval if it's already set
+            if (IERC20(swapParams.assetIn).balanceOf(address(periphery)) != 0) {
+                IERC20(swapParams.assetIn).safeApprove(address(periphery), 0);
+            }
+            IERC20(swapParams.assetIn).safeApprove(address(periphery), swapParams.approve);
         }
 
         uint256 underlier = periphery.swapPTsForUnderlying(

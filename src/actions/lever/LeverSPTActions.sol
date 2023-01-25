@@ -472,7 +472,11 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
 
         // approve the Sense Finance Adapter to transfer `target` tokens
         if (params.redeemParams.approveTarget != 0) {
-            IERC20(params.redeemParams.target).approve(params.redeemParams.adapter, targetAmount);
+            // reset approval if it's already set
+            if (IERC20(params.redeemParams.target).balanceOf(params.redeemParams.adapter) != 0) {
+                IERC20(params.redeemParams.target).safeApprove(params.redeemParams.adapter, 0);
+            }
+            IERC20(params.redeemParams.target).safeApprove(params.redeemParams.adapter, targetAmount);
         }
         // unwrap `target` token for underlier
         uint256 underlierAmount = IAdapter(params.redeemParams.adapter).unwrapTarget(targetAmount);
@@ -490,7 +494,11 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
     /// @dev Executed in the context of LeverEPTActions instead of the Proxy
     function _buyPToken(uint256 underlierAmount, CollateralSwapParams memory swapParams) internal returns (uint256) {
         if (IERC20(swapParams.assetIn).allowance(address(this), address(periphery)) < underlierAmount) {
-            IERC20(swapParams.assetIn).approve(address(periphery), type(uint256).max);
+            // reset approval if it's already set
+            if (IERC20(swapParams.assetIn).balanceOf(address(periphery)) != 0) {
+                IERC20(swapParams.assetIn).safeApprove(address(periphery), 0);
+            }
+            IERC20(swapParams.assetIn).safeApprove(address(periphery), type(uint256).max);
         }
 
         return
@@ -505,7 +513,11 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
     /// @dev Executed in the context of LeverEPTActions instead of the Proxy
     function _sellPToken(uint256 pTokenAmount, CollateralSwapParams memory swapParams) internal returns (uint256) {
         if (IERC20(swapParams.assetIn).allowance(address(this), address(periphery)) < pTokenAmount) {
-            IERC20(swapParams.assetIn).approve(address(periphery), type(uint256).max);
+            // reset approval if it's already set
+            if (IERC20(swapParams.assetIn).balanceOf(address(periphery)) != 0) {
+                IERC20(swapParams.assetIn).safeApprove(address(periphery), 0);
+            }
+            IERC20(swapParams.assetIn).safeApprove(address(periphery), type(uint256).max);
         }
 
         return
