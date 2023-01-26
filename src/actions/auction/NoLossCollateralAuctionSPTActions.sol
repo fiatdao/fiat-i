@@ -150,6 +150,14 @@ contract NoLossCollateralAuctionSPTActions is NoLossCollateralAuctionActionsBase
         // sell pToken according to `swapParams`
         // approve Sense Finance Periphery to transfer pTokens on behalf of the proxy
         if (swapParams.approve != 0) {
+            if(IERC20(swapParams.assetIn).allowance(address(this), address(periphery)) != 0){
+                if(IERC20(swapParams.assetIn).allowance(address(this), address(periphery)) != 0){
+                    IERC20(swapParams.assetIn).safeApprove(address(periphery), 0);
+                }
+
+                IERC20(swapParams.assetIn).safeApprove(address(periphery), 0);
+            }
+
             IERC20(swapParams.assetIn).safeApprove(address(periphery), swapParams.approve);
         }
 

@@ -258,6 +258,7 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
         return CALLBACK_SUCCESS;
     }
 
+    /// @dev Executed in the context of LeverSPTActions instead of the Proxy
     function _onBuyCollateralAndIncreaseLever(uint256 borrowed, bytes memory data) internal {
         BuyCollateralAndIncreaseLeverFlashLoanData memory params = abi.decode(
             data,
@@ -408,6 +409,7 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
         return CALLBACK_SUCCESS_CREDIT;
     }
 
+    /// @dev Executed in the context of LeverSPTActions instead of the Proxy
     function _onSellCollateralAndDecreaseLever(
         address initiator,
         uint256 borrowed,
@@ -442,6 +444,7 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
         );
     }
 
+    /// @dev Executed in the context of LeverSPTActions instead of the Proxy
     function _onRedeemCollateralAndDecreaseLever(
         address initiator,
         uint256 borrowed,
