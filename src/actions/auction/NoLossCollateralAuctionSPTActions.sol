@@ -104,7 +104,12 @@ contract NoLossCollateralAuctionSPTActions is NoLossCollateralAuctionActionsBase
 
         // approve the Sense Finance Adapter to transfer `target` tokens on behalf of the proxy
         if (redeemParams.approveTarget != 0) {
-            IERC20(redeemParams.target).safeApprove(redeemParams.adapter, targetAmount);
+            // reset the allowance if it's currently non-zero
+            if (IERC20(redeemParams.target).allowance(address(this),redeemParams.adapter) != 0){
+                IERC20(redeemParams.target).safeApprove(redeemParams.adapter, 0);    
+            }
+            
+            IERC20(redeemParams.target).safeApprove(redeemParams.adapter, redeemParams.approveTarget);
         }
         // unwrap `target` token for underlier
         uint256 underlierAmount = IAdapter(redeemParams.adapter).unwrapTarget(targetAmount);

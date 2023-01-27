@@ -276,7 +276,7 @@ contract VaultSPTActions is Vault20Actions {
                 IERC20(redeemParams.target).safeApprove(redeemParams.adapter, 0);    
             }
 
-            IERC20(redeemParams.target).safeApprove(redeemParams.adapter, targetAmount);
+            IERC20(redeemParams.target).safeApprove(redeemParams.adapter, redeemParams.approveTarget);
         }
         // unwrap `target` token for underlier
         uint256 underlierAmount = IAdapter(redeemParams.adapter).unwrapTarget(targetAmount);
