@@ -66,6 +66,7 @@ interface IBalancerVault {
 
 /// @title LeverSPTActions
 /// @notice A set of vault actions for modifying positions collateralized by Sense Finance pTokens
+/// @dev Due to the size of this contract it has to be compiled with custom optimizer settings
 contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBorrower {
     using SafeERC20 for IERC20;
 
