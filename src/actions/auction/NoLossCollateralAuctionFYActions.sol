@@ -17,9 +17,11 @@ import {WAD, toInt256, sub, mul, div, wmul, wdiv} from "../../core/utils/Math.so
 contract NoLossCollateralAuctionFYActions is NoLossCollateralAuctionActionsBase {
     using SafeERC20 for IERC20;
 
-    error NoLossCollateralAuctionFYActions__toUint128_overflow();
+    /// ======== Custom Errors ======== ///
 
-    /// ======== Storage ======== ///
+    error NoLossCollateralAuctionFYActions__takeCollateralAndSwapForUnderlier_overflow();
+
+    /// ======== Types ======== ///
 
     // Swap data
     struct SwapParams {
@@ -97,7 +99,6 @@ contract NoLossCollateralAuctionFYActions is NoLossCollateralAuctionActionsBase 
         address recipient,
         SwapParams calldata swapParams
     ) external {
-        // Take collateral (fyTokens)
         uint256 fyTokenAmount = takeCollateral(
             vault,
             tokenId,
@@ -110,25 +111,12 @@ contract NoLossCollateralAuctionFYActions is NoLossCollateralAuctionActionsBase 
         
         IVault(address(vault)).exit(0, address(this), fyTokenAmount);
 
-        // sell fyToken according to `swapParams`
-        _sellFYToken(fyTokenAmount, recipient, swapParams);
-    }
-
-    function _sellFYToken(
-        uint256 fyTokenAmount,
-        address to,
-        SwapParams calldata swapParams
-    ) internal returns (uint256) {
-        // Transfer from this contract to fypool
+        // transfer from this contract to Yield Space pool
         IERC20(swapParams.assetIn).safeTransfer(swapParams.yieldSpacePool, fyTokenAmount);
-        return uint256(IFYPool(swapParams.yieldSpacePool).sellFYToken(to, _toUint128(swapParams.minAssetOut)));
-    }
-
-    /// ======== Utils ======== ///
-
-    /// @dev Casts from uint256 to uint128 (required by Yield Protocol)
-    function _toUint128(uint256 x) private pure returns (uint128) {
-        if (x >= type(uint128).max) revert NoLossCollateralAuctionFYActions__toUint128_overflow();
-        return uint128(x);
+        // cast to uint128 (Yield Space precision)
+        if (swapParams.minAssetOut >= type(uint128).max)
+            revert NoLossCollateralAuctionFYActions__takeCollateralAndSwapForUnderlier_overflow();
+        // sell fyToken according to `swapParams`
+        IFYPool(swapParams.yieldSpacePool).sellFYToken(recipient, uint128(swapParams.minAssetOut));
     }
 }

@@ -55,7 +55,6 @@ contract NoLossCollateralAuctionFCActions is NoLossCollateralAuctionActionsBase 
         uint256 maxPrice,
         address recipient
     ) external {
-        // Take collateral
         uint256 fCashAmount = takeCollateral(
             vault,
             tokenId,
@@ -66,10 +65,7 @@ contract NoLossCollateralAuctionFCActions is NoLossCollateralAuctionActionsBase 
             address(this)
         );
 
-        IVaultFC(address(vault)).redeemAndExit(
-        tokenId,
-        recipient,
-        fCashAmount);
+        IVaultFC(address(vault)).redeemAndExit(tokenId, recipient, fCashAmount);
     }
 
     /// @notice Take collateral and swaps it for underlier
@@ -92,7 +88,6 @@ contract NoLossCollateralAuctionFCActions is NoLossCollateralAuctionActionsBase 
         address recipient,
         uint32 maxImpliedRate
     ) external {
-        // Take collateral (fCash)
         uint256 fCashAmount = takeCollateral(
             vault,
             tokenId,
@@ -109,7 +104,44 @@ contract NoLossCollateralAuctionFCActions is NoLossCollateralAuctionActionsBase 
         _sellfCash(tokenId, recipient, fCashAmount, maxImpliedRate, IERC20(IVault(vault).underlierToken()));
     }
 
-    function _getCurrencyId(uint256 tokenId) internal pure returns (uint16) {
+    /// @dev Sells an fCash tokens (shares) back on the Notional AMM
+    /// @param tokenId fCash Id (ERC1155 tokenId)
+    /// @param fCashAmount The amount of fCash to sell [tokenScale]
+    /// @param to Receiver of the underlier tokens
+    /// @param maxImpliedRate Max. accepted annualized implied borrow rate for swapping fCash for underliers [1e9]
+    /// @param underlier underlier token for fCash
+    function _sellfCash(
+        uint256 tokenId,
+        address to,
+        uint256 fCashAmount,
+        uint32 maxImpliedRate,
+        IERC20 underlier
+    ) internal {
+        if (fCashAmount >= type(uint88).max) revert NoLossCollateralAuctionFCActions__sellfCash_amountOverflow();
+
+        INotional.BalanceActionWithTrades[] memory action = new INotional.BalanceActionWithTrades[](1);
+        action[0].actionType = INotional.DepositActionType.None;
+        action[0].currencyId = _getCurrencyId(tokenId);
+        action[0].withdrawEntireCashBalance = true;
+        action[0].redeemToUnderlying = true;
+        action[0].trades = new bytes32[](1);
+        action[0].trades[0] = EncodeDecode.encodeBorrowTrade(
+            getMarketIndex(tokenId),
+            uint88(fCashAmount),
+            maxImpliedRate
+        );
+
+        uint256 balanceBefore = underlier.balanceOf(address(this));
+        notionalV2.batchBalanceAndTradeAction(address(this), action);
+        uint256 balanceAfter = underlier.balanceOf(address(this));
+
+        // send the resulting underlier to the user
+        underlier.safeTransfer(to, balanceAfter - balanceBefore);
+    }
+
+    /// ======== View Methods ======== ///
+
+     function _getCurrencyId(uint256 tokenId) internal pure returns (uint16) {
         return uint16(tokenId >> 48);
     }
 
@@ -132,41 +164,5 @@ contract NoLossCollateralAuctionFCActions is NoLossCollateralAuctionActionsBase 
     /// @notice Returns the underlying fCash maturity of the token
     function getMaturity(uint256 tokenId) public pure returns (uint40 maturity) {
         (, maturity, ) = EncodeDecode.decodeERC1155Id(tokenId);
-    }
-
-    /// @dev Sells an fCash tokens (shares) back on the Notional AMM
-    /// @param tokenId fCash Id (ERC1155 tokenId)
-    /// @param fCashAmount The amount of fCash to sell [tokenScale]
-    /// @param to Receiver of the underlier tokens
-    /// @param maxImpliedRate Max. accepted annualized implied borrow rate for swapping fCash for underliers [1e9]
-    /// @param underlier underlier token for fCash
-    function _sellfCash(
-        uint256 tokenId,
-        address to,
-        uint256 fCashAmount,
-        uint32 maxImpliedRate,
-        IERC20 underlier
-    ) internal {
-        
-        if (fCashAmount >= type(uint88).max) revert NoLossCollateralAuctionFCActions__sellfCash_amountOverflow();
-
-        INotional.BalanceActionWithTrades[] memory action = new INotional.BalanceActionWithTrades[](1);
-        action[0].actionType = INotional.DepositActionType.None;
-        action[0].currencyId = _getCurrencyId(tokenId);
-        action[0].withdrawEntireCashBalance = true;
-        action[0].redeemToUnderlying = true;
-        action[0].trades = new bytes32[](1);
-        action[0].trades[0] = EncodeDecode.encodeBorrowTrade(
-            getMarketIndex(tokenId),
-            uint88(fCashAmount),
-            maxImpliedRate
-        );
-
-        uint256 balanceBefore = underlier.balanceOf(address(this));
-        notionalV2.batchBalanceAndTradeAction(address(this), action);
-        uint256 balanceAfter = underlier.balanceOf(address(this));
-
-        // Send the resulting underlier to the user
-        underlier.safeTransfer(to, balanceAfter - balanceBefore);
     }
 }
