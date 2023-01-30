@@ -18,7 +18,7 @@ import {WAD, toInt256, sub, mul, div, wmul, wdiv} from "../../core/utils/Math.so
 contract NoLossCollateralAuctionEPTActions is NoLossCollateralAuctionActionsBase {
     using SafeERC20 for IERC20;
 
-    /// ======== Storage ======== ///
+    /// ======== Types ======== ///
 
     // Swap data
     struct SwapParams {
@@ -62,7 +62,6 @@ contract NoLossCollateralAuctionEPTActions is NoLossCollateralAuctionActionsBase
         uint256 maxPrice,
         address recipient
     ) external {
-        // Take collateral (pTokens)
         uint256 pTokenAmount = takeCollateral(
             vault,
             tokenId,
@@ -74,6 +73,7 @@ contract NoLossCollateralAuctionEPTActions is NoLossCollateralAuctionActionsBase
         );
 
         IVault(address(vault)).exit(0, address(this), pTokenAmount);
+
         // redeem pToken for underlier
         ITranche(IVault(vault).token()).withdrawPrincipal(pTokenAmount, recipient);
     }
@@ -99,7 +99,6 @@ contract NoLossCollateralAuctionEPTActions is NoLossCollateralAuctionActionsBase
         address recipient,
         SwapParams calldata swapParams
     ) external {
-        // Take collateral (pTokens)
         uint256 pTokenAmount = takeCollateral(
             vault,
             tokenId,
@@ -110,6 +109,7 @@ contract NoLossCollateralAuctionEPTActions is NoLossCollateralAuctionActionsBase
             address(this)
         );
         IVault(address(vault)).exit(0, address(this), pTokenAmount);
+
         // sell pToken according to `swapParams`
         _sellPToken(pTokenAmount, recipient, swapParams);
     }
@@ -138,7 +138,8 @@ contract NoLossCollateralAuctionEPTActions is NoLossCollateralAuctionActionsBase
         
 
         // kind == `GIVE_IN` use `minOutput` as `limit` to enforce min. amount of underliers to receive
-        return
-            IBalancerVault(swapParams.balancerVault).swap(singleSwap, funds, swapParams.minOutput, swapParams.deadline);
+        return IBalancerVault(swapParams.balancerVault).swap(
+            singleSwap, funds, swapParams.minOutput, swapParams.deadline
+        );
     }
 }

@@ -321,7 +321,6 @@ contract LeverSPTActions_RPC_tests is Test {
         redeemParams.maturity = maturity;
         redeemParams.target = address(maDAI);
         redeemParams.underlierToken = address(dai);
-        redeemParams.approveTarget = type(uint256).max;
     }
 
     function setUp() public {
