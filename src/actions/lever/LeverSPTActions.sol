@@ -111,8 +111,6 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
         address target;
         // Address of the pToken's underlier
         address underlierToken;
-        // Amount of `target` token to approve for the Sense Finance Adapter for unwrapping them for `underlierToken`
-        uint256 approveTarget;
     }
 
     struct BuyCollateralAndIncreaseLeverFlashLoanData {
