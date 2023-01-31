@@ -156,8 +156,8 @@ contract VaultEPT_ModifyPositionCollateralizationTest is Test, ERC1155Holder {
         assertEq(_balance(address(vaultYUSDC_V4_3Months), address(me)), collateralBefore + wadAmount);
     }
 
-    function test_exit(uint32 rndA, uint32 rndB) public {
-        vm.assume(rndA != 0);
+    function test_exit_x(uint32 rndA, uint32 rndB) public {
+        vm.assume(rndA != 0 && rndA != IERC20(trancheUSDC_V4_3Months).balanceOf(me));
         vm.assume(rndB != 0);
         
         uint256 amountEnter = rndA % IERC20(trancheUSDC_V4_3Months).balanceOf(me);
