@@ -70,6 +70,7 @@ contract LeverFYActions_RPC_tests is Test {
     uint256 internal maturity = 1672412400;
 
     bytes32 internal fiatPoolId = 0x178e029173417b1f9c8bc16dcec6f697bc32374600000000000000000000025d;
+    bytes32 internal bbausdPoolId = 0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000063;
     address internal fiatBalancerVault = address(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
 
     // Batch swaps
@@ -1774,42 +1775,52 @@ contract LeverFYActions_RPC_tests is Test {
     function test_fiatForUnderlier() public {
         uint256 fiatOut = 500 * WAD;
 
-        // Prepare arguments for preview method
-        poolIds.push(fiatPoolId);
+        // prepare arguments for preview method, ordered from underlier to FIAT
+        poolIds.push(bbausdPoolId);
         poolIds.push(fiatPoolId);
 
         pathAssetsIn.push(address(usdc));
         pathAssetsIn.push(address(dai));
         
         uint underlierIn = leverActions.fiatForUnderlier(poolIds, pathAssetsIn, fiatOut);
+        assertApproxEqAbs(underlierIn, wmul(fiatOut,fyUSDC2212Vault.tokenScale()), 2 * ONE_USDC);
 
         uint fiatIn = fiatOut;
+        // Prepare arguments for preview method, ordered from FIAT to underlier
+        delete poolIds;
+        poolIds.push(fiatPoolId);
+        poolIds.push(bbausdPoolId);
         
         pathAssetsOut.push(address(dai));
         pathAssetsOut.push(address(usdc));
         
-        assertApproxEqAbs(underlierIn, wmul(fiatOut,fyUSDC2212Vault.tokenScale()), 2 * ONE_USDC);
         assertApproxEqAbs(underlierIn, leverActions.fiatToUnderlier(poolIds, pathAssetsOut, fiatIn), 2 * ONE_USDC);
     }
 
     function test_fiatToUnderlier() public {
         uint256 fiatIn = 500 * WAD;
         
-        // Prepare arguments for preview method
+        // Prepare arguments for preview method, ordered from FIAT to underlier
         poolIds.push(fiatPoolId);
-        poolIds.push(fiatPoolId);
+        poolIds.push(bbausdPoolId);
 
         pathAssetsOut.push(address(dai));
         pathAssetsOut.push(address(usdc));
 
         uint underlierOut = leverActions.fiatToUnderlier(poolIds, pathAssetsOut, fiatIn);
-
+        assertApproxEqAbs(underlierOut, wmul(fiatIn,fyUSDC2212Vault.tokenScale()), 2 * ONE_USDC);
+        
         uint256 fiatOut = fiatIn;
+        
+        // prepare arguments for preview method, ordered from underlier to FIAT
+        delete poolIds;
+        poolIds.push(bbausdPoolId);
+        poolIds.push(fiatPoolId);
         
         pathAssetsIn.push(address(usdc));
         pathAssetsIn.push(address(dai));
         
-        assertApproxEqAbs(underlierOut, wmul(fiatIn,fyUSDC2212Vault.tokenScale()), 2 * ONE_USDC);
+        
         assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(poolIds, pathAssetsIn, fiatOut), 2 * ONE_USDC);
     }
     

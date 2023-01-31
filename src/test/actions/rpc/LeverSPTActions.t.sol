@@ -114,6 +114,7 @@ contract LeverSPTActions_RPC_tests is Test {
     LeverSPTActions internal leverActions;
 
     bytes32 internal fiatPoolId = 0x178e029173417b1f9c8bc16dcec6f697bc32374600000000000000000000025d;
+    bytes32 internal bbausdPoolId = 0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000063;
     address internal fiatBalancerVault = address(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
     
     // Batch swaps
@@ -1404,42 +1405,52 @@ contract LeverSPTActions_RPC_tests is Test {
     function test_fiatForUnderlier() public {
         uint256 fiatOut = 500 * WAD;
 
-        // Prepare arguments for preview method
-        pathPoolIds.push(fiatPoolId);
+        // Prepare arguments for preview method, ordered from underlier to FIAT
+        pathPoolIds.push(bbausdPoolId);
         pathPoolIds.push(fiatPoolId);
 
         pathAssetsIn.push(address(dai));
         pathAssetsIn.push(address(usdc));
         
         uint underlierIn = leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut);
+        assertApproxEqAbs(underlierIn, fiatOut, 4 * WAD);
 
         uint fiatIn = fiatOut;
-        
+        // Prepare arguments for preview method, ordered from FIAT to underlier
+        delete pathPoolIds;
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(bbausdPoolId);
+
         pathAssetsOut.push(address(usdc));
         pathAssetsOut.push(address(dai));
-
-        assertApproxEqAbs(underlierIn, fiatOut, 4 * WAD);
+        
         assertApproxEqAbs(underlierIn, leverActions.fiatToUnderlier(pathPoolIds, pathAssetsOut, fiatIn), 4 ether);
     }
 
     function test_fiatToUnderlier() public {
         uint256 fiatIn = 500 * WAD;
         
-        // Prepare arguments for preview method
+        // Prepare arguments for preview method, ordered from FIAT to underlier
         pathPoolIds.push(fiatPoolId);
-        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(bbausdPoolId);
 
         pathAssetsOut.push(address(usdc));
         pathAssetsOut.push(address(dai));
 
         uint underlierOut = leverActions.fiatToUnderlier(pathPoolIds, pathAssetsOut, fiatIn);
+        assertApproxEqAbs(underlierOut, fiatIn, 5 * WAD);
 
         uint256 fiatOut = fiatIn;
         
+        // Prepare arguments for preview method, ordered from underlier to FIAT 
+        delete pathPoolIds;
+        pathPoolIds.push(bbausdPoolId);
+        pathPoolIds.push(fiatPoolId);
+
         pathAssetsIn.push(address(dai));
         pathAssetsIn.push(address(usdc));
 
-        assertApproxEqAbs(underlierOut, fiatIn, 5 * WAD);
+        
         assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut), 0.22 ether);
     }
 

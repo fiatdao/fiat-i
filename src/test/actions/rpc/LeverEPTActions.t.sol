@@ -670,10 +670,8 @@ contract LeverEPTActions_RPC_tests is Test {
         // Prepare buy FIAT params
         pathAssetsIn.push(address(underlierUSDC));
         pathAssetsIn.push(address(dai));
-        pathAssetsIn.push(address(underlierUSDC));
 
-        pathPoolIds.push(bbausdPoolId);
-        pathPoolIds.push(bbausdPoolId);
+        pathPoolIds.push(fiatPoolId);
         pathPoolIds.push(fiatPoolId);
 
         uint maxUnderliersIn = totalUnderlier - upfrontUnderlier + fee; // max USDC In
@@ -1442,42 +1440,52 @@ contract LeverEPTActions_RPC_tests is Test {
     function test_fiatForUnderlier() public {
         uint256 fiatOut = 500 * WAD;
 
-        // Prepare arguments for preview method
+        // prepare arguments for preview method, ordered from underlier to FIAT
+        pathPoolIds.push(bbausdPoolId);
         pathPoolIds.push(fiatPoolId);
-        pathPoolIds.push(fiatPoolId);
-
+        
         pathAssetsIn.push(address(underlierUSDC));
         pathAssetsIn.push(address(dai));
         
         uint underlierIn = leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut);
+        assertApproxEqAbs(underlierIn, wmul(fiatOut,vault_yvUSDC_16SEP22.tokenScale()), 2 * ONE_USDC);     
 
         uint fiatIn = fiatOut;
-        
+
+        // prepare arguments for preview method, ordered from FIAT to underlier
+        delete pathPoolIds;
+        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(bbausdPoolId);
+
         pathAssetsOut.push(address(dai));
         pathAssetsOut.push(address(underlierUSDC));
         
-        assertApproxEqAbs(underlierIn, wmul(fiatOut,vault_yvUSDC_16SEP22.tokenScale()), 2 * ONE_USDC);
         assertApproxEqAbs(underlierIn, leverActions.fiatToUnderlier(pathPoolIds, pathAssetsOut, fiatIn), 2 * ONE_USDC);
     }
 
     function test_fiatToUnderlier() public {
         uint256 fiatIn = 500 * WAD;
         
-        // Prepare arguments for preview method
+        // prepare arguments for preview method, ordered from FIAT to underlier
         pathPoolIds.push(fiatPoolId);
-        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(bbausdPoolId);
 
         pathAssetsOut.push(address(dai));
         pathAssetsOut.push(address(underlierUSDC));
 
         uint underlierOut = leverActions.fiatToUnderlier(pathPoolIds, pathAssetsOut, fiatIn);
+        assertApproxEqAbs(underlierOut, wmul(fiatIn,vault_yvUSDC_16SEP22.tokenScale()), 2 * ONE_USDC);
 
         uint256 fiatOut = fiatIn;
+
+        // prepare arguments for preview method, ordered from underlier to FIAT
+        delete pathPoolIds;
+        pathPoolIds.push(bbausdPoolId);
+        pathPoolIds.push(fiatPoolId);
         
         pathAssetsIn.push(address(underlierUSDC));
         pathAssetsIn.push(address(dai));
         
-        assertApproxEqAbs(underlierOut, wmul(fiatIn,vault_yvUSDC_16SEP22.tokenScale()), 2 * ONE_USDC);
         assertApproxEqAbs(underlierOut, leverActions.fiatForUnderlier(pathPoolIds, pathAssetsIn, fiatOut), 2 * ONE_USDC);
     }
 }
