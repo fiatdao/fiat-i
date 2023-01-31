@@ -66,6 +66,7 @@ interface IBalancerVault {
 
 /// @title LeverSPTActions
 /// @notice A set of vault actions for modifying positions collateralized by Sense Finance pTokens
+/// @dev Due to the size of this contract it has to be compiled with custom optimizer settings
 contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashBorrower {
     using SafeERC20 for IERC20;
 
@@ -110,8 +111,6 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
         address target;
         // Address of the pToken's underlier
         address underlierToken;
-        // Amount of `target` token to approve for the Sense Finance Adapter for unwrapping them for `underlierToken`
-        uint256 approveTarget;
     }
 
     struct BuyCollateralAndIncreaseLeverFlashLoanData {
@@ -258,6 +257,7 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
         return CALLBACK_SUCCESS;
     }
 
+    /// @dev Executed in the context of LeverSPTActions instead of the Proxy
     function _onBuyCollateralAndIncreaseLever(uint256 borrowed, bytes memory data) internal {
         BuyCollateralAndIncreaseLeverFlashLoanData memory params = abi.decode(
             data,
@@ -408,6 +408,7 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
         return CALLBACK_SUCCESS_CREDIT;
     }
 
+    /// @dev Executed in the context of LeverSPTActions instead of the Proxy
     function _onSellCollateralAndDecreaseLever(
         address initiator,
         uint256 borrowed,
@@ -442,6 +443,7 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
         );
     }
 
+    /// @dev Executed in the context of LeverSPTActions instead of the Proxy
     function _onRedeemCollateralAndDecreaseLever(
         address initiator,
         uint256 borrowed,
@@ -470,10 +472,11 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
             params.subPTokenAmount
         );
 
-        // approve the Sense Finance Adapter to transfer `target` tokens
-        if (params.redeemParams.approveTarget != 0) {
-            IERC20(params.redeemParams.target).approve(params.redeemParams.adapter, targetAmount);
+        // approve the Sense Finance Adapter to transfer max `target` tokens
+        if (IERC20(params.redeemParams.target).allowance(address(this),params.redeemParams.adapter) == 0) {
+            IERC20(params.redeemParams.target).safeApprove(params.redeemParams.adapter, type(uint256).max);
         }
+        
         // unwrap `target` token for underlier
         uint256 underlierAmount = IAdapter(params.redeemParams.adapter).unwrapTarget(targetAmount);
 
@@ -489,8 +492,8 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
 
     /// @dev Executed in the context of LeverEPTActions instead of the Proxy
     function _buyPToken(uint256 underlierAmount, CollateralSwapParams memory swapParams) internal returns (uint256) {
-        if (IERC20(swapParams.assetIn).allowance(address(this), address(periphery)) < underlierAmount) {
-            IERC20(swapParams.assetIn).approve(address(periphery), type(uint256).max);
+        if (IERC20(swapParams.assetIn).allowance(address(this),address(periphery)) == 0) {
+            IERC20(swapParams.assetIn).safeApprove(address(periphery), type(uint256).max);
         }
 
         return
@@ -504,10 +507,10 @@ contract LeverSPTActions is Lever20Actions, ICreditFlashBorrower, IERC3156FlashB
 
     /// @dev Executed in the context of LeverEPTActions instead of the Proxy
     function _sellPToken(uint256 pTokenAmount, CollateralSwapParams memory swapParams) internal returns (uint256) {
-        if (IERC20(swapParams.assetIn).allowance(address(this), address(periphery)) < pTokenAmount) {
-            IERC20(swapParams.assetIn).approve(address(periphery), type(uint256).max);
+        if (IERC20(swapParams.assetIn).allowance(address(this),address(periphery)) == 0) {
+            IERC20(swapParams.assetIn).safeApprove(address(periphery), type(uint256).max);
         }
-
+        
         return
             periphery.swapPTsForUnderlying(
                 swapParams.adapter,

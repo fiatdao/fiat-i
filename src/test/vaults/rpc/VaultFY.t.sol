@@ -124,7 +124,7 @@ contract VaultFY_ModifyPositionCollateralizationTest is Test, ERC1155Holder {
     }
 
     function test_enter(uint32 rnd) public {
-        if (rnd == 0) return;
+        vm.assume(rnd != 0);
         uint256 amount = rnd % IERC20(fyUSDC04).balanceOf(address(this));
 
         uint256 balanceBefore = IERC20(fyUSDC04).balanceOf(address(vaultFY_USDC04));
@@ -139,7 +139,8 @@ contract VaultFY_ModifyPositionCollateralizationTest is Test, ERC1155Holder {
     }
 
     function test_exit(uint32 rndA, uint32 rndB) public {
-        if (rndA == 0 || rndB == 0) return;
+        vm.assume(rndA != 0);
+        vm.assume(rndB != 0);
         uint256 amountEnter = rndA % IERC20(fyUSDC04).balanceOf(address(this));
         uint256 amountExit = rndB % amountEnter;
 

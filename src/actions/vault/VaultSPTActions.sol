@@ -271,7 +271,12 @@ contract VaultSPTActions is Vault20Actions {
 
         // approve the Sense Finance Adapter to transfer `target` tokens on behalf of the proxy
         if (redeemParams.approveTarget != 0) {
-            IERC20(redeemParams.target).approve(redeemParams.adapter, targetAmount);
+            // reset the allowance if it's currently non-zero
+            if (IERC20(redeemParams.target).allowance(address(this),redeemParams.adapter) != 0){
+                IERC20(redeemParams.target).safeApprove(redeemParams.adapter, 0);    
+            }
+
+            IERC20(redeemParams.target).safeApprove(redeemParams.adapter, redeemParams.approveTarget);
         }
         // unwrap `target` token for underlier
         uint256 underlierAmount = IAdapter(redeemParams.adapter).unwrapTarget(targetAmount);
@@ -293,7 +298,12 @@ contract VaultSPTActions is Vault20Actions {
 
         // approve Sense Finance Periphery to transfer underliers on behalf of proxy
         if (swapParams.approve != 0) {
-            IERC20(swapParams.assetIn).approve(address(periphery), swapParams.approve);
+            // reset the allowance if it's currently non-zero
+            if (IERC20(swapParams.assetIn).allowance(address(this),address(periphery)) != 0){
+                IERC20(swapParams.assetIn).safeApprove(address(periphery), 0);    
+            }
+
+            IERC20(swapParams.assetIn).safeApprove(address(periphery), swapParams.approve);
         }
 
         return
@@ -308,7 +318,12 @@ contract VaultSPTActions is Vault20Actions {
     function _sellPToken(uint256 pTokenAmount, SwapParams calldata swapParams) internal returns (uint256) {
         // approve Sense Finance Periphery to transfer pTokens on behalf of the proxy
         if (swapParams.approve != 0) {
-            IERC20(swapParams.assetIn).approve(address(periphery), swapParams.approve);
+            // reset the allowance if it's currently non-zero
+            if (IERC20(swapParams.assetIn).allowance(address(this),address(periphery)) != 0){
+                IERC20(swapParams.assetIn).safeApprove(address(periphery), 0);    
+            }
+
+            IERC20(swapParams.assetIn).safeApprove(address(periphery), swapParams.approve);
         }
 
         return

@@ -86,7 +86,6 @@ contract NoLossCollateralAuctionSPTActions is NoLossCollateralAuctionActionsBase
         address recipient,
         RedeemParams calldata redeemParams
     ) external {
-        // Take collateral (pTokens)
         uint256 pTokenAmount = takeCollateral(
             vault,
             tokenId,
@@ -104,7 +103,12 @@ contract NoLossCollateralAuctionSPTActions is NoLossCollateralAuctionActionsBase
 
         // approve the Sense Finance Adapter to transfer `target` tokens on behalf of the proxy
         if (redeemParams.approveTarget != 0) {
-            IERC20(redeemParams.target).approve(redeemParams.adapter, targetAmount);
+            // reset the allowance if it's currently non-zero
+            if (IERC20(redeemParams.target).allowance(address(this), redeemParams.adapter) != 0){
+                IERC20(redeemParams.target).safeApprove(redeemParams.adapter, 0);    
+            }
+            
+            IERC20(redeemParams.target).safeApprove(redeemParams.adapter, redeemParams.approveTarget);
         }
         // unwrap `target` token for underlier
         uint256 underlierAmount = IAdapter(redeemParams.adapter).unwrapTarget(targetAmount);
@@ -134,7 +138,6 @@ contract NoLossCollateralAuctionSPTActions is NoLossCollateralAuctionActionsBase
         address recipient,
         SwapParams calldata swapParams
     ) external {
-        // Take collateral (pTokens)
         uint256 pTokenAmount = takeCollateral(
             vault,
             tokenId,
@@ -150,7 +153,11 @@ contract NoLossCollateralAuctionSPTActions is NoLossCollateralAuctionActionsBase
         // sell pToken according to `swapParams`
         // approve Sense Finance Periphery to transfer pTokens on behalf of the proxy
         if (swapParams.approve != 0) {
-            IERC20(swapParams.assetIn).approve(address(periphery), swapParams.approve);
+            if (IERC20(swapParams.assetIn).allowance(address(this), address(periphery)) != 0){
+                IERC20(swapParams.assetIn).safeApprove(address(periphery), 0);
+            }
+
+            IERC20(swapParams.assetIn).safeApprove(address(periphery), swapParams.approve);
         }
 
         uint256 underlier = periphery.swapPTsForUnderlying(
@@ -160,7 +167,7 @@ contract NoLossCollateralAuctionSPTActions is NoLossCollateralAuctionActionsBase
             swapParams.minAccepted
         );
 
-        // Send underlier to recipient
+        // send underlier to recipient
         IERC20(swapParams.assetOut).safeTransfer(recipient, underlier);
     }
 }

@@ -489,7 +489,7 @@ contract VaultFCActions is Vault1155Actions {
 
         notionalV2.batchBalanceAndTradeAction(address(this), action);
 
-        // Send any residuals underlier back to the sender
+        // send any residuals underlier back to the sender
         if (from != address(0) && from != address(this)) {
             uint256 balanceAfter = underlier.balanceOf(address(this));
             uint256 residual = balanceAfter - balanceBefore;
@@ -528,7 +528,7 @@ contract VaultFCActions is Vault1155Actions {
         notionalV2.batchBalanceAndTradeAction(address(this), action);
         uint256 balanceAfter = underlier.balanceOf(address(this));
 
-        // Send the resulting underlier to the user
+        // send the resulting underlier to the user
         underlier.safeTransfer(to, balanceAfter - balanceBefore);
     }
 
