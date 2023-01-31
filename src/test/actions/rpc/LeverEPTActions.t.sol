@@ -81,9 +81,9 @@ contract LeverEPTActions_RPC_tests is Test {
     address internal trancheUSDC_V4_3Months;
 
     bytes32 internal fiatPoolId = 0x178e029173417b1f9c8bc16dcec6f697bc32374600000000000000000000025d;
+    bytes32 internal bbausdPoolId = 0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000063;
     address internal fiatBalancerVault = address(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
     IERC20 internal dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
-    uint256 internal tokenId = 0;
     address internal me = address(this);
     uint256 internal ONE_USDC = 1e6;
 
@@ -672,11 +672,11 @@ contract LeverEPTActions_RPC_tests is Test {
         pathAssetsIn.push(address(dai));
         pathAssetsIn.push(address(underlierUSDC));
 
-        pathPoolIds.push(fiatPoolId);
-        pathPoolIds.push(fiatPoolId);
+        pathPoolIds.push(bbausdPoolId);
+        pathPoolIds.push(bbausdPoolId);
         pathPoolIds.push(fiatPoolId);
 
-        uint maxUnderliersIn = totalUnderlier - upfrontUnderlier+fee; // max USDC In
+        uint maxUnderliersIn = totalUnderlier - upfrontUnderlier + fee; // max USDC In
         uint deadline = block.timestamp + 10 days;
 
         _sellCollateralAndDecreaseLever(
