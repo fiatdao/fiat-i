@@ -403,7 +403,7 @@ abstract contract LeverActions {
         assets[pathLength] = IAsset(address(fiat));
         limits[0] = toInt256(maxUnderliersIn);
 
-        for (uint256 i = 0; i < pathLength;){
+        for (uint256 i = 0; i < pathLength;) {
             IBalancerVault.BatchSwapStep memory swap;
             unchecked {
                 swap = IBalancerVault.BatchSwapStep(
