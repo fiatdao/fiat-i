@@ -18,7 +18,6 @@ import {Flash} from "../../../core/Flash.sol";
 import {Moneta} from "../../../core/Moneta.sol";
 import {toInt256, WAD, wdiv} from "../../../core/utils/Math.sol";
 
-import {VaultEPT} from "../../../vaults/VaultEPT.sol";
 import {VaultSPT} from "../../../vaults/VaultSPT.sol";
 import {VaultFactory} from "../../../vaults/VaultFactory.sol";
 import {IVault} from "../../../interfaces/IVault.sol";
@@ -1454,7 +1453,6 @@ contract LeverSPTActions_RPC_tests is Test {
         uint256 underlierOut = leverActions.fiatToUnderlier(pathPoolIds, pathAssetsOut, fiatIn);
         assertApproxEqAbs(underlierOut, fiatIn, 5 * WAD);
         
-        // sanity check: underlier amount should be close to the same for the reverse swap
         uint256 fiatOut = fiatIn;
 
         pathPoolIds[0] = bbausdPoolId; // DAI : USDC pool

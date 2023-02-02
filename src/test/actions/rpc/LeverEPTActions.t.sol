@@ -267,7 +267,6 @@ contract LeverEPTActions_RPC_tests is Test {
         codex = new Codex();
         publican = new Publican(address(codex));
         moneta = new Moneta(address(codex), address(fiat));
-        
         prbProxyFactory = new PRBProxyFactory();
         collybus = new Collybus();
         userProxy = PRBProxy(prbProxyFactory.deployFor(me));
