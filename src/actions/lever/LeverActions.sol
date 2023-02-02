@@ -226,7 +226,7 @@ abstract contract LeverActions {
             -toInt256(subNormalDebt)
         );
 
-        // withdraw tokens not be used as collateral anymore from Vault
+        // withdraw tokens not used as collateral anymore from Vault
         exitVault(vault, token, tokenId, collateralizer, wmul(subCollateral, IVault(vault).tokenScale()));
     }
 
@@ -275,7 +275,7 @@ abstract contract LeverActions {
 
     /// @notice Returns an amount of underliers for a given amount of FIAT
     /// @dev This method should be exclusively called off-chain for estimation.
-    ///      `pathPoolIds` and `pathAssetsOut` must have the same length and be ordered from FIAT to the underlier.
+    ///      `pathPoolIds` and `pathAssetsOut` must have the same length and must be ordered from FIAT to the underlier.
     /// @param pathPoolIds Balancer PoolIds for every step of the swap from FIAT to the underlier
     /// @param pathAssetsOut Assets to be swapped at every step from FIAT to the underlier (excluding FIAT)
     /// @param fiatAmount Amount of FIAT [wad]
@@ -350,9 +350,9 @@ abstract contract LeverActions {
 
     /// @notice Populates the SellFIATSwapParams struct used in the `_sellFIATExactIn` method
     /// @dev This method should be exclusively called off-chain for estimation.
-    ///      `pathPoolIds` and `pathAssetsOut` must have the same length and be ordered from underlier to FIAT.
-    /// @param pathPoolIds Balancer PoolIds for every step of the swap from underlier to FIAT
-    /// @param pathAssetsOut Assets to be swapped at every step from underlier to FIAT (excluding FIAT)
+    ///      `pathPoolIds` and `pathAssetsOut` must have the same length and be ordered from FIAT to underlier.
+    /// @param pathPoolIds Balancer PoolIds for every step of the swap from FIAT to underlier
+    /// @param pathAssetsOut Assets to be swapped at every step from FIAT to underlier (excluding FIAT)
     /// @param minUnderliersOut Min. amount of underlier to receive [underlierScale]
     /// @param deadline Timestamp after which the trade is no more valid [s]
     /// @return sellFIATSwapParams SellFIATSwapParams struct
@@ -364,7 +364,7 @@ abstract contract LeverActions {
         
         IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
         IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1))); // number of assets = number of swaps + 1
-        int256[] memory limits = new int[](add(pathLength, uint256(1))); // for each asset has an associated limit
+        int256[] memory limits = new int256[](add(pathLength, uint256(1))); // for each asset has an associated limit
         assets[0] = IAsset(address(fiat));
         limits[pathLength] = -toInt256(minUnderliersOut);
 
@@ -398,18 +398,18 @@ abstract contract LeverActions {
 
         IBalancerVault.BatchSwapStep[] memory swaps = new IBalancerVault.BatchSwapStep[](pathLength);
         IAsset[] memory assets = new IAsset[](add(pathLength, uint256(1))); // number of assets = number of swaps + 1
-        int256[] memory limits = new int[](add(pathLength, uint256(1))); // for each asset has an associated limit
+        int256[] memory limits = new int256[](add(pathLength, uint256(1))); // for each asset has an associated limit
 
         assets[pathLength] = IAsset(address(fiat));
         limits[0] = toInt256(maxUnderliersIn);
 
-        for (uint256 i = 0; i < pathLength;){
+        for (uint256 i = 0; i < pathLength;) {
             IBalancerVault.BatchSwapStep memory swap;
             unchecked {
                 swap = IBalancerVault.BatchSwapStep(
-                    // reverse the order such that last asset becomes assetIndexOut for the first swap
-                    // and the first asset becomes the assetIndexIn for the last swap
-                    pathPoolIds[i], pathLength - i - 1, pathLength - i, 0, new bytes(0)
+                    // reverse the order such that last asset (FIAT) becomes assetIndexOut for the first swap
+                    // and the first asset (underlier) becomes the assetIndexIn for the last swap
+                    pathPoolIds[pathLength - i - 1], pathLength - i - 1, pathLength - i, 0, new bytes(0)
                 );
             }
             swaps[i] = swap;
