@@ -74,7 +74,7 @@ contract LeverSPTActions_RPC_tests is Test {
 
     // Underliers
     IERC20 internal usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
-    IERC20 internal dai = dai = IERC20(address(0x6B175474E89094C44Da98b954EedeAC495271d0F));
+    IERC20 internal dai = IERC20(address(0x6B175474E89094C44Da98b954EedeAC495271d0F));
     address internal weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     // Sense Finance contracts
@@ -97,13 +97,6 @@ contract LeverSPTActions_RPC_tests is Test {
     bytes32 internal usdcWethPoolId = 0x96646936b91d6b9d7d0c47c496afbf3d6ec7b6f8000200000000000000000019;
     address internal fiatBalancerVault = address(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
     address internal senseBalancerVault = address(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
-
-    function _mintDAI(address to, uint256 amount) internal {
-        vm.store(address(dai), keccak256(abi.encode(address(address(this)), uint256(0))), bytes32(uint256(1)));
-        string memory sig = "mint(address,uint256)";
-        (bool ok, ) = address(dai).call(abi.encodeWithSignature(sig, to, amount));
-        assert(ok);
-    }
 
     function _collateral(address vault, address user_) internal view returns (uint256) {
         (uint256 collateral, ) = codex.positions(vault, 0, user_);
@@ -310,10 +303,10 @@ contract LeverSPTActions_RPC_tests is Test {
         publican.init(address(sPmaDAIVault));
         codex.allowCaller(codex.modifyBalance.selector, address(sPmaDAIVault));
 
-        // get test USDC
+        // get test DAI
         user = new Caller();
-        _mintDAI(address(user), 10000 ether);
-        _mintDAI(me, 10000 ether);
+        deal(address(dai), address(user), 10000 ether);
+        deal(address(dai), me, 10000 ether);
 
         // set up flashlending facility
         flash = new Flash(address(moneta));
@@ -446,13 +439,13 @@ contract LeverSPTActions_RPC_tests is Test {
             amount,
             0,
            _getSwapParams(
-            maDAIAdapter,
-            address(dai),
-            address(sP_maDAI),
-            0,
-            maturity,
-            amount
-        )
+                maDAIAdapter,
+                address(dai),
+                address(sP_maDAI),
+                0,
+                maturity,
+                amount
+            )
         );
 
         assertEq(dai.balanceOf(me), meInitialBalance - amount);
@@ -702,7 +695,7 @@ contract LeverSPTActions_RPC_tests is Test {
         );
     }
 
-    function test_sellCollateralAndDecreaseLever_buildBuyFIATSwapParams_x() public {
+    function test_sellCollateralAndDecreaseLever_buildBuyFIATSwapParams() public {
         uint256 lendFIAT = 500 * WAD;
         uint256 upfrontUnderlier = 100 * WAD;
         uint256 totalUnderlier = 600 * WAD;
